@@ -27,6 +27,7 @@ const fastHealIcon = loadImg("5")
 const slowHealIcon = loadImg("8")
 const shieldHealIcon = loadImg("48")
 const aoeHealIcon = loadImg("58")
+const enragedIcon = loadImg("106")
 
 class Sprite {
     constructor(tile, tx, ty, tWidth, tHeight, nbImage) {
@@ -36,7 +37,7 @@ class Sprite {
         this.tWidth = tWidth;
         this.tHeight = tHeight;
         this.singleWidth = tWidth / nbImage;
-
+        this.correctAngus = 0;
     }
     paint(x, y, frame, reverse) {
         if (typeof (frame) === "undefined")
@@ -66,7 +67,7 @@ class Sprite {
     paintRotate(x, y, angus) {
         ctx.save();
         ctx.translate(x + this.singleWidth / 2, y + this.tHeight / 2);
-        ctx.rotate(angus);
+        ctx.rotate(angus + this.correctAngus);
         ctx.drawImage(this.tile,
             this.tx, this.ty, this.singleWidth - 1, this.tHeight,
             -this.singleWidth / 2, -this.tHeight / 2, (this.singleWidth - 1), this.tHeight);
@@ -89,6 +90,8 @@ const arrowSprite = new Sprite(tileSet1, 644, 400, 20, 48, 1);
 const frostSprite = new Sprite(tileSet2, 352, 672, 32, 32, 1);
 const swordSprite = new Sprite(tileSet1, 640, 16, 28, 48, 1);
 const hamerSprite = new Sprite(tileSet1, 640, 76, 28, 48, 1);
+const enragedSprite = new Sprite(tileSet2, 32, 0, 32, 32, 1);
+enragedSprite.correctAngus = - 3 * Math.PI / 4;
 
 class Character {
     constructor(sprite, x, y) {
@@ -104,6 +107,7 @@ class Character {
         this.reverse = false;
         this.spells = [];
         this.buffs = [];
+        this.onUpdate = null;
     }
 
     paint() {
@@ -119,6 +123,9 @@ class Character {
             if(this.buffs[i].update()){
                 this.buffs.splice(i, 1);
             }
+        }
+        if( this.onUpdate){
+            this.onUpdate(this);
         }
     }
     onHit(projectileStat) {
@@ -158,7 +165,8 @@ class CharacterMenu {
             this.paintLifeBar(this.x, this.y);
         }
         for(let i = 0; i <  this.character.buffs.length; i++){
-            ctx.drawImage( this.character.buffs[i].icon, this.x + 40 + i * 22, this.y + 32, 20, 20)
+            const offsetX = this.isLeft ? 40 : 0
+            ctx.drawImage( this.character.buffs[i].icon, this.x + offsetX + i * 22, this.y + 32, 20, 20)
         }
     }
 
@@ -185,7 +193,7 @@ class CharacterMenu {
 class PnjSpell {
     constructor(stat, castFunc) {
         this.stat = stat;
-        this.cooldown = 40;
+        this.cooldown = stat.cooldown;
         this.tick = 0;
         this.castFunc = castFunc;
     }
@@ -197,11 +205,12 @@ class PnjSpell {
     }
 }
 class ProjectileStat {
-    constructor(icon, speed, range, dmg) {
+    constructor(icon, speed, range, dmg, cooldown) {
         this.icon = icon;
         this.speed = speed;
         this.range = range;
         this.dmg = dmg;
+        this.cooldown = cooldown;
     }
 }
 let allAnimations = [];
@@ -211,15 +220,15 @@ class ProjectileAnim {
         this.stat = stat;
         this.from = from;
         this.to = to;
-        this.x = from.x;
-        this.y = from.y;
-        this.destX = to.x;
-        this.destY = to.y;
+        this.x = from.x + from.width / 2;
+        this.y = from.y + (from.height - stat.icon.tHeight) / 2;
+        this.destX = to.x + to.width / 2;
+        this.destY = to.y + (to.height - stat.icon.tHeight) / 2;
         this.targetAngus = Math.atan2(this.destY - this.y, this.destX - this.x);
     }
     update() {
         const d = Math.sqrt(Square(this.destX - this.x) + Square(this.destY - this.y));
-        if (d < 5) {
+        if (d < this.stat.speed) {
             this.to.onHit(this.stat);
             return true;
         }
@@ -236,9 +245,13 @@ class ProjectileAnim {
 
 
 const knight = new Character(redKnightSprite, 560, 225);
+knight.maxLife = knight.life = 1600;
 const witch = new Character(witchSprite, 460, 100);
+witch.maxLife = witch.life = 600;
 const hunter = new Character(elfSprite, 350, 150);
+hunter.maxLife = hunter.life = 800;
 let boss = new Character(bigZombySprite, 600, 200);
+boss.maxLife = boss.life = 5000;
 boss.reverse = true;
 boss.isVilain = true;
 let teams = [
@@ -256,10 +269,30 @@ function castSimpleProjectile(stat, from) {
     const projectile = new ProjectileAnim(stat, from, target);
     allAnimations.push(projectile);
 }
-hunter.spells.push(new PnjSpell(new ProjectileStat(arrowSprite, 10, 800, 5), castSimpleProjectile));
-witch.spells.push(new PnjSpell(new ProjectileStat(frostSprite, 12, 1200, 4), castSimpleProjectile));
-knight.spells.push(new PnjSpell(new ProjectileStat(swordSprite, 7, 100, 3), castSimpleProjectile));
-boss.spells.push(new PnjSpell(new ProjectileStat(hamerSprite, 7, 100, 50), castSimpleProjectile));
+hunter.spells.push(new PnjSpell(new ProjectileStat(arrowSprite, 10, 800, 50, 38), castSimpleProjectile));
+witch.spells.push(new PnjSpell(new ProjectileStat(frostSprite, 12, 1200, 40, 44), castSimpleProjectile));
+knight.spells.push(new PnjSpell(new ProjectileStat(swordSprite, 7, 100, 30, 38), castSimpleProjectile));
+boss.spells.push(new PnjSpell(new ProjectileStat(hamerSprite, 7, 100, 100, 40), castSimpleProjectile));
+boss.onUpdate = function(self){
+    if(self.isEnraged){
+        return;
+    }
+    if(self.life > 2000){
+        return;
+    }
+    self.isEnraged = true;
+    const stat = new ProjectileStat(enragedSprite, 15, 1000, 50, 40)
+    self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, enragedTick));
+}
+
+function enragedTick(stat, boss){
+    for (const c of teams) {
+        if(c.life > 0){
+            const projectile = new ProjectileAnim(stat, boss, c);
+            allAnimations.push(projectile);
+        }
+    }
+}
 
 let characterMenus = [
     new CharacterMenu(knight, 0),
@@ -330,7 +363,6 @@ class SpellButton {
         this.height = 48;
         this.selected = false;
     }
-
     paint() {
         ctx.drawImage(this.icon, this.x, this.y, this.width, this.height);
 
@@ -347,11 +379,8 @@ class SpellButton {
             ctx.stroke();
         }
     }
-
     update() {
-
     }
-
     click() {
         this.selected = !this.selected;
         if(this.selected){
@@ -373,10 +402,10 @@ class SpellButton {
     }
 }
 
-const fastHeal = new PlayerSpell("Fast", fastHealIcon, 50, 15, 0, 100, healCasted);
-const slowHeal = new PlayerSpell("Big", slowHealIcon, 80, 90, 0, 300, healCasted);
-const hotHeal = new PlayerSpell("HOT", hotHealIcon, 60, 10, 0, 20, hotHealCaster);
-const aoeHeal = new PlayerSpell("AOE", aoeHealIcon, 100, 30, 0, 80, aoeHealCasted);
+const fastHeal = new PlayerSpell("Fast", fastHealIcon, 100, 30, 0, 250, healCasted);
+const slowHeal = new PlayerSpell("Big", slowHealIcon, 140, 90, 0, 500, healCasted);
+const hotHeal = new PlayerSpell("HOT", hotHealIcon, 80, 10, 0, 400/40, hotHealCaster);
+const aoeHeal = new PlayerSpell("AOE", aoeHealIcon, 70, 30, 0, 200, aoeHealCasted);
 //const shieldHeal = new PlayerSpell(shieldHealIcon, 80, 90, 0, 300, healCasted);
 
 
@@ -384,7 +413,7 @@ function healCasted(stat, target){
     target.onHeal(stat.power);
 }
 function hotHealCaster(stat, target){
-    target.pushBuff(new CharacterBuffEffect("HOT", target, stat.icon, 15, 30*6, stat, healCasted));
+    target.pushBuff(new CharacterBuffEffect("HOT", target, stat.icon, 15, 30*20, stat, healCasted));
 }
 function aoeHealCasted(stat, target){
     for (const c of teams) {
