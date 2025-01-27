@@ -5,7 +5,7 @@ const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 let tickNumber = 1;
 canvas.onmousedown = onmousedown;
-
+canvas.onmousemove = onmousemove;
 
 function loadImg(name) {
     const img = new Image();
@@ -82,6 +82,7 @@ class Sprite {
     }
 }
 
+const healerSprite = new Sprite(tileSet1, 256, 340, 288, 48, 9);
 const witchSprite = new Sprite(tileSet1, 256, 274, 288, 48, 9);
 const redKnightSprite = new Sprite(tileSet1, 256, 148, 256, 48, 8);
 const elfSprite = new Sprite(tileSet1, 256, 84, 256, 44, 8);
@@ -91,6 +92,7 @@ const frostSprite = new Sprite(tileSet2, 352, 672, 32, 32, 1);
 const swordSprite = new Sprite(tileSet1, 640, 16, 28, 48, 1);
 const hamerSprite = new Sprite(tileSet1, 640, 76, 28, 48, 1);
 const enragedSprite = new Sprite(tileSet2, 32, 0, 32, 32, 1);
+const deadSprite = new Sprite(tileSet2, 0, 0, 32, 32, 1);
 enragedSprite.correctAngus = - 3 * Math.PI / 4;
 
 class Character {
@@ -111,7 +113,14 @@ class Character {
     }
 
     paint() {
-        this.sprite.paint(this.x, this.y, Math.floor(tickNumber / 8) % 2, this.reverse);       
+        let spriteNumber = Math.floor(tickNumber / 8) % 2;
+        if(this.life <= 0){
+            spriteNumber = 0;
+        }
+        this.sprite.paint(this.x, this.y, spriteNumber, this.reverse);       
+        if(this.life <= 0){
+            deadSprite.paint(this.x + 10, this.y + 10);
+        }
     }
     update() {
         if (this.life <= 0)
@@ -205,12 +214,11 @@ class PnjSpell {
     }
 }
 class ProjectileStat {
-    constructor(icon, speed, range, dmg, cooldown) {
+    constructor(icon, dmg, cooldown, speed) {
         this.icon = icon;
-        this.speed = speed;
-        this.range = range;
         this.dmg = dmg;
         this.cooldown = cooldown;
+        this.speed = speed;       
     }
 }
 let allAnimations = [];
@@ -243,6 +251,49 @@ class ProjectileAnim {
     }
 }
 
+class Heroes {
+  createPelin(){
+    const c = new Character(healerSprite, 500, 225);
+    c.maxLife = c.life = 800;
+    const banana = new Sprite(tileSet2, 32, 450, 32, 32, 1);
+    c.spells.push(new PnjSpell(new ProjectileStat(banana, 15, 45, 10), castSimpleProjectile));
+    return c;
+  }
+}
+const heroesFactory = new Heroes();
+
+class Vilains {
+    createVilainOfLevel(level){
+        switch(level)
+        {
+             case 20: return this.lvl1();
+            default: return this.lvl1();
+        }
+    }
+
+    lvl1(){
+        const sprite = new Sprite(tileSet1, 736, 32, 64, 48, 2);
+        let vilain = new Character(sprite, 620, 240);
+        vilain.maxLife = vilain.life = 100;
+        vilain.reverse = true;
+        vilain.isVilain = true;
+
+        vilain.spells.push(new PnjSpell(new ProjectileStat(hamerSprite, 80, 40, 7), castSimpleProjectile));
+        vilain.onUpdate = function(self){
+            if(self.isEnraged){
+                return;
+            }
+            if(self.life > vilain.maxLife / 2){
+                return;
+            }
+            self.isEnraged = true;
+            const stat = new ProjectileStat(enragedSprite, 250, 40, 15)
+            self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, enragedTick));
+        }        
+        return vilain;
+    }
+}
+const vilainsFactory = new Vilains();
 
 const knight = new Character(redKnightSprite, 560, 225);
 knight.maxLife = knight.life = 1600;
@@ -254,6 +305,8 @@ let boss = new Character(bigZombySprite, 600, 200);
 boss.maxLife = boss.life = 5000;
 boss.reverse = true;
 boss.isVilain = true;
+
+let currentLevel = 1;
 let teams = [
     knight,
     witch,
@@ -264,15 +317,15 @@ let mobs = [
 ]
 
 function castSimpleProjectile(stat, from) {
-    let target = from.isVilain ? teams.find(p => p.life > 0) : boss;
+    let target = from.isVilain ? teams.find(p => p.life > 0) : mobs.find(p => p.life > 0);
     if (!target) return;
     const projectile = new ProjectileAnim(stat, from, target);
     allAnimations.push(projectile);
 }
-hunter.spells.push(new PnjSpell(new ProjectileStat(arrowSprite, 10, 800, 50, 38), castSimpleProjectile));
-witch.spells.push(new PnjSpell(new ProjectileStat(frostSprite, 12, 1200, 40, 44), castSimpleProjectile));
-knight.spells.push(new PnjSpell(new ProjectileStat(swordSprite, 7, 100, 30, 38), castSimpleProjectile));
-boss.spells.push(new PnjSpell(new ProjectileStat(hamerSprite, 7, 100, 100, 40), castSimpleProjectile));
+hunter.spells.push(new PnjSpell(new ProjectileStat(arrowSprite, 50, 38, 10), castSimpleProjectile));
+witch.spells.push(new PnjSpell(new ProjectileStat(frostSprite, 40, 44, 12), castSimpleProjectile));
+knight.spells.push(new PnjSpell(new ProjectileStat(swordSprite, 30, 38, 7), castSimpleProjectile));
+boss.spells.push(new PnjSpell(new ProjectileStat(hamerSprite, 100, 40, 7), castSimpleProjectile));
 boss.onUpdate = function(self){
     if(self.isEnraged){
         return;
@@ -281,7 +334,7 @@ boss.onUpdate = function(self){
         return;
     }
     self.isEnraged = true;
-    const stat = new ProjectileStat(enragedSprite, 15, 1000, 50, 40)
+    const stat = new ProjectileStat(enragedSprite, 50, 40, 15)
     self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, enragedTick));
 }
 
@@ -465,7 +518,6 @@ class PlayerStat{
         this.fullManaRegen = 20;
         this.liteManaRegen = 5;
     }
-
     paint(){
         const left = 300;
         const top = 420;
@@ -487,7 +539,6 @@ class PlayerStat{
         ctx.rect(left, top + 10, 200, 20);
         ctx.stroke();
     }
-
     update(){
         const regenTick = tickNumber - this.lastCast;
         this.manaRegen = (regenTick >  6 * 30) ? this.fullManaRegen :
@@ -498,11 +549,17 @@ class PlayerStat{
     }
 }
 let playerStat = new PlayerStat();
-
 class Board {
     constructor() {
+        characterMenus = [];
+        for(let i = 0; i < teams.length; i++){
+            characterMenus.push(new CharacterMenu(teams[i], i));
+        }
+        const vilain = vilainsFactory.createVilainOfLevel(currentLevel);
+        mobs = [vilain];
+        characterMenus.push(new CharacterMenu(vilain, 0));
+        this.combatEnded = null;
     }
-
     paint() {
         for (const c of teams) {
             c.paint();
@@ -523,13 +580,12 @@ class Board {
             playerCastingBar.paint();
         playerStat.paint();
     }
-
     update() {
         for (let i = 0; i < allAnimations.length; i++) {
             if (allAnimations[i].update()) {
                 allAnimations.splice(i--, 1);
             }
-        }
+        }        
         for (const c of teams) {
             c.update();
         }
@@ -542,6 +598,18 @@ class Board {
         if(playerCastingBar)
             playerCastingBar.update();
         playerStat.update();
+        if(this.combatEnded == null){
+            if(teams.filter(c => c.life > 0).length == 0 || mobs.filter(c => c.life > 0).length == 0 ){
+                this.combatEnded = 80;
+            }
+        }
+        if(this.combatEnded <= 0){
+            if(teams[0].life <= 0) {
+                currentPage = new DeadScreen();
+            }
+        } else {
+            this.combatEnded--;
+        }      
     }
     click(x, y) {
         for (const s of spells) {
@@ -568,12 +636,79 @@ class Board {
     }
 }
 
-function onmousedown(event) {
-    mainPage.click(event.offsetX, event.offsetY);
+class MenuButton {
+    constructor(x, y, label, click) {
+        this.x = x;
+        this.y = y;
+        this.label = label;
+        this.click = click;
+        this.width = 200;
+        this.height = 44;
+        this.mouseOver = false;
+    }
+    paint() {
+        ctx.fillStyle = this.mouseOver ? "silver" : "gray";
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+
+        ctx.fillStyle = "black";
+        ctx.font = "32px Verdana";
+        ctx.fillText(this.label, this.x + this.width / 2 - this.label.length * 8, this.y + 33);
+    }
+    isInside(event){
+        return event.offsetX >= this.x && event.offsetX < this.x + this.width
+            && event.offsetY >= this.y && event.offsetY < this.y + this.height
+    }
+    mouseEnter() {
+        this.mouseOver = true;
+    }
+    mouseExit() {
+        this.mouseOver = false;
+    }    
 }
 
-let mainPage = new Board();
+class StartMenu{
+    constructor(){
+        this.buttons = [new MenuButton(500, 350, "Start", this.startGame)]
+    }
+    update(){}
+    paint(){
+        ctx.fillStyle = "black";
+        ctx.font = "24px Verdana";
+        ctx.fillText("You are Pelin:", 100, 100);
+        healerSprite.paint(280, 60)
+        ctx.fillText("Your power is to heal.", 100, 150);
+        ctx.fillText("Descent to the dungeon, gather a group and", 100, 200);
+        ctx.fillText("increase your stats to clean the dungeon.", 100, 230);
+        for(let b of this.buttons){
+            b.paint();
+        }
+    }
+    startGame() {
+        currentLevel = 1;
+        teams = [heroesFactory.createPelin()];
+        currentPage = new Board();
+    }
+}
 
+class DeadScreen {
+    constructor(){
+        this.buttons = [new MenuButton(500, 350, "Ok", this.goToMainMenu)]
+    }
+    update(){}
+    paint(){
+        ctx.fillStyle = "black";
+        ctx.font = "24px Verdana";
+        ctx.fillText("You are dead", 100, 100);        
+        for(let b of this.buttons){
+            b.paint();
+        }
+    }
+    goToMainMenu() {        
+        currentPage = new StartMenu();
+    }
+}
+
+let currentPage = new StartMenu();
 const tickDuration = 1000.0 / 30;
 function tick() {
     tickNumber++;
@@ -581,14 +716,44 @@ function tick() {
     paint();
     setTimeout(tick, tickDuration);
 }
-
 function update() {
-    mainPage.update();
+    currentPage.update();
 }
-
 function paint() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    mainPage.paint();
+    currentPage.paint();
+}
+function onmousedown(event) {
+    if(currentPage.click){
+        currentPage.click(event.offsetX, event.offsetY);
+    }
+    if(currentPage.buttons){
+        for (const c of currentPage.buttons) {
+            if (c.isInside(event)) {
+                c.click(event);
+            }
+        }
+    }
 }
 
+let currentControl = null;
+function onmousemove(event) {
+    if(!currentPage.buttons)
+        return;
+    let newControl = null
+    for (const c of currentPage.buttons) {
+        if (c.isInside(event)) {
+            newControl = c;
+            break;
+        }
+    }
+    if (currentControl === newControl) {
+        return;
+    }
+    if (currentControl && currentControl.mouseExit)
+        currentControl.mouseExit(event);
+    if (newControl && newControl.mouseEnter)
+        newControl.mouseEnter(event);
+    currentControl = newControl;
+}
 tick();
