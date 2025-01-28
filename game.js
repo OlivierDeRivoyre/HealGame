@@ -366,7 +366,7 @@ class PlayerSpell {
     }    
 }
 
-class PlayerCasting{
+class PlayerCasting {
     constructor(playerSpell, target){
         this.spell = playerSpell;
         this.target = target;
@@ -432,7 +432,7 @@ class SpellButton {
             ctx.stroke();
         }
     }
-    update() {
+    update() {        
     }
     click() {
         this.selected = !this.selected;
@@ -449,6 +449,7 @@ class SpellButton {
         if(playerCastingBar != null){
             return;
         }
+        this.selected = false;
         if(this.spell.mana <= playerStat.mana){
             playerCastingBar = new PlayerCasting(this.spell, target);
         }
@@ -499,9 +500,9 @@ class CharacterBuffEffect{
 
 let spells = [
     new SpellButton(fastHeal),
-    new SpellButton(slowHeal),
+  //  new SpellButton(slowHeal),
     new SpellButton(hotHeal),
-    new SpellButton(aoeHeal),
+  //  new SpellButton(aoeHeal),
   //  new SpellButton(shieldHeal)
 ];
 
@@ -603,9 +604,11 @@ class Board {
                 this.combatEnded = 80;
             }
         }
-        if(this.combatEnded <= 0){
+        else if(this.combatEnded <= 0){
             if(teams[0].life <= 0) {
                 currentPage = new DeadScreen();
+            } else{
+                currentPage = new SelectUpgradeScreen();
             }
         } else {
             this.combatEnded--;
@@ -690,6 +693,91 @@ class StartMenu{
     }
 }
 
+class UpgradeFactory {
+    constructor(){
+        this.availables = [];
+        this.addPnjs();
+    }
+
+    addPnjs(){
+        this.addKnight();
+        this.addWitch();
+        this.addHunter();
+    }
+
+    pushPnj(pnj, desc){        
+        this.availables.push({
+            sprite : pnj.sprite,
+            desc: desc,
+            click: () => {
+                teams.push(pnj);
+            }
+        }
+        );
+    }
+    addKnight(){
+        const knight = new Character(redKnightSprite, 560, 225);
+        knight.maxLife = knight.life = 1600;
+        knight.spells.push(new PnjSpell(new ProjectileStat(swordSprite, 30, 38, 7), castSimpleProjectile));   
+        this.pushPnj(knight, ["The knight can reduce","the damage with his shield"]);     
+    }
+    addWitch(){
+        const witch = new Character(witchSprite, 460, 100);
+        witch.maxLife = witch.life = 600;
+        witch.spells.push(new PnjSpell(new ProjectileStat(frostSprite, 40, 44, 12), castSimpleProjectile));
+        this.pushPnj(witch, ["The witch can slow", "the attack of the ennemy"]);
+    }
+    addHunter(){
+        const hunter = new Character(elfSprite, 350, 150);
+        hunter.maxLife = hunter.life = 800;
+        hunter.spells.push(new PnjSpell(new ProjectileStat(arrowSprite, 50, 38, 10), castSimpleProjectile));
+        this.pushPnj(hunter, ["The hunter deals", " regular damages"]);
+    }
+    propose3Upgrades(){
+        return this.availables;
+    }
+    click(upgrade){
+        upgrade.click();
+    }
+
+
+}
+let upgradeFactory = new UpgradeFactory();
+
+class SelectUpgradeScreen {
+    constructor(){
+        this.upgrades = upgradeFactory.propose3Upgrades();
+        this.buttons = []
+        for(let i = 0; i < this.upgrades.length; i++){
+          this.buttons.push(new MenuButton(50 + i * 250, 350, "Ok", () => this.selectUpgrade(i)))
+        }
+    }
+    update(){}
+
+    paint(){
+        for(let i = 0 ; i < this.upgrades.length; i++){
+            const upgrade = this.upgrades[i];
+            upgrade.sprite.paint(50 + i * 250, 100);
+            ctx.fillStyle = "black";
+            ctx.font = "16px Verdana";
+            for(let line = 0 ; line < upgrade.desc.length; line++){
+                ctx.fillText(upgrade.desc[line], 50 + i * 250, 200 + line * 24);    
+            }
+        }
+        for(let b of this.buttons){
+            b.paint();
+        }
+    }
+    selectUpgrade(index){
+        upgradeFactory.click(this.upgrades[index]);
+        this.nextLevel();
+    }
+    nextLevel() {
+        currentLevel++;
+        currentPage = new Board();
+    }
+}
+
 class DeadScreen {
     constructor(){
         this.buttons = [new MenuButton(500, 350, "Ok", this.goToMainMenu)]
@@ -709,6 +797,8 @@ class DeadScreen {
 }
 
 let currentPage = new StartMenu();
+//let currentPage = new SelectUpgradeScreen();
+
 const tickDuration = 1000.0 / 30;
 function tick() {
     tickNumber++;
