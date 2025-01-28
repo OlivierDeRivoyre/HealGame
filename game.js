@@ -580,6 +580,17 @@ class Board {
         if(playerCastingBar)
             playerCastingBar.paint();
         playerStat.paint();
+        if(this.combatEnded != null){
+            if(teams[0].life <= 0){
+                ctx.fillStyle = "darkred";
+                ctx.font = "24px Verdana";
+                ctx.fillText("Pelin is dead", 500, 200);
+            } else {
+                ctx.fillStyle = "darkgreen";
+                ctx.font = "24px Verdana";
+                ctx.fillText("Victory!", 500, 200);
+            }
+        }
     }
     update() {
         for (let i = 0; i < allAnimations.length; i++) {
@@ -749,12 +760,15 @@ class SelectUpgradeScreen {
         this.upgrades = upgradeFactory.propose3Upgrades();
         this.buttons = []
         for(let i = 0; i < this.upgrades.length; i++){
-          this.buttons.push(new MenuButton(50 + i * 250, 350, "Ok", () => this.selectUpgrade(i)))
+          this.buttons.push(new MenuButton(50 + i * 250, 350, "OK", () => this.selectUpgrade(i)))
         }
     }
     update(){}
 
     paint(){
+        ctx.fillStyle = "black";
+        ctx.font = "30px Verdana";
+        ctx.fillText("Select one bonus:", 250, 40);
         for(let i = 0 ; i < this.upgrades.length; i++){
             const upgrade = this.upgrades[i];
             upgrade.sprite.paint(50 + i * 250, 100);
@@ -797,7 +811,7 @@ class DeadScreen {
 }
 
 let currentPage = new StartMenu();
-//let currentPage = new SelectUpgradeScreen();
+//currentPage = new SelectUpgradeScreen();
 
 const tickDuration = 1000.0 / 30;
 function tick() {
