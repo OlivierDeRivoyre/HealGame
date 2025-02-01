@@ -287,6 +287,7 @@ class UpgradeFactory {
 
     propose3Upgrades(){
         let all = [];
+        this.addSpells(all);
         this.addPnjs(all);
         return all;
     }
@@ -301,11 +302,11 @@ class UpgradeFactory {
                 teams.push(pnj);
             }
         };
-    }    
+    }
     addPnjs(array){
         array.push(this.addKnight());
         array.push(this.addWitch());
-        array.push(this.addHunter());
+    //    array.push(this.addHunter());
     }
     addKnight(){
         const c = heroesFactory.createKnight();
@@ -319,7 +320,28 @@ class UpgradeFactory {
         const c = heroesFactory.createHunter();
         return this.proposePnj(c, ["The hunter deals", " regular damages"]);
     }
-   
+    proposeSpell(spell, desc){
+        return {
+            sprite : new Sprite(spell.icon, 0,0, 48, 48, 1),
+            desc: desc,
+            click: () => {
+                spells.push(spell);
+            }
+        };
+    }
+    addSpells(array){
+        if(spells.indexOf(fastHeal2) == -1) {
+            array.push(this.proposeSpell(fastHeal2, ["Fast Heal level 2", `Heals ${fastHeal2.power}`, `Mana: ${fastHeal2.mana}`]));
+        }
+        if(spells.indexOf(slowHeal1) == -1) {
+            array.push(this.proposeSpell(slowHeal1, ["Slow Heal", `Heals ${slowHeal1.power}`, `Mana: ${slowHeal1.mana}`]));
+        } else if(spells.indexOf(slowHeal2) == -1) {
+            array.push(this.proposeSpell(slowHeal2, ["Slow Heal level 2", `Heals ${slowHeal2.power}`, `Mana: ${slowHeal2.mana}`]));
+        }
+        if(spells.indexOf(aoeHeal) == -1) {
+            array.push(this.proposeSpell(aoeHeal, ["Group heal", `Share ${aoeHeal.power} heals`, `Mana: ${aoeHeal.mana}`]));
+        }
+    }
 }
 let upgradeFactory = new UpgradeFactory();
 class Vilains {
@@ -415,12 +437,12 @@ let characterMenus = [
 ]
 
 class PlayerSpell {
-    constructor(name, icon, mana, castingTime, cooldown, power, effect) {
+    constructor(name, icon, mana, castingTime, rank, power, effect) {
         this.name = name;
         this.icon = icon;
         this.mana = mana;
         this.castingTime = castingTime;
-        this.cooldown = cooldown;
+        this.rank = rank;
         this.power = power;
         this.effect = effect;
     }    
@@ -516,11 +538,12 @@ class SpellButton {
     }
 }
 
-const fastHeal = new PlayerSpell("Fast", fastHealIcon, 100, 30, 0, 250, healCasted);
-const slowHeal = new PlayerSpell("Big", slowHealIcon, 140, 90, 0, 500, healCasted);
-const hotHeal = new PlayerSpell("HOT", hotHealIcon, 80, 10, 0, 400/40, hotHealCaster);
-const aoeHeal = new PlayerSpell("AOE", aoeHealIcon, 70, 30, 0, 200, aoeHealCasted);
-//const shieldHeal = new PlayerSpell(shieldHealIcon, 80, 90, 0, 300, healCasted);
+const fastHeal1 = new PlayerSpell("Fast", fastHealIcon, 100, 30, 1, 250, healCasted);
+const fastHeal2 = new PlayerSpell("Fast 2", fastHealIcon, 160, 30, 2, 400, healCasted);
+const slowHeal1 = new PlayerSpell("Big", slowHealIcon, 140, 90, 3, 500, healCasted);
+const slowHeal2 = new PlayerSpell("Big 2", slowHealIcon, 200, 90, 4, 800, healCasted);
+const hotHeal = new PlayerSpell("HOT", hotHealIcon, 80, 10, 5, 400/40, hotHealCaster);
+const aoeHeal = new PlayerSpell("AOE", aoeHealIcon, 70, 30, 6, 400, aoeHealCasted);
 
 
 function healCasted(stat, target){
@@ -530,8 +553,9 @@ function hotHealCaster(stat, target){
     target.pushBuff(new CharacterBuffEffect("HOT", target, stat.icon, 15, 30*20, stat, healCasted));
 }
 function aoeHealCasted(stat, target){
+    const heal = Math.floor(stat.power / teams.length);
     for (const c of teams) {
-        c.onHeal(stat.power);
+        c.onHeal(heal);
     }
 }
 
@@ -559,17 +583,11 @@ class CharacterBuffEffect{
 }
 
 let spells = [
-    new SpellButton(fastHeal),
-  //  new SpellButton(slowHeal),
-    new SpellButton(hotHeal),
-  //  new SpellButton(aoeHeal),
-  //  new SpellButton(shieldHeal)
+    fastHeal1,
+    hotHeal,  
 ];
 
-for (let i = 0; i < spells.length; i++) {
-    spells[i].x = 300 + i * (spells[i].width + 2);
-    spells[i].y = CanvasHeigth - spells[i].height - 20;
-}
+
 class PlayerStat{
     constructor(){
         this.maxMana = 800;
@@ -623,7 +641,14 @@ class Board {
         this.placeCharacters();
         this.combatEnded = null;
         playerStat.mana = playerStat.maxMana;
-
+        spells.sort((a, b) => a.rank - b.rank)
+        this.spellButtons = [];
+        for (let i = 0; i < spells.length; i++) {
+            const button = new SpellButton(spells[i]);
+            button.x = 300 + i * (button.width + 2);
+            button.y = CanvasHeigth - button.height - 20;
+            this.spellButtons.push(button)
+        }       
     }
 
     placeCharacters(){
@@ -632,10 +657,9 @@ class Board {
         vilain.y = 240;
         const tank = teams.find(c => c.isTank) ?? teams[teams.length - 1];
         tank.x = 560;
-        tank.y = 225;
+        tank.y = 230;
         const rangeds = teams.filter(c => c != tank);
         for(let i = 0; i < rangeds.length; i++){
-
             rangeds[i].x = 450 - Math.floor(i/3) * 100;
             rangeds[i].y = 100 + (i % 3) * 100;
         }
@@ -651,7 +675,7 @@ class Board {
         for (let m of characterMenus) {
             m.paint();
         }
-        for (const s of spells) {
+        for (const s of this.spellButtons) {
             s.paint();
         }
         for (const a of allAnimations) {
@@ -684,7 +708,7 @@ class Board {
         for (const c of mobs) {
             c.update();
         }
-        for (const s of spells) {
+        for (const s of this.spellButtons) {
             s.update();
         }
         if(playerCastingBar)
@@ -706,7 +730,7 @@ class Board {
         }      
     }
     click(x, y) {
-        for (const s of spells) {
+        for (const s of this.spellButtons) {
             if (x >= s.x && x < s.x + s.width
                 && y >= s.y && y < s.y + s.height) {
                 s.click();
@@ -720,7 +744,7 @@ class Board {
             }
         }
         if (selectedChar != null) {
-            for (const s of spells) {
+            for (let s of this.spellButtons) {
                 if (s.selected) {
                     s.cast(selectedChar);
                     break;
