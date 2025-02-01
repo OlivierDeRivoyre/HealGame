@@ -96,15 +96,17 @@ const deadSprite = new Sprite(tileSet2, 0, 0, 32, 32, 1);
 enragedSprite.correctAngus = - 3 * Math.PI / 4;
 
 class Character {
-    constructor(sprite, x, y) {
+    constructor(name, sprite) {
+        this.name = name;
         this.sprite = sprite;
-        this.x = x;
-        this.y = y;
+        this.x = 400;
+        this.y = 200;
         this.isVilain = false;
         this.width = sprite.singleWidth;
         this.height = sprite.tHeight;
         this.maxLife = 1000;
         this.life = 800;
+        this.isTank = false;
         this.target = null;
         this.reverse = false;
         this.spells = [];
@@ -253,15 +255,73 @@ class ProjectileAnim {
 
 class Heroes {
   createPelin(){
-    const c = new Character(healerSprite, 500, 225);
+    const c = new Character("Pelin", healerSprite);
     c.maxLife = c.life = 800;
     const banana = new Sprite(tileSet2, 32, 450, 32, 32, 1);
     c.spells.push(new PnjSpell(new ProjectileStat(banana, 15, 45, 10), castSimpleProjectile));
     return c;
   }
+  createKnight(){
+    const c = new Character("Knight", redKnightSprite);
+    c.maxLife = c.life = 1600;
+    c.isTank = true;
+    c.spells.push(new PnjSpell(new ProjectileStat(swordSprite, 30, 38, 7), castSimpleProjectile));
+    return c;
+  }
+  createWitch(){
+    const c = new Character("Witch", witchSprite);
+    c.maxLife = c.life = 600;
+    c.spells.push(new PnjSpell(new ProjectileStat(frostSprite, 40, 44, 12), castSimpleProjectile));
+    return c;
+  }
+  createHunter(){
+    const c = new Character("Hunter", elfSprite);
+    c.maxLife = c.life = 800;
+    c.spells.push(new PnjSpell(new ProjectileStat(arrowSprite, 50, 38, 10), castSimpleProjectile));
+    return c;
+  }
 }
 const heroesFactory = new Heroes();
 
+class UpgradeFactory {
+
+    propose3Upgrades(){
+        let all = [];
+        this.addPnjs(all);
+        return all;
+    }
+    click(upgrade){
+        upgrade.click();
+    }    
+    proposePnj(pnj, desc){        
+        return {
+            sprite : pnj.sprite,
+            desc: desc,
+            click: () => {
+                teams.push(pnj);
+            }
+        };
+    }    
+    addPnjs(array){
+        array.push(this.addKnight());
+        array.push(this.addWitch());
+        array.push(this.addHunter());
+    }
+    addKnight(){
+        const c = heroesFactory.createKnight();
+        return this.proposePnj(c, ["The knight can reduce","the damage with his shield"]);     
+    }
+    addWitch(){
+        const c = heroesFactory.createWitch();
+        return this.proposePnj(c, ["The witch can slow", "the attack of the ennemy"]);
+    }
+    addHunter(){
+        const c = heroesFactory.createHunter();
+        return this.proposePnj(c, ["The hunter deals", " regular damages"]);
+    }
+   
+}
+let upgradeFactory = new UpgradeFactory();
 class Vilains {
     createVilainOfLevel(level){
         switch(level)
@@ -273,7 +333,7 @@ class Vilains {
 
     lvl1(){
         const sprite = new Sprite(tileSet1, 736, 32, 64, 48, 2);
-        let vilain = new Character(sprite, 620, 240);
+        let vilain = new Character("Brown Bag", sprite);
         vilain.maxLife = vilain.life = 100;
         vilain.reverse = true;
         vilain.isVilain = true;
@@ -292,19 +352,33 @@ class Vilains {
         }        
         return vilain;
     }
+
+    createBigZombie(){
+        let boss = new Character("Big Zombie", bigZombySprite);
+        boss.maxLife = boss.life = 5000;
+        boss.reverse = true;
+        boss.isVilain = true;
+        boss.spells.push(new PnjSpell(new ProjectileStat(hamerSprite, 100, 40, 7), castSimpleProjectile));
+        boss.onUpdate = function(self) {
+            if(self.isEnraged){
+                return;
+            }
+            if(self.life > 2000){
+                return;
+            }
+            self.isEnraged = true;
+            const stat = new ProjectileStat(enragedSprite, 50, 40, 15)
+            self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, enragedTick));
+        }
+        return boss;
+    }
 }
 const vilainsFactory = new Vilains();
 
-const knight = new Character(redKnightSprite, 560, 225);
-knight.maxLife = knight.life = 1600;
-const witch = new Character(witchSprite, 460, 100);
-witch.maxLife = witch.life = 600;
-const hunter = new Character(elfSprite, 350, 150);
-hunter.maxLife = hunter.life = 800;
-let boss = new Character(bigZombySprite, 600, 200);
-boss.maxLife = boss.life = 5000;
-boss.reverse = true;
-boss.isVilain = true;
+const knight = heroesFactory.createKnight();
+const witch = heroesFactory.createWitch();
+const hunter = heroesFactory.createHunter();
+let boss = vilainsFactory.createBigZombie();
 
 let currentLevel = 1;
 let teams = [
@@ -322,21 +396,7 @@ function castSimpleProjectile(stat, from) {
     const projectile = new ProjectileAnim(stat, from, target);
     allAnimations.push(projectile);
 }
-hunter.spells.push(new PnjSpell(new ProjectileStat(arrowSprite, 50, 38, 10), castSimpleProjectile));
-witch.spells.push(new PnjSpell(new ProjectileStat(frostSprite, 40, 44, 12), castSimpleProjectile));
-knight.spells.push(new PnjSpell(new ProjectileStat(swordSprite, 30, 38, 7), castSimpleProjectile));
-boss.spells.push(new PnjSpell(new ProjectileStat(hamerSprite, 100, 40, 7), castSimpleProjectile));
-boss.onUpdate = function(self){
-    if(self.isEnraged){
-        return;
-    }
-    if(self.life > 2000){
-        return;
-    }
-    self.isEnraged = true;
-    const stat = new ProjectileStat(enragedSprite, 50, 40, 15)
-    self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, enragedTick));
-}
+
 
 function enragedTick(stat, boss){
     for (const c of teams) {
@@ -555,12 +615,32 @@ class Board {
         characterMenus = [];
         for(let i = 0; i < teams.length; i++){
             characterMenus.push(new CharacterMenu(teams[i], i));
+            teams[i].life = teams[i].maxLife;
         }
         const vilain = vilainsFactory.createVilainOfLevel(currentLevel);
         mobs = [vilain];
         characterMenus.push(new CharacterMenu(vilain, 0));
+        this.placeCharacters();
         this.combatEnded = null;
+        playerStat.mana = playerStat.maxMana;
+
     }
+
+    placeCharacters(){
+        const vilain = mobs[0];
+        vilain.x = 620;
+        vilain.y = 240;
+        const tank = teams.find(c => c.isTank) ?? teams[teams.length - 1];
+        tank.x = 560;
+        tank.y = 225;
+        const rangeds = teams.filter(c => c != tank);
+        for(let i = 0; i < rangeds.length; i++){
+
+            rangeds[i].x = 450 - Math.floor(i/3) * 100;
+            rangeds[i].y = 100 + (i % 3) * 100;
+        }
+    }
+
     paint() {
         for (const c of teams) {
             c.paint();
@@ -704,57 +784,6 @@ class StartMenu{
     }
 }
 
-class UpgradeFactory {
-    constructor(){
-        this.availables = [];
-        this.addPnjs();
-    }
-
-    addPnjs(){
-        this.addKnight();
-        this.addWitch();
-        this.addHunter();
-    }
-
-    pushPnj(pnj, desc){        
-        this.availables.push({
-            sprite : pnj.sprite,
-            desc: desc,
-            click: () => {
-                teams.push(pnj);
-            }
-        }
-        );
-    }
-    addKnight(){
-        const knight = new Character(redKnightSprite, 560, 225);
-        knight.maxLife = knight.life = 1600;
-        knight.spells.push(new PnjSpell(new ProjectileStat(swordSprite, 30, 38, 7), castSimpleProjectile));   
-        this.pushPnj(knight, ["The knight can reduce","the damage with his shield"]);     
-    }
-    addWitch(){
-        const witch = new Character(witchSprite, 460, 100);
-        witch.maxLife = witch.life = 600;
-        witch.spells.push(new PnjSpell(new ProjectileStat(frostSprite, 40, 44, 12), castSimpleProjectile));
-        this.pushPnj(witch, ["The witch can slow", "the attack of the ennemy"]);
-    }
-    addHunter(){
-        const hunter = new Character(elfSprite, 350, 150);
-        hunter.maxLife = hunter.life = 800;
-        hunter.spells.push(new PnjSpell(new ProjectileStat(arrowSprite, 50, 38, 10), castSimpleProjectile));
-        this.pushPnj(hunter, ["The hunter deals", " regular damages"]);
-    }
-    propose3Upgrades(){
-        return this.availables;
-    }
-    click(upgrade){
-        upgrade.click();
-    }
-
-
-}
-let upgradeFactory = new UpgradeFactory();
-
 class SelectUpgradeScreen {
     constructor(){
         this.upgrades = upgradeFactory.propose3Upgrades();
@@ -787,7 +816,7 @@ class SelectUpgradeScreen {
         this.nextLevel();
     }
     nextLevel() {
-        currentLevel++;
+        currentLevel++;        
         currentPage = new Board();
     }
 }
@@ -811,7 +840,7 @@ class DeadScreen {
 }
 
 let currentPage = new StartMenu();
-//currentPage = new SelectUpgradeScreen();
+currentPage = new SelectUpgradeScreen();
 
 const tickDuration = 1000.0 / 30;
 function tick() {
