@@ -148,14 +148,22 @@ class Character {
         }
     }
     onHit(projectileStat) {
-        var dmg = Math.floor(projectileStat.dmg * 100 / (100 + this.armor))
-        this.life = Math.max(0, this.life - dmg);
+        if(Math.random() * 100 < this.dodge){            
+            allAnimations.push(new LabelAnim("dodge", this, "dodge"));
+            return;
+        }
+        const isCrit = Math.random() *100 < projectileStat.from.crit;
+        const fullDamge = isCrit ? projectileStat.dmg * 2 : projectileStat.dmg;
+        const dmg = Math.floor(fullDamge * 100 / (100 + this.armor))
+        this.life = Math.max(0, this.life - dmg);        
+        allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit"));
     }
     onHeal(power){
         if(this.life <= 0)
         {
             return;
         }
+        allAnimations.push(new LabelAnim(`${power}`, this, "heal"));
         this.life = Math.min(this.maxLife, this.life + power);
     }
     pushBuff(buff){
@@ -260,7 +268,8 @@ class PnjSpell {
     }
 }
 class ProjectileStat {
-    constructor(icon, dmg, cooldown, speed) {
+    constructor(from, icon, dmg, cooldown, speed) {
+        this.from = from;
         this.icon = icon;
         this.dmg = dmg;
         this.cooldown = cooldown;
@@ -295,13 +304,47 @@ class ProjectileAnim {
         //this.stat.icon.paintRotate(this.x, this.y, this.targetAngus-Math.PI / 2);
     }
 }
+class LabelAnim {
+    constructor(label, from, type){
+        this.label = label;
+        this.x = from.x + from.width / 2 - 5;
+        this.y = from.y - 5
+        this.tick = 0;
+        this.color = "red";
+        this.font = "12px Arial";
+        switch(type){
+            case "crit": this.font = "20px Arial"; break;
+            case "heal": this.color = "green"; break;
+            case "dodge": this.color = "gray"; break;
+            case "block": this.color = "gray"; break;
+        }
+        this.vx = Math.random() * 0.5 - 0.25;
+        this.vy = Math.random() * 1 + 1;
+    }
+    update(){
+        this.tick++;
+        if(this.tick > 30*1){
+            return true;
+        }
+        this.x += this.vx;
+        this.y -= this.vy;
+        return false;
+    }
+    paint(){
+        ctx.fillStyle = this.color;
+        ctx.font =  this.font;        
+        ctx.fillText(this.label, Math.floor(this.x), Math.floor(this.y));
+    }
+}
+
+
 
 class Heroes {
   createPelin(){
     const c = new Character("Pelin", healerSprite);
     c.maxLife = c.life = 800;
     const banana = new Sprite(tileSet2, 32, 450, 32, 32, 1);
-    c.spells.push(new PnjSpell(new ProjectileStat(banana, 15, 45, 10), castSimpleProjectile));
+    c.spells.push(new PnjSpell(new ProjectileStat(c, banana, 15, 45, 10), castSimpleProjectile));
     c.talents = {
         life : 1,
         mana : 1,
@@ -315,7 +358,7 @@ class Heroes {
     const c = new Character("Knight", redKnightSprite);
     c.maxLife = c.life = 1600;
     c.isTank = true;
-    c.spells.push(new PnjSpell(new ProjectileStat(swordSprite, 30, 38, 7), castSimpleProjectile));
+    c.spells.push(new PnjSpell(new ProjectileStat(c, swordSprite, 30, 38, 7), castSimpleProjectile));
     c.talents = {
         life : 1,
         blockBuff : 1,
@@ -328,7 +371,7 @@ class Heroes {
   createWitch(){
     const c = new Character("Witch", witchSprite);
     c.maxLife = c.life = 600;
-    c.spells.push(new PnjSpell(new ProjectileStat(frostSprite, 40, 44, 12), castSimpleProjectile));
+    c.spells.push(new PnjSpell(new ProjectileStat(c, frostSprite, 40, 44, 12), castSimpleProjectile));
     c.talents = {
         life : 1,
         frostBuff : 1,
@@ -342,7 +385,7 @@ class Heroes {
   createHunter(){
     const c = new Character("Hunter", elfSprite);
     c.maxLife = c.life = 800;
-    c.spells.push(new PnjSpell(new ProjectileStat(arrowSprite, 50, 38, 10), castSimpleProjectile));
+    c.spells.push(new PnjSpell(new ProjectileStat(c, arrowSprite, 50, 38, 10), castSimpleProjectile));
     c.talents = {
         life : 1,
         poisonBuff : 1,
@@ -537,7 +580,7 @@ class Vilains {
         const sprite = new Sprite(tileSet1, 736, 32, 64, 48, 2);
         let vilain = new Character("Brown Bag", sprite);
         vilain.maxLife = 100;        
-        vilain.spells.push(new PnjSpell(new ProjectileStat(hamerSprite, 80, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 80, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 250));            
         return vilain;
     }
@@ -546,7 +589,7 @@ class Vilains {
         const sprite = new Sprite(tileSet1, 736, 80, 64, 48, 2);
         let vilain = new Character("Green Bag", sprite);
         vilain.maxLife = 800;        
-        vilain.spells.push(new PnjSpell(new ProjectileStat(hamerSprite, 80, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 80, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));            
         return vilain;
     }
@@ -555,7 +598,7 @@ class Vilains {
         const sprite = new Sprite(tileSet1, 736, 124, 64, 48, 2);
         let vilain = new Character("Green Bag", sprite);
         vilain.maxLife = 800;        
-        vilain.spells.push(new PnjSpell(new ProjectileStat(hamerSprite, 80, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 80, 40, 7), castSimpleProjectile));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30*4));            
         return vilain;
     }
@@ -565,7 +608,7 @@ class Vilains {
         boss.maxLife = boss.life = 5000;
         boss.reverse = true;
         boss.isVilain = true;
-        boss.spells.push(new PnjSpell(new ProjectileStat(hamerSprite, 100, 40, 7), castSimpleProjectile));
+        boss.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 100, 40, 7), castSimpleProjectile));
         boss.spells.push(new EnragedAoeTrigger(0.4, 50));        
         return boss;
     }
@@ -605,7 +648,7 @@ class EnragedAoeTrigger{
             return;
         }
         self.isEnragedAoe = true;
-        const stat = new ProjectileStat(enragedSprite, this.dmg, 40, 15)
+        const stat = new ProjectileStat(self, enragedSprite, this.dmg, 40, 15)
         self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, enragedTick));
     }
 }
