@@ -149,21 +149,21 @@ class Character {
     }
     onHit(projectileStat) {
         if(Math.random() * 100 < this.dodge){            
-            allAnimations.push(new LabelAnim("dodge", this, "dodge"));
+            allAnimations.push(new LabelAnim("dodge", this, "dodge", 0));
             return;
         }
         const isCrit = Math.random() *100 < projectileStat.from.crit;
         const fullDamge = isCrit ? projectileStat.dmg * 2 : projectileStat.dmg;
         const dmg = Math.floor(fullDamge * 100 / (100 + this.armor))
         this.life = Math.max(0, this.life - dmg);        
-        allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit"));
+        allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit", dmg));
     }
     onHeal(power){
         if(this.life <= 0)
         {
             return;
         }
-        allAnimations.push(new LabelAnim(`${power}`, this, "heal"));
+        allAnimations.push(new LabelAnim(`${power}`, this, "heal", power));
         this.life = Math.min(this.maxLife, this.life + power);
     }
     pushBuff(buff){
@@ -305,7 +305,7 @@ class ProjectileAnim {
     }
 }
 class LabelAnim {
-    constructor(label, from, type){
+    constructor(label, from, type, power){
         this.label = label;
         this.x = from.x + from.width / 2 - 5;
         this.y = from.y - 5
@@ -313,13 +313,51 @@ class LabelAnim {
         this.color = "red";
         this.font = "12px Arial";
         switch(type){
-            case "crit": this.font = "20px Arial"; break;
-            case "heal": this.color = "green"; break;
+            case "hit":
+                if(power < 20){
+                    this.font = "10px Arial";
+                } else if(power < 50){
+                    this.font = "12px Arial";
+                } else if(power < 150){
+                    this.font = "14px Arial";
+                }  else if(power < 250){
+                    this.font = "16px Arial";
+                } else {
+                    this.font = "18px Arial";
+                }
+                break;
+            case "crit": 
+                if(power < 20){
+                    this.font = "14px Arial";
+                } else if(power < 50){
+                    this.font = "16px Arial";
+                } else if(power < 150){
+                    this.font = "18px Arial";
+                }  else if(power < 250){
+                    this.font = "20px Arial";
+                } else {
+                    this.font = "22px Arial";
+                }
+             break;
+            case "heal": 
+            this.color = "green"; 
+            if(power < 50){
+                this.font = "10px Arial";
+            } else if(power < 90){
+                this.font = "12px Arial";
+            } else if(power < 200){
+                this.font = "14px Arial";
+            }  else if(power < 400){
+                this.font = "16px Arial";
+            } else {
+                this.font = "18px Arial";
+            }
+            break;
             case "dodge": this.color = "gray"; break;
             case "block": this.color = "gray"; break;
         }
-        this.vx = Math.random() * 0.5 - 0.25;
-        this.vy = Math.random() * 1 + 1;
+        this.vx = Math.random() * 0.6 - 0.3;
+        this.vy = 1.5;
     }
     update(){
         this.tick++;
@@ -604,13 +642,13 @@ class Vilains {
     }
 
     createBigZombie(){
-        let boss = new Character("Big Zombie", bigZombySprite);
-        boss.maxLife = boss.life = 5000;
-        boss.reverse = true;
-        boss.isVilain = true;
-        boss.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 100, 40, 7), castSimpleProjectile));
-        boss.spells.push(new EnragedAoeTrigger(0.4, 50));        
-        return boss;
+        let vilain = new Character("Big Zombie", bigZombySprite);
+        vilain.maxLife = vilain.life = 5000;
+        vilain.reverse = true;
+        vilain.isVilain = true;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 100, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.4, 50));        
+        return vilain;
     }
 }
 const vilainsFactory = new Vilains();
