@@ -1250,7 +1250,7 @@ class DeadScreen {
 }
 
 let currentPage = new StartMenu();
-teams = [heroesFactory.createPelin(), heroesFactory.createKnight()]; currentPage = new SelectUpgradeScreen(); currentLevel = 3;
+//teams = [heroesFactory.createPelin(), heroesFactory.createKnight()]; currentPage = new SelectUpgradeScreen(); currentLevel = 3;
 
 const tickDuration = 1000.0 / 30;
 function tick() {
