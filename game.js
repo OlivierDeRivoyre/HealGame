@@ -39,6 +39,7 @@ class Sprite {
         this.tHeight = tHeight;
         this.singleWidth = tWidth / nbImage;
         this.correctAngus = 0;
+        this.forbidRotate = false;
     }
     paint(x, y, frame, reverse) {
         if (typeof (frame) === "undefined")
@@ -66,6 +67,10 @@ class Sprite {
         }
     }
     paintRotate(x, y, angus) {
+        if(this.forbidRotate){
+            this.paint(x, y, 0, false);
+            return;
+        }
         ctx.save();
         ctx.translate(x + this.singleWidth / 2, y + this.tHeight / 2);
         ctx.rotate(angus + this.correctAngus);
@@ -74,12 +79,11 @@ class Sprite {
             -this.singleWidth / 2, -this.tHeight / 2, (this.singleWidth - 1), this.tHeight);
         ctx.restore();
     }
-    paintScale(x, y, width, heigth)
-    {
+    paintScale(x, y, width, heigth) {
         ctx.drawImage(this.tile,
             this.tx + frame * this.singleWidth, this.ty,
             this.singleWidth - 1, this.tHeight,
-            x, y, width, heigth);        
+            x, y, width, heigth);
     }
 }
 
@@ -91,10 +95,13 @@ const bigZombySprite = new Sprite(tileSet1, 40, 668, 492, 68, 8);
 const arrowSprite = new Sprite(tileSet1, 644, 400, 20, 48, 1);
 const frostSprite = new Sprite(tileSet2, 352, 672, 32, 32, 1);
 const swordSprite = new Sprite(tileSet1, 640, 16, 28, 48, 1);
+const knifeSprite = new Sprite(tileSet1, 580, 16, 24, 32, 1);
 const hamerSprite = new Sprite(tileSet1, 640, 76, 28, 48, 1);
 const enragedSprite = new Sprite(tileSet2, 32, 0, 32, 32, 1);
-const deadSprite = new Sprite(tileSet2, 0, 0, 32, 32, 1);
 enragedSprite.correctAngus = - 3 * Math.PI / 4;
+const deadSprite = new Sprite(tileSet2, 0, 0, 32, 32, 1);
+const greenPotionSprite = new Sprite(tileSet1, 640, 672, 28, 28, 1);
+greenPotionSprite.forbidRotate = true;
 
 class Character {
     constructor(name, sprite) {
@@ -115,20 +122,20 @@ class Character {
         this.onUpdate = null;
         this.talents = {};
         this.selectedTalents = [];
-        this.level = 1;        
-        this.armor = 0; 
+        this.level = 1;
+        this.armor = 0;
         this.crit = 0;
         this.haste = 0;
         this.dodge = 5;
-        this.canBlock = false;        
+        this.canBlock = false;
     }
     paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
-        if(this.life <= 0){
+        if (this.life <= 0) {
             spriteNumber = 0;
         }
-        this.sprite.paint(this.x, this.y, spriteNumber, this.reverse);       
-        if(this.life <= 0){
+        this.sprite.paint(this.x, this.y, spriteNumber, this.reverse);
+        if (this.life <= 0) {
             deadSprite.paint(this.x + 10, this.y + 10);
         }
     }
@@ -138,68 +145,71 @@ class Character {
         for (let spell of this.spells) {
             spell.update(this);
         }
-        for(let i = this.buffs.length - 1; i >= 0; i--){
-            if(this.buffs[i].update()){
+        for (let i = this.buffs.length - 1; i >= 0; i--) {
+            if (this.buffs[i].update()) {
                 this.buffs.splice(i, 1);
             }
         }
-        if( this.onUpdate){
+        if (this.onUpdate) {
             this.onUpdate(this);
         }
     }
     onHit(projectileStat) {
-        if(Math.random() * 100 < this.dodge){            
+        if (Math.random() * 100 < this.dodge) {
             allAnimations.push(new LabelAnim("dodge", this, "dodge", 0));
             return;
         }
-        const isCrit = Math.random() *100 < projectileStat.from.crit;
+        const isCrit = Math.random() * 100 < projectileStat.from.crit;
         const fullDamge = isCrit ? projectileStat.dmg * 2 : projectileStat.dmg;
         const dmg = Math.floor(fullDamge * 100 / (100 + this.armor))
-        this.life = Math.max(0, this.life - dmg);        
+        this.life = Math.max(0, this.life - dmg);
+        if(this.life <= 0){
+            this.buffs = [];
+        }
         allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit", dmg));
+        
     }
-    onHeal(power, isCrit){
-        if(this.life <= 0)
-        {
+    onHeal(power, isCrit) {
+        if (this.life <= 0) {
             return;
         }
         allAnimations.push(new LabelAnim(`${power}`, this, isCrit ? "critHeal" : "heal", power));
         this.life = Math.min(this.maxLife, this.life + power);
     }
-    pushBuff(buff){
-        for(let i = this.buffs.length - 1; i >= 0; i--){
-            if(this.buffs[i].name == buff.name){
+    pushBuff(buff) {
+        for (let i = this.buffs.length - 1; i >= 0; i--) {
+            if (this.buffs[i].name == buff.name) {
                 this.buffs.splice(i, 1);
             }
         }
         this.buffs.push(buff);
     }
-    canHaveBonus(bonusKey){
-        if(!this.talents[bonusKey]){
+    canHaveBonus(bonusKey) {
+        if (!this.talents[bonusKey]) {
             return false;
         }
-        if(this.selectedTalents.length < 3){
+        if (this.selectedTalents.length < 3) {
             return true;
         }
         return this.selectedTalents.indexOf(bonusKey) != -1;
     }
-    addBonus(bonusKey){
-        if(this.selectedTalents.indexOf(bonusKey) == -1){
+    addBonus(bonusKey) {
+        if (this.selectedTalents.indexOf(bonusKey) == -1) {
             this.selectedTalents.push(bonusKey);
         }
     }
-    selectTarget(){
-        if(this.target != null && this.target.life > 0){
+    selectTarget() {
+        if (this.target != null && this.target.life > 0) {
             return this.target;
         }
-        if(!this.isVilain){
+        if (!this.isVilain) {
             this.target = mobs.find(p => p.life > 0);
             return this.target;
         }
         let minD = 100000000;
-        for(let c of teams.filter(p => p.life > 0)){
+        for (let c of teams.filter(p => p.life > 0)) {
             const d = square(this.x - c.x) + square(this.y - c.y);
-            if(d < minD){
+            if (d < minD) {
                 this.target = c;
                 minD = d;
             }
@@ -224,9 +234,9 @@ class CharacterMenu {
             this.character.sprite.paint(this.x + this.width - 40, this.y, 0, true);
             this.paintLifeBar(this.x, this.y);
         }
-        for(let i = 0; i <  this.character.buffs.length; i++){
+        for (let i = 0; i < this.character.buffs.length; i++) {
             const offsetX = this.isLeft ? 40 : 0
-            ctx.drawImage( this.character.buffs[i].icon, this.x + offsetX + i * 22, this.y + 32, 20, 20)
+            ctx.drawImage(this.character.buffs[i].icon, this.x + offsetX + i * 22, this.y + 32, 20, 20)
         }
     }
 
@@ -258,7 +268,7 @@ class PnjSpell {
         this.castFunc = castFunc;
         this.nextCastTick = this.cooldown;
     }
-    update(pnj) {        
+    update(pnj) {
         this.tick++;
         if (this.tick >= this.nextCastTick) {
             this.tick = null;
@@ -273,7 +283,7 @@ class ProjectileStat {
         this.icon = icon;
         this.dmg = dmg;
         this.cooldown = cooldown;
-        this.speed = speed;       
+        this.speed = speed;
     }
 }
 let allAnimations = [];
@@ -305,161 +315,161 @@ class ProjectileAnim {
     }
 }
 class LabelAnim {
-    constructor(label, from, type, power){
+    constructor(label, from, type, power) {
         this.label = label;
         this.x = from.x + from.width / 2 - 5;
         this.y = from.y - 5
         this.tick = 0;
         this.color = "red";
         this.font = "12px Arial";
-        switch(type){
+        switch (type) {
             case "hit":
-                if(power < 20){
+                if (power < 20) {
                     this.font = "10px Arial";
-                } else if(power < 50){
+                } else if (power < 50) {
                     this.font = "12px Arial";
-                } else if(power < 150){
+                } else if (power < 150) {
                     this.font = "14px Arial";
-                }  else if(power < 250){
+                } else if (power < 250) {
                     this.font = "16px Arial";
                 } else {
                     this.font = "18px Arial";
                 }
                 break;
-            case "crit": 
-                if(power < 20){
+            case "crit":
+                if (power < 20) {
                     this.font = "14px Arial";
-                } else if(power < 50){
+                } else if (power < 50) {
                     this.font = "16px Arial";
-                } else if(power < 150){
+                } else if (power < 150) {
                     this.font = "18px Arial";
-                }  else if(power < 250){
+                } else if (power < 250) {
                     this.font = "20px Arial";
                 } else {
                     this.font = "22px Arial";
                 }
-             break;
-            case "heal": 
-                this.color = "green"; 
-                if(power < 50){
+                break;
+            case "heal":
+                this.color = "green";
+                if (power < 50) {
                     this.font = "10px Arial";
-                } else if(power < 90){
+                } else if (power < 90) {
                     this.font = "12px Arial";
-                } else if(power < 200){
+                } else if (power < 200) {
                     this.font = "14px Arial";
-                }  else if(power < 400){
+                } else if (power < 400) {
                     this.font = "16px Arial";
                 } else {
                     this.font = "18px Arial";
                 }
-            break;
-            case "critHeal": 
-                this.color = "green"; 
-                if(power < 50){
+                break;
+            case "critHeal":
+                this.color = "green";
+                if (power < 50) {
                     this.font = "14px Arial";
-                } else if(power < 90){
+                } else if (power < 90) {
                     this.font = "16px Arial";
-                } else if(power < 200){
+                } else if (power < 200) {
                     this.font = "18px Arial";
-                }  else if(power < 400){
+                } else if (power < 400) {
                     this.font = "20px Arial";
                 } else {
                     this.font = "24px Arial";
                 }
-            break;            
+                break;
             case "dodge": this.color = "gray"; break;
             case "block": this.color = "gray"; break;
         }
         this.vx = Math.random() * 0.6 - 0.3;
         this.vy = 1.5;
     }
-    update(){
+    update() {
         this.tick++;
-        if(this.tick > 30*1){
+        if (this.tick > 30 * 1) {
             return true;
         }
         this.x += this.vx;
         this.y -= this.vy;
         return false;
     }
-    paint(){
+    paint() {
         ctx.fillStyle = this.color;
-        ctx.font =  this.font;        
+        ctx.font = this.font;
         ctx.fillText(this.label, Math.floor(this.x), Math.floor(this.y));
     }
 }
 
 class Heroes {
-  createPelin(){
-    const c = new Character("Pelin", healerSprite);
-    c.maxLife = c.life = 800;
-    const banana = new Sprite(tileSet2, 32, 450, 32, 32, 1);
-    c.spells.push(new PnjSpell(new ProjectileStat(c, banana, 15, 45, 10), castSimpleProjectile));
-    c.talents = {
-        life : 1,
-        mana : 1,        
-        regen : 1,
-        healPower : 1,
-        haste : 1,
-        crit : 1,
-    };
-    return c;
-  }
-  createKnight(){
-    const c = new Character("Knight", redKnightSprite);
-    c.maxLife = c.life = 1000;
-    c.isTank = true;
-    c.spells.push(new PnjSpell(new ProjectileStat(c, swordSprite, 30, 38, 7), castSimpleProjectile));
-    c.talents = {
-        life : 1,
-        blockBuff : 1,
-        armor : 1,
-        dodge : 1,        
-        damage : 1,
-    };
-    return c;
-  }
-  createWitch(){
-    const c = new Character("Witch", witchSprite);
-    c.maxLife = c.life = 600;
-    c.spells.push(new PnjSpell(new ProjectileStat(c, frostSprite, 40, 44, 12), castSimpleProjectile));
-    c.talents = {
-        life : 1,
-        frostBuff : 1,
-        armor : 1,
-        damage : 1,
-        haste : 1,
-        crit : 1,
-    };
-    return c;
-  }
-  createHunter(){
-    const c = new Character("Hunter", elfSprite);
-    c.maxLife = c.life = 700;
-    c.spells.push(new PnjSpell(new ProjectileStat(c, arrowSprite, 50, 38, 10), castSimpleProjectile));
-    c.talents = {
-        life : 1,
-        poisonBuff : 1,
-        armor : 1,
-        dodge : 1,
-        damage : 1,
-        haste : 1,
-        crit : 1,
-    };
-    return c;
-  }
+    createPelin() {
+        const c = new Character("Pelin", healerSprite);
+        c.maxLife = c.life = 800;
+        const banana = new Sprite(tileSet2, 32, 450, 32, 32, 1);
+        c.spells.push(new PnjSpell(new ProjectileStat(c, banana, 15, 45, 10), castSimpleProjectile));
+        c.talents = {
+            life: 1,
+            mana: 1,
+            regen: 1,
+            healPower: 1,
+            haste: 1,
+            crit: 1,
+        };
+        return c;
+    }
+    createKnight() {
+        const c = new Character("Knight", redKnightSprite);
+        c.maxLife = c.life = 1000;
+        c.isTank = true;
+        c.spells.push(new PnjSpell(new ProjectileStat(c, swordSprite, 30, 38, 7), castSimpleProjectile));
+        c.talents = {
+            life: 1,
+            blockBuff: 1,
+            armor: 1,
+            dodge: 1,
+            damage: 1,
+        };
+        return c;
+    }
+    createWitch() {
+        const c = new Character("Witch", witchSprite);
+        c.maxLife = c.life = 600;
+        c.spells.push(new PnjSpell(new ProjectileStat(c, frostSprite, 40, 44, 12), castSimpleProjectile));
+        c.talents = {
+            life: 1,
+            frostBuff: 1,
+            armor: 1,
+            damage: 1,
+            haste: 1,
+            crit: 1,
+        };
+        return c;
+    }
+    createHunter() {
+        const c = new Character("Hunter", elfSprite);
+        c.maxLife = c.life = 700;
+        c.spells.push(new PnjSpell(new ProjectileStat(c, arrowSprite, 50, 38, 10), castSimpleProjectile));
+        c.talents = {
+            life: 1,
+            poisonBuff: 1,
+            armor: 1,
+            dodge: 1,
+            damage: 1,
+            haste: 1,
+            crit: 1,
+        };
+        return c;
+    }
 }
 const heroesFactory = new Heroes();
 
 class UpgradeFactory {
 
-    propose3Upgrades(){
+    propose3Upgrades() {
 
         // 0-1 of lvlup spell / recruit
         // 3-2 of level up options on one character
         const pnjs = [];
         this.addPnjs(pnjs);
-        if(teams.length == 1){
+        if (teams.length == 1) {
             let selected = [];
             this.randomPick(pnjs, selected, 3);
             return selected;
@@ -469,76 +479,76 @@ class UpgradeFactory {
         const heros = [];
         this.addLevelUpForOneHero(heros);
         let selected = [];
-        if(spells.length != 0 && Math.random() < 0.5){
+        if (spells.length != 0 && Math.random() < 0.5) {
             this.randomPick(spells, selected, 1);
-        } else {
+        } else if (teams.length < 7) {
             this.randomPick(pnjs, selected, 1);
         }
         this.randomPick(heros, selected, 3);
         return selected;
     }
-    randomPick(array, selected, n){        
-        for(let i = 0; i < n && array.length > 0 && selected.length < 3; i++) {
+    randomPick(array, selected, n) {
+        for (let i = 0; i < n && array.length > 0 && selected.length < 3; i++) {
             let r = getRandomInt(0, array.length);
             selected.push(array[r]);
             array.splice(r, 1);
         }
     }
-    
-    click(upgrade){
+
+    click(upgrade) {
         upgrade.click();
-    }    
-    proposePnj(pnj, desc){        
+    }
+    proposePnj(pnj, desc) {
         return {
-            sprite : pnj.sprite,
+            sprite: pnj.sprite,
             desc: desc,
             click: () => {
                 teams.push(pnj);
             }
         };
     }
-    addPnjs(array){
+    addPnjs(array) {
         array.push(this.addKnight());
         array.push(this.addWitch());
         array.push(this.addHunter());
     }
-    addKnight(){
+    addKnight() {
         const c = heroesFactory.createKnight();
-        return this.proposePnj(c, ["Recruit the knight", "He can reduce","the damage with his shield"]);     
+        return this.proposePnj(c, ["Recruit the knight", "He can reduce", "the damage with his shield"]);
     }
-    addWitch(){
+    addWitch() {
         const c = heroesFactory.createWitch();
         return this.proposePnj(c, ["Recruit the witch", "She can slow the", "attacks of the ennemy"]);
     }
-    addHunter(){
+    addHunter() {
         const c = heroesFactory.createHunter();
         return this.proposePnj(c, ["Recruit the hunter", "He damages with poison"]);
     }
-    proposeSpell(spell, desc){
+    proposeSpell(spell, desc) {
         return {
-            sprite : new Sprite(spell.icon, 0,0, 48, 48, 1),
+            sprite: new Sprite(spell.icon, 0, 0, 48, 48, 1),
             desc: desc,
             click: () => {
                 spells.push(spell);
             }
         };
     }
-    addSpells(array){
-        if(spells.indexOf(fastHeal2) == -1) {
+    addSpells(array) {
+        if (spells.indexOf(fastHeal2) == -1) {
             array.push(this.proposeSpell(fastHeal2, ["Fast Heal level 2", `Heals ${fastHeal2.power}`, `Mana: ${fastHeal2.mana}`]));
         }
-        if(spells.indexOf(slowHeal1) == -1) {
+        if (spells.indexOf(slowHeal1) == -1) {
             array.push(this.proposeSpell(slowHeal1, ["Slow Heal", `Heals ${slowHeal1.power}`, `Mana: ${slowHeal1.mana}`]));
-        } else if(spells.indexOf(slowHeal2) == -1) {
+        } else if (spells.indexOf(slowHeal2) == -1) {
             array.push(this.proposeSpell(slowHeal2, ["Slow Heal level 2", `Heals ${slowHeal2.power}`, `Mana: ${slowHeal2.mana}`]));
         }
-        if(spells.indexOf(aoeHeal) == -1) {
+        if (spells.indexOf(aoeHeal) == -1) {
             array.push(this.proposeSpell(aoeHeal, ["Group Heal", `Share ${aoeHeal.power} heals`, `Mana: ${aoeHeal.mana}`]));
         }
     }
     pushLevelUp(array, hero, desc, action) {
         array.push({
-            sprite : hero.sprite,
+            sprite: hero.sprite,
             desc: desc,
             click: () => {
                 hero.level++;
@@ -548,85 +558,85 @@ class UpgradeFactory {
     }
     addLevelUpForOneHero(array) {
         const hero = teams[getRandomInt(0, teams.length)];
-        if(hero.canHaveBonus("life")){
+        if (hero.canHaveBonus("life")) {
             let incr = 100 + hero.talents.life * 100;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase heal of ${hero.name}`, `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function() {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase heal of ${hero.name}`, `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function () {
                 hero.talents.life++;
                 hero.maxLife += incr;
                 hero.addBonus("life")
             });
         }
-        if(hero.canHaveBonus("armor")){
+        if (hero.canHaveBonus("armor")) {
             let incr = hero.talents.armor * 25;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase armor of ${hero.name}`, `From ${hero.armor}`, `To ${hero.armor + incr}`], function() {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase armor of ${hero.name}`, `From ${hero.armor}`, `To ${hero.armor + incr}`], function () {
                 hero.talents.armor++;
                 hero.armor += incr;
                 hero.addBonus("armor")
             });
         }
-        if(hero.canHaveBonus("damage")){
+        if (hero.canHaveBonus("damage")) {
             let incr = 5;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase damage of ${hero.name}`, `From ${hero.spells[0].stat.dmg}`, `To ${hero.spells[0].stat.dmg + incr}`], function() {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase damage of ${hero.name}`, `From ${hero.spells[0].stat.dmg}`, `To ${hero.spells[0].stat.dmg + incr}`], function () {
                 hero.talents.damage++;
                 hero.spells[0].stat.dmg += incr;
                 hero.addBonus("damage")
             });
         }
-        if(hero.canHaveBonus("crit")){
+        if (hero.canHaveBonus("crit")) {
             let incr = 25;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase critical chance`, `From ${hero.crit} %`, `To ${hero.crit + incr} %`], function() {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase critical chance`, `From ${hero.crit} %`, `To ${hero.crit + incr} %`], function () {
                 hero.talents.crit++;
                 hero.crit += incr;
                 hero.addBonus("crit")
             });
         }
-        if(hero.canHaveBonus("dodge")){
-            let incr = Math.max(3, 10 -  hero.talents.dodge);
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase dodge chance`, `From ${hero.dodge} %`, `To ${hero.dodge + incr} %`], function() {
+        if (hero.canHaveBonus("dodge")) {
+            let incr = Math.max(3, 10 - hero.talents.dodge);
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase dodge chance`, `From ${hero.dodge} %`, `To ${hero.dodge + incr} %`], function () {
                 hero.talents.dodge++;
                 hero.dodge += incr;
                 hero.addBonus("dodge")
             });
         }
-        if(hero.canHaveBonus("haste")){
+        if (hero.canHaveBonus("haste")) {
             let incr = 20;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase haste`, `From ${hero.haste}`, `To ${hero.haste + incr}`], function() {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase haste`, `From ${hero.haste}`, `To ${hero.haste + incr}`], function () {
                 hero.talents.haste++;
                 hero.haste += incr;
                 hero.addBonus("haste")
-            });            
+            });
         }
-        if(hero.canHaveBonus("mana")){
+        if (hero.canHaveBonus("mana")) {
             let incr = 100 + hero.talents.mana * 100;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana`, `From ${playerStat.maxMana}`, `To ${playerStat.maxMana + incr}`], function() {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana`, `From ${playerStat.maxMana}`, `To ${playerStat.maxMana + incr}`], function () {
                 hero.talents.mana++;
                 playerStat.maxMana += incr;
                 hero.addBonus("mana")
-            });   
+            });
         }
-        if(hero.canHaveBonus("regen")){
+        if (hero.canHaveBonus("regen")) {
             let incr = 1 + hero.talents.regen;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana regen`, `From ${playerStat.liteManaRegen} mana/s`, `To ${playerStat.liteManaRegen + incr} mana/s`], function() {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana regen`, `From ${playerStat.liteManaRegen} mana/s`, `To ${playerStat.liteManaRegen + incr} mana/s`], function () {
                 hero.talents.regen++;
                 playerStat.liteManaRegen += incr;
                 playerStat.fullManaRegen += incr * 4;
                 hero.addBonus("regen")
-            });   
+            });
         }
-        if(hero.canHaveBonus("healPower")){
+        if (hero.canHaveBonus("healPower")) {
             let incr = 10;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase heal bonus`, `From ${playerStat.healPower} %`, `To ${playerStat.healPower + incr} %`], function() {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase heal bonus`, `From ${playerStat.healPower} %`, `To ${playerStat.healPower + incr} %`], function () {
                 hero.talents.regen++;
-                playerStat.healPower += incr;                
+                playerStat.healPower += incr;
                 hero.addBonus("healPower")
-            });   
+            });
         }
 
-        if(hero.level >= 3){
-            if(hero.talents.blockBuff == 1){            
-                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Learn to block`, `30% chance to block`], function() {
+        if (hero.level >= 3) {
+            if (hero.talents.blockBuff == 1) {
+                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Learn to block`, `30% chance to block`], function () {
                     hero.talents.blockBuff++;
-                    hero.canBlock = true;                
+                    hero.canBlock = true;
                 });
             }
 
@@ -636,57 +646,66 @@ class UpgradeFactory {
 let upgradeFactory = new UpgradeFactory();
 let rerollsNumber = 2;
 class Vilains {
-    createVilainOfLevel(level){
+    createVilainOfLevel(level) {
         let vilain = this.selectVilain(level);
         vilain.life = vilain.maxLife;
         vilain.reverse = true;
         vilain.isVilain = true;
         return vilain;
     }
-    selectVilain(level){
-        switch(level)
-        {
+    selectVilain(level) {
+        switch (level) {
             case 1: return this.lvl1();
             case 2: return this.lvl2();
             case 3: return this.lvl3();
+            case 4: return this.lvl4();
             default: return this.createBigZombie();
         }
     }
 
-    lvl1(){
+    lvl1() {
         const sprite = new Sprite(tileSet1, 736, 32, 64, 48, 2);
         let vilain = new Character("Brown Bag", sprite);
-        vilain.maxLife = 100;        
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 80, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 250));            
+        vilain.maxLife = 100;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 80, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 250));
         return vilain;
     }
 
-    lvl2(){
+    lvl2() {
         const sprite = new Sprite(tileSet1, 736, 80, 64, 48, 2);
         let vilain = new Character("Green Bag", sprite);
-        vilain.maxLife = 800;        
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 80, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));            
+        vilain.maxLife = 800;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 80, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
 
-    lvl3(){
+    lvl3() {
         const sprite = new Sprite(tileSet1, 736, 124, 64, 48, 2);
-        let vilain = new Character("Green Bag", sprite);
-        vilain.maxLife = 800;        
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 80, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30*4));            
+        let vilain = new Character("Small Devil", sprite);
+        vilain.maxLife = 1000;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 100, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 4));
         return vilain;
     }
 
-    createBigZombie(){
+    lvl4() {
+        const sprite = new Sprite(tileSet1, 736, 220, 64, 36, 2);
+        let vilain = new Character("Brown Mud", sprite);
+        vilain.maxLife = 1200;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+
+    createBigZombie() {
         let vilain = new Character("Big Zombie", bigZombySprite);
         vilain.maxLife = vilain.life = 5000;
         vilain.reverse = true;
         vilain.isVilain = true;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 100, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.4, 50));        
+        vilain.spells.push(new EnragedAoeTrigger(0.4, 50));
         return vilain;
     }
 }
@@ -704,24 +723,24 @@ function castSimpleProjectile(stat, from) {
     const projectile = new ProjectileAnim(stat, from, target);
     allAnimations.push(projectile);
 }
-function enragedTick(stat, boss){
+function enragedTick(stat, boss) {
     for (const c of teams) {
-        if(c.life > 0){
+        if (c.life > 0) {
             const projectile = new ProjectileAnim(stat, boss, c);
             allAnimations.push(projectile);
         }
     }
 }
-class EnragedAoeTrigger{
-    constructor(lifeRatio, dmg){
+class EnragedAoeTrigger {
+    constructor(lifeRatio, dmg) {
         this.lifeRatio = lifeRatio;
-        this.dmg = dmg;        
+        this.dmg = dmg;
     }
-    update(self){
-        if(self.isEnragedAoe){
+    update(self) {
+        if (self.isEnragedAoe) {
             return;
         }
-        if(self.life > self.maxLife * this.lifeRatio){
+        if (self.life > self.maxLife * this.lifeRatio) {
             return;
         }
         self.isEnragedAoe = true;
@@ -729,32 +748,32 @@ class EnragedAoeTrigger{
         self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, enragedTick));
     }
 }
-class HasteBuffTrigger{
-    constructor(lifePeriodRatio, hasteIncr, duration){
+class HasteBuffTrigger {
+    constructor(lifePeriodRatio, hasteIncr, duration) {
         this.lifePeriodRatio = lifePeriodRatio;
         this.hasteIncr = hasteIncr;
         this.duration = duration;
         this.nextLifeTrigger = null;
         this.period = null;
-        this.isRunning = false;        
+        this.isRunning = false;
     }
-    update(self){
-        if(this.isRunning){
+    update(self) {
+        if (this.isRunning) {
             return;
         }
-        if(this.nextLifeTrigger == null){
+        if (this.nextLifeTrigger == null) {
             this.period = Math.floor(self.maxLife * this.lifePeriodRatio);
             this.nextLifeTrigger = self.maxLife - this.period;
         }
-        if(self.life > this.nextLifeTrigger){
+        if (self.life > this.nextLifeTrigger) {
             return;
         }
         this.nextLifeTrigger -= this.period;
         this.isRunning = true;
         self.haste += this.hasteIncr;
         const spell = this;
-        const buff = new CharacterBuffEffect("Haste", self, hasteBuffIcon, this.duration, this.duration, {}, function(){
-            if(spell.isRunning){
+        const buff = new CharacterBuffEffect("Haste", self, hasteBuffIcon, this.duration, this.duration, {}, function () {
+            if (spell.isRunning) {
                 spell.isRunning = false;
                 self.haste -= spell.hasteIncr;
             }
@@ -774,19 +793,19 @@ class PlayerSpell {
         this.rank = rank;
         this.power = power;
         this.effect = effect;
-    }    
+    }
 }
 
 class PlayerCasting {
-    constructor(playerSpell, target){
+    constructor(playerSpell, target) {
         this.spell = playerSpell;
         this.target = target;
-        this.endTick =  Math.ceil(this.spell.castingTime * 100 / (100 + playerStat.haste));
+        this.endTick = Math.ceil(this.spell.castingTime * 100 / (100 + playerStat.haste));
         this.tick = 0;
     }
-    update(){
+    update() {
         this.tick++;
-        if(this.tick <= this.endTick){
+        if (this.tick <= this.endTick) {
             return;
         }
         playerCastingBar = null;
@@ -794,17 +813,17 @@ class PlayerCasting {
         playerStat.lastCast = tickNumber;
         this.spell.effect(this.spell, this.target);
     }
-    paint(){
+    paint() {
         const left = CanvasWidth / 2 - 100;
         const top = 340;
-        
-        if(this.endTick <= 0)
+
+        if (this.endTick <= 0)
             return;
 
         ctx.beginPath();
         ctx.lineWidth = "1";
         ctx.fillStyle = "blue";
-        ctx.rect(left, top + 10,  this.tick * 200 / this.endTick, 20);
+        ctx.rect(left, top + 10, this.tick * 200 / this.endTick, 20);
         ctx.fill();
 
         ctx.beginPath();
@@ -843,26 +862,26 @@ class SpellButton {
             ctx.stroke();
         }
     }
-    update() {        
+    update() {
     }
     click(spellButtons) {
         this.selected = !this.selected;
-        if(this.selected){
-            for(let s of spellButtons){
-                if(s != this){
+        if (this.selected) {
+            for (let s of spellButtons) {
+                if (s != this) {
                     s.selected = false;
                 }
-            } 
-        } else if(!this.selected){            
+            }
+        } else if (!this.selected) {
             playerCastingBar = null;
         }
     }
     cast(target) {
-        if(playerCastingBar != null){
+        if (playerCastingBar != null) {
             return;
         }
         this.selected = false;
-        if(this.spell.mana <= playerStat.mana){
+        if (this.spell.mana <= playerStat.mana) {
             playerCastingBar = new PlayerCasting(this.spell, target);
         }
     }
@@ -872,48 +891,48 @@ const fastHeal1 = new PlayerSpell("Fast", fastHealIcon, 100, 30, 1, 250, healCas
 const fastHeal2 = new PlayerSpell("Fast 2", fastHealIcon, 160, 30, 2, 400, healCasted);
 const slowHeal1 = new PlayerSpell("Big", slowHealIcon, 140, 90, 3, 500, healCasted);
 const slowHeal2 = new PlayerSpell("Big 2", slowHealIcon, 200, 90, 4, 800, healCasted);
-const hotHeal = new PlayerSpell("HOT", hotHealIcon, 80, 10, 5, 400/40, hotHealCaster);
+const hotHeal = new PlayerSpell("HOT", hotHealIcon, 80, 10, 5, 400 / 40, hotHealCaster);
 const aoeHeal = new PlayerSpell("AOE", aoeHealIcon, 70, 30, 6, 400, aoeHealCasted);
 
 
-function trueHeal(power){   
-    const poweredHeal = Math.floor(power * (100 + playerStat.healPower + Math.random() * 10) /100);
+function trueHeal(power) {
+    const poweredHeal = Math.floor(power * (100 + playerStat.healPower + Math.random() * 10) / 100);
     return poweredHeal;
 }
-function healCasted(stat, target){
+function healCasted(stat, target) {
     const isCrit = Math.random() * 100 < playerStat.crit;
     target.onHeal(trueHeal(stat.power * (isCrit ? 3 : 1)), isCrit);
 }
-function hotHealCaster(stat, target){
-    target.pushBuff(new CharacterBuffEffect("HOT", target, stat.icon, 15, 30*20, stat, healCasted));
+function hotHealCaster(stat, target) {
+    target.pushBuff(new CharacterBuffEffect("HOT", target, stat.icon, 15, 30 * 20, stat, healCasted));
 }
-function aoeHealCasted(stat, target){
+function aoeHealCasted(stat, target) {
     const heal = trueHeal(stat.power / teams.length);
     for (const c of teams) {
         c.onHeal(heal, false);
     }
 }
 
-class CharacterBuffEffect{
-    constructor(name, character, icon, period, duration, stat, onTick){
+class CharacterBuffEffect {
+    constructor(name, character, icon, period, duration, stat, onTick) {
         this.name = name;
-        this.character = character;        
+        this.character = character;
         this.icon = icon;
         this.period = period;
         this.start = tickNumber;
         this.duration = duration;
         this.onTick = onTick;
-        this.stat = stat;      
+        this.stat = stat;
     }
-    update(){
-        if(tickNumber == this.start){
+    update() {
+        if (tickNumber == this.start) {
             return;
         }
-        const ellapsed = tickNumber - this.start;        
-        if(ellapsed % this.period == 0){
+        const ellapsed = tickNumber - this.start;
+        if (ellapsed % this.period == 0) {
             this.onTick(this.stat, this.character);
         }
-        if(ellapsed > this.duration){
+        if (ellapsed > this.duration) {
             return true;
         }
         return false;
@@ -922,11 +941,11 @@ class CharacterBuffEffect{
 
 let spells = [
     fastHeal1,
-    hotHeal,  
+    hotHeal,
 ];
 
-class PlayerStat{
-    constructor(){
+class PlayerStat {
+    constructor() {
         this.maxMana = 800;
         this.mana = 800;
         this.lastCast = 0;
@@ -937,7 +956,7 @@ class PlayerStat{
         this.haste = 0;
         this.crit = 0;
     }
-    paint(){
+    paint() {
         const left = 300;
         const top = 420;
 
@@ -949,7 +968,7 @@ class PlayerStat{
 
         ctx.fillStyle = "green";
         ctx.font = "12px Arial";
-        let label = "" + this.mana + " ( +" + this.manaRegen + ") / " +  this.maxMana;
+        let label = "" + this.mana + " ( +" + this.manaRegen + ") / " + this.maxMana;
         ctx.fillText(label, left + 80, top + 24);
 
         ctx.beginPath();
@@ -958,11 +977,11 @@ class PlayerStat{
         ctx.rect(left, top + 10, 200, 20);
         ctx.stroke();
     }
-    update(){
+    update() {
         const regenTick = tickNumber - this.lastCast;
-        this.manaRegen = (regenTick >  6 * 30) ? this.fullManaRegen :
-            (regenTick >  3 * 30) ? this.liteManaRegen : 0;
-        if(regenTick % 30 == 0){
+        this.manaRegen = (regenTick > 6 * 30) ? this.fullManaRegen :
+            (regenTick > 3 * 30) ? this.liteManaRegen : 0;
+        if (regenTick % 30 == 0) {
             this.mana = Math.min(this.maxMana, this.mana + this.manaRegen);
         }
     }
@@ -972,7 +991,7 @@ class Board {
     constructor() {
         allAnimations = [];
         characterMenus = [];
-        for(let i = 0; i < teams.length; i++){
+        for (let i = 0; i < teams.length; i++) {
             characterMenus.push(new CharacterMenu(teams[i], i));
             teams[i].life = teams[i].maxLife;
             teams[i].buffs = [];
@@ -992,10 +1011,10 @@ class Board {
             button.x = 300 + i * (button.width + 2);
             button.y = CanvasHeigth - button.height - 20;
             this.spellButtons.push(button)
-        }       
+        }
     }
 
-    placeCharacters(){
+    placeCharacters() {
         const vilain = mobs[0];
         vilain.x = 620;
         vilain.y = 240;
@@ -1003,8 +1022,8 @@ class Board {
         tank.x = 560;
         tank.y = 230;
         const rangeds = teams.filter(c => c != tank);
-        for(let i = 0; i < rangeds.length; i++){
-            rangeds[i].x = 450 - Math.floor(i/3) * 100;
+        for (let i = 0; i < rangeds.length; i++) {
+            rangeds[i].x = 450 - Math.floor(i / 3) * 100;
             rangeds[i].y = 100 + (i % 3) * 100;
         }
     }
@@ -1025,11 +1044,11 @@ class Board {
         for (const a of allAnimations) {
             a.paint();
         }
-        if(playerCastingBar)
+        if (playerCastingBar)
             playerCastingBar.paint();
         playerStat.paint();
-        if(this.combatEnded != null){
-            if(teams[0].life <= 0){
+        if (this.combatEnded != null) {
+            if (teams[0].life <= 0) {
                 ctx.fillStyle = "darkred";
                 ctx.font = "24px Verdana";
                 ctx.fillText("Pelin is dead", 500, 200);
@@ -1045,7 +1064,7 @@ class Board {
             if (allAnimations[i].update()) {
                 allAnimations.splice(i--, 1);
             }
-        }        
+        }
         for (const c of teams) {
             c.update();
         }
@@ -1055,20 +1074,20 @@ class Board {
         for (const s of this.spellButtons) {
             s.update();
         }
-        if(playerCastingBar)
+        if (playerCastingBar)
             playerCastingBar.update();
         playerStat.update();
-        if(this.combatEnded == null){
-            if(teams.filter(c => c.life > 0).length == 0 || mobs.filter(c => c.life > 0).length == 0 ){
+        if (this.combatEnded == null) {
+            if (teams.filter(c => c.life > 0).length == 0 || mobs.filter(c => c.life > 0).length == 0) {
                 this.combatEnded = 80;
             }
         }
-        else if(this.combatEnded <= 0){
-            if(teams[0].life <= 0) {
+        else if (this.combatEnded <= 0) {
+            if (teams[0].life <= 0) {
                 currentPage = new DeadScreen();
-            } else{
-                for(let i = teams.length -1; i >= 0; i--){
-                    if(teams[i].life <= 0){
+            } else {
+                for (let i = teams.length - 1; i >= 0; i--) {
+                    if (teams[i].life <= 0) {
                         teams.splice(i, 1);
                     }
                 }
@@ -1076,8 +1095,8 @@ class Board {
             }
         } else {
             this.combatEnded--;
-        }      
-    }    
+        }
+    }
     click(x, y) {
         for (const s of this.spellButtons) {
             if (x >= s.x && x < s.x + s.width
@@ -1120,13 +1139,13 @@ class MenuButton {
 
         ctx.fillStyle = "black";
         ctx.font = "32px Verdana";
-        if(this.textX == null){
+        if (this.textX == null) {
             const textWidth = ctx.measureText(this.label).width;
             this.textX = this.x + this.width / 2 - textWidth / 2;
         }
         ctx.fillText(this.label, this.textX, this.y + 33);
     }
-    isInside(event){
+    isInside(event) {
         return event.offsetX >= this.x && event.offsetX < this.x + this.width
             && event.offsetY >= this.y && event.offsetY < this.y + this.height
     }
@@ -1135,15 +1154,15 @@ class MenuButton {
     }
     mouseExit() {
         this.mouseOver = false;
-    }    
+    }
 }
 
-class StartMenu{
-    constructor(){
+class StartMenu {
+    constructor() {
         this.buttons = [new MenuButton(500, 350, "Start", this.startGame)]
     }
-    update(){}
-    paint(){
+    update() { }
+    paint() {
         ctx.fillStyle = "black";
         ctx.font = "24px Verdana";
         ctx.fillText("You are Pelin:", 100, 100);
@@ -1151,7 +1170,7 @@ class StartMenu{
         ctx.fillText("Your power is to heal.", 100, 150);
         ctx.fillText("Descent to the dungeon, gather a group and", 100, 200);
         ctx.fillText("increase your stats to clean the dungeon.", 100, 230);
-        for(let b of this.buttons){
+        for (let b of this.buttons) {
             b.paint();
         }
     }
@@ -1163,75 +1182,75 @@ class StartMenu{
 }
 
 class SelectUpgradeScreen {
-    constructor(){
+    constructor() {
         this.upgrades = upgradeFactory.propose3Upgrades();
         this.buttons = []
-        for(let i = 0; i < this.upgrades.length; i++){
-          this.buttons.push(new MenuButton(50 + i * 250, 350, "OK", () => this.selectUpgrade(i)))
+        for (let i = 0; i < this.upgrades.length; i++) {
+            this.buttons.push(new MenuButton(50 + i * 250, 350, "OK", () => this.selectUpgrade(i)))
         }
-        if(rerollsNumber > 0){
+        if (rerollsNumber > 0) {
             this.buttons.push(new MenuButton(CanvasWidth - 210, 10, `Reroll (${rerollsNumber})`, () => this.reroll()))
         } else {
             this.buttons.push(new MenuButton(CanvasWidth - 210, 10, `Skip`, () => this.skip()));
         }
     }
-    update(){}
+    update() { }
 
-    paint(){
+    paint() {
         ctx.fillStyle = "black";
         ctx.font = "30px Verdana";
         ctx.fillText("Select a bonus", 250, 40);
-        for(let i = 0 ; i < this.upgrades.length; i++){
+        for (let i = 0; i < this.upgrades.length; i++) {
             const upgrade = this.upgrades[i];
             upgrade.sprite.paint(50 + i * 250, 100);
             ctx.fillStyle = "black";
             ctx.font = "16px Verdana";
-            for(let line = 0 ; line < upgrade.desc.length; line++){
-                ctx.fillText(upgrade.desc[line], 50 + i * 250, 200 + line * 24);    
+            for (let line = 0; line < upgrade.desc.length; line++) {
+                ctx.fillText(upgrade.desc[line], 50 + i * 250, 200 + line * 24);
             }
         }
-        for(let b of this.buttons){
+        for (let b of this.buttons) {
             b.paint();
         }
     }
-    selectUpgrade(index){
+    selectUpgrade(index) {
         upgradeFactory.click(this.upgrades[index]);
         this.nextLevel();
     }
     nextLevel() {
-        currentLevel++;        
+        currentLevel++;
         currentPage = new Board();
     }
-    reroll(){
+    reroll() {
         rerollsNumber--;
         currentPage = new SelectUpgradeScreen();
     }
-    skip(){
+    skip() {
         rerollsNumber += 3;
         this.nextLevel();
     }
 }
 
 class DeadScreen {
-    constructor(){
+    constructor() {
         this.buttons = [new MenuButton(500, 350, "Ok", this.goToMainMenu)]
     }
-    update(){}
-    paint(){
+    update() { }
+    paint() {
         ctx.fillStyle = "black";
         ctx.font = "24px Verdana";
-        ctx.fillText("You are dead", 100, 100);        
-        for(let b of this.buttons){
+        ctx.fillText("You are dead", 100, 100);
+        for (let b of this.buttons) {
             b.paint();
         }
     }
-    goToMainMenu() {        
+    goToMainMenu() {
         currentPage = new StartMenu();
     }
 }
 
 let currentPage = new StartMenu();
-//teams = [heroesFactory.createPelin(), heroesFactory.createKnight()]; currentPage = new SelectUpgradeScreen(); currentLevel = 2;
+teams = [heroesFactory.createPelin(), heroesFactory.createKnight()]; currentPage = new SelectUpgradeScreen(); currentLevel = 3;
 
 const tickDuration = 1000.0 / 30;
 function tick() {
@@ -1248,10 +1267,10 @@ function paint() {
     currentPage.paint();
 }
 function onmousedown(event) {
-    if(currentPage.click){
+    if (currentPage.click) {
         currentPage.click(event.offsetX, event.offsetY);
     }
-    if(currentPage.buttons){
+    if (currentPage.buttons) {
         for (const c of currentPage.buttons) {
             if (c.isInside(event)) {
                 c.click(event);
@@ -1262,7 +1281,7 @@ function onmousedown(event) {
 
 let currentControl = null;
 function onmousemove(event) {
-    if(!currentPage.buttons)
+    if (!currentPage.buttons)
         return;
     let newControl = null
     for (const c of currentPage.buttons) {
