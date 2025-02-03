@@ -158,12 +158,12 @@ class Character {
         this.life = Math.max(0, this.life - dmg);        
         allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit", dmg));
     }
-    onHeal(power){
+    onHeal(power, isCrit){
         if(this.life <= 0)
         {
             return;
         }
-        allAnimations.push(new LabelAnim(`${power}`, this, "heal", power));
+        allAnimations.push(new LabelAnim(`${power}`, this, isCrit ? "critHeal" : "heal", power));
         this.life = Math.min(this.maxLife, this.life + power);
     }
     pushBuff(buff){
@@ -340,19 +340,33 @@ class LabelAnim {
                 }
              break;
             case "heal": 
-            this.color = "green"; 
-            if(power < 50){
-                this.font = "10px Arial";
-            } else if(power < 90){
-                this.font = "12px Arial";
-            } else if(power < 200){
-                this.font = "14px Arial";
-            }  else if(power < 400){
-                this.font = "16px Arial";
-            } else {
-                this.font = "18px Arial";
-            }
+                this.color = "green"; 
+                if(power < 50){
+                    this.font = "10px Arial";
+                } else if(power < 90){
+                    this.font = "12px Arial";
+                } else if(power < 200){
+                    this.font = "14px Arial";
+                }  else if(power < 400){
+                    this.font = "16px Arial";
+                } else {
+                    this.font = "18px Arial";
+                }
             break;
+            case "critHeal": 
+                this.color = "green"; 
+                if(power < 50){
+                    this.font = "14px Arial";
+                } else if(power < 90){
+                    this.font = "16px Arial";
+                } else if(power < 200){
+                    this.font = "18px Arial";
+                }  else if(power < 400){
+                    this.font = "20px Arial";
+                } else {
+                    this.font = "24px Arial";
+                }
+            break;            
             case "dodge": this.color = "gray"; break;
             case "block": this.color = "gray"; break;
         }
@@ -375,8 +389,6 @@ class LabelAnim {
     }
 }
 
-
-
 class Heroes {
   createPelin(){
     const c = new Character("Pelin", healerSprite);
@@ -385,16 +397,17 @@ class Heroes {
     c.spells.push(new PnjSpell(new ProjectileStat(c, banana, 15, 45, 10), castSimpleProjectile));
     c.talents = {
         life : 1,
-        mana : 1,
-        armor : 1,
-        damage : 1,
+        mana : 1,        
+        regen : 1,
+        healPower : 1,
         haste : 1,
+        crit : 1,
     };
     return c;
   }
   createKnight(){
     const c = new Character("Knight", redKnightSprite);
-    c.maxLife = c.life = 1600;
+    c.maxLife = c.life = 1000;
     c.isTank = true;
     c.spells.push(new PnjSpell(new ProjectileStat(c, swordSprite, 30, 38, 7), castSimpleProjectile));
     c.talents = {
@@ -413,7 +426,7 @@ class Heroes {
     c.talents = {
         life : 1,
         frostBuff : 1,
-        armor : 1,        
+        armor : 1,
         damage : 1,
         haste : 1,
         crit : 1,
@@ -422,7 +435,7 @@ class Heroes {
   }
   createHunter(){
     const c = new Character("Hunter", elfSprite);
-    c.maxLife = c.life = 800;
+    c.maxLife = c.life = 700;
     c.spells.push(new PnjSpell(new ProjectileStat(c, arrowSprite, 50, 38, 10), castSimpleProjectile));
     c.talents = {
         life : 1,
@@ -536,7 +549,7 @@ class UpgradeFactory {
     addLevelUpForOneHero(array) {
         const hero = teams[getRandomInt(0, teams.length)];
         if(hero.canHaveBonus("life")){
-            let incr = 100 + hero.talents.life * 50;
+            let incr = 100 + hero.talents.life * 100;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase heal of ${hero.name}`, `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function() {
                 hero.talents.life++;
                 hero.maxLife += incr;
@@ -581,8 +594,34 @@ class UpgradeFactory {
                 hero.talents.haste++;
                 hero.haste += incr;
                 hero.addBonus("haste")
-            });
+            });            
         }
+        if(hero.canHaveBonus("mana")){
+            let incr = 100 + hero.talents.mana * 100;
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana`, `From ${playerStat.maxMana}`, `To ${playerStat.maxMana + incr}`], function() {
+                hero.talents.mana++;
+                playerStat.maxMana += incr;
+                hero.addBonus("mana")
+            });   
+        }
+        if(hero.canHaveBonus("regen")){
+            let incr = 1 + hero.talents.regen;
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana regen`, `From ${playerStat.liteManaRegen} mana/s`, `To ${playerStat.liteManaRegen + incr} mana/s`], function() {
+                hero.talents.regen++;
+                playerStat.liteManaRegen += incr;
+                playerStat.fullManaRegen += incr * 4;
+                hero.addBonus("regen")
+            });   
+        }
+        if(hero.canHaveBonus("healPower")){
+            let incr = 10;
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase heal bonus`, `From ${playerStat.healPower} %`, `To ${playerStat.healPower + incr} %`], function() {
+                hero.talents.regen++;
+                playerStat.healPower += incr;                
+                hero.addBonus("healPower")
+            });   
+        }
+
         if(hero.level >= 3){
             if(hero.talents.blockBuff == 1){            
                 this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Learn to block`, `30% chance to block`], function() {
@@ -742,7 +781,7 @@ class PlayerCasting {
     constructor(playerSpell, target){
         this.spell = playerSpell;
         this.target = target;
-        this.endTick =  this.spell.castingTime;
+        this.endTick =  Math.ceil(this.spell.castingTime * 100 / (100 + playerStat.haste));
         this.tick = 0;
     }
     update(){
@@ -837,16 +876,21 @@ const hotHeal = new PlayerSpell("HOT", hotHealIcon, 80, 10, 5, 400/40, hotHealCa
 const aoeHeal = new PlayerSpell("AOE", aoeHealIcon, 70, 30, 6, 400, aoeHealCasted);
 
 
+function trueHeal(power){   
+    const poweredHeal = Math.floor(power * (100 + playerStat.healPower + Math.random() * 10) /100);
+    return poweredHeal;
+}
 function healCasted(stat, target){
-    target.onHeal(stat.power);
+    const isCrit = Math.random() * 100 < playerStat.crit;
+    target.onHeal(trueHeal(stat.power * (isCrit ? 3 : 1)), isCrit);
 }
 function hotHealCaster(stat, target){
     target.pushBuff(new CharacterBuffEffect("HOT", target, stat.icon, 15, 30*20, stat, healCasted));
 }
 function aoeHealCasted(stat, target){
-    const heal = Math.floor(stat.power / teams.length);
+    const heal = trueHeal(stat.power / teams.length);
     for (const c of teams) {
-        c.onHeal(heal);
+        c.onHeal(heal, false);
     }
 }
 
@@ -889,6 +933,9 @@ class PlayerStat{
         this.manaRegen = 0;
         this.fullManaRegen = 20;
         this.liteManaRegen = 5;
+        this.healPower = 0;
+        this.haste = 0;
+        this.crit = 0;
     }
     paint(){
         const left = 300;
@@ -935,6 +982,8 @@ class Board {
         characterMenus.push(new CharacterMenu(vilain, 0));
         this.placeCharacters();
         this.combatEnded = null;
+        playerStat.haste = teams[0].haste;
+        playerStat.crit = teams[0].crit;
         playerStat.mana = playerStat.maxMana;
         spells.sort((a, b) => a.rank - b.rank)
         this.spellButtons = [];
@@ -1018,6 +1067,11 @@ class Board {
             if(teams[0].life <= 0) {
                 currentPage = new DeadScreen();
             } else{
+                for(let i = teams.length -1; i >= 0; i--){
+                    if(teams[i].life <= 0){
+                        teams.splice(i, 1);
+                    }
+                }
                 currentPage = new SelectUpgradeScreen();
             }
         } else {
@@ -1177,7 +1231,7 @@ class DeadScreen {
 }
 
 let currentPage = new StartMenu();
-//teams = [heroesFactory.createPelin()]; currentPage = new SelectUpgradeScreen(); currentLevel = 2;
+//teams = [heroesFactory.createPelin(), heroesFactory.createKnight()]; currentPage = new SelectUpgradeScreen(); currentLevel = 2;
 
 const tickDuration = 1000.0 / 30;
 function tick() {
