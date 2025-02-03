@@ -1250,8 +1250,16 @@ class DeadScreen {
 }
 
 let currentPage = new StartMenu();
-//teams = [heroesFactory.createPelin(), heroesFactory.createKnight()]; currentPage = new SelectUpgradeScreen(); currentLevel = 3;
-
+// Debug mode:
+if(window.location.search){
+    const params = new URLSearchParams(window.location.search);
+    const lvl = params.get("lvl");
+    if(lvl){
+        currentLevel = parseInt(lvl) - 1;
+        teams = [heroesFactory.createPelin(), heroesFactory.createKnight()]; 
+        currentPage = new SelectUpgradeScreen();
+    }  
+}
 const tickDuration = 1000.0 / 30;
 function tick() {
     tickNumber++;
