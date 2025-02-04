@@ -81,7 +81,7 @@ class Sprite {
     }
     paintScale(x, y, width, heigth) {
         ctx.drawImage(this.tile,
-            this.tx + frame * this.singleWidth, this.ty,
+            this.tx, this.ty,
             this.singleWidth - 1, this.tHeight,
             x, y, width, heigth);
     }
@@ -102,6 +102,7 @@ enragedSprite.correctAngus = - 3 * Math.PI / 4;
 const deadSprite = new Sprite(tileSet2, 0, 0, 32, 32, 1);
 const greenPotionSprite = new Sprite(tileSet1, 640, 672, 28, 28, 1);
 greenPotionSprite.forbidRotate = true;
+const brokenArmorSprite = new Sprite(tileSet2, 160, 128, 32, 32, 1);
 
 class Character {
     constructor(name, sprite) {
@@ -124,10 +125,13 @@ class Character {
         this.selectedTalents = [];
         this.level = 1;
         this.armor = 0;
+        this.armorBroken = 0;
         this.crit = 0;
         this.haste = 0;
         this.dodge = 5;
         this.canBlock = false;
+        this.slow = 0;
+        this.ultimatePower = 0;
     }
     paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
@@ -161,13 +165,17 @@ class Character {
         }
         const isCrit = Math.random() * 100 < projectileStat.from.crit;
         const fullDamge = isCrit ? projectileStat.dmg * 2 : projectileStat.dmg;
-        const dmg = Math.floor(fullDamge * 100 / (100 + this.armor))
+        const remainingArmor = Math.max(0, this.armor * (100 - this.armorBroken) / 100);
+        const dmg = Math.floor(fullDamge * 100 / (100 + remainingArmor))
         this.life = Math.max(0, this.life - dmg);
+        allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit", dmg));        
         if(this.life <= 0){
             this.buffs = [];
+            return;
         }
-        allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit", dmg));
-        
+        if(projectileStat.hitFunc != null){
+            projectileStat.hitFunc(this);
+        }
     }
     onHeal(power, isCrit) {
         if (this.life <= 0) {
@@ -236,7 +244,14 @@ class CharacterMenu {
         }
         for (let i = 0; i < this.character.buffs.length; i++) {
             const offsetX = this.isLeft ? 40 : 0
-            ctx.drawImage(this.character.buffs[i].icon, this.x + offsetX + i * 22, this.y + 32, 20, 20)
+            const imgX = this.x + offsetX + i * 22;
+            const imgY = this.y + 32;
+            const img = this.character.buffs[i].icon;
+            if(img.paintScale){
+                img.paintScale(imgX, imgY,20, 20);
+            } else{
+                ctx.drawImage(img, imgX, imgY, 20, 20);
+            }
         }
     }
 
@@ -272,7 +287,7 @@ class PnjSpell {
         this.tick++;
         if (this.tick >= this.nextCastTick) {
             this.tick = null;
-            this.nextCastTick = Math.floor(this.cooldown * 100 / (100 + pnj.haste));
+            this.nextCastTick = Math.floor(this.cooldown * (100 + pnj.slow) / (100 + pnj.haste));
             this.castFunc(this.stat, pnj);
         }
     }
@@ -284,6 +299,7 @@ class ProjectileStat {
         this.dmg = dmg;
         this.cooldown = cooldown;
         this.speed = speed;
+        this.hitFunc = null;
     }
 }
 let allAnimations = [];
@@ -308,10 +324,8 @@ class ProjectileAnim {
         this.y += (this.destY - this.y) * this.stat.speed / d;
         return false;
     }
-    paint() {
-        // this.stat.icon.paintRotate(this.x, this.y, 0);
-        this.stat.icon.paintRotate(this.x, this.y, this.targetAngus + Math.PI / 2);
-        //this.stat.icon.paintRotate(this.x, this.y, this.targetAngus-Math.PI / 2);
+    paint() {        
+        this.stat.icon.paintRotate(this.x, this.y, this.targetAngus + Math.PI / 2);        
     }
 }
 class LabelAnim {
@@ -431,25 +445,48 @@ class Heroes {
     }
     createWitch() {
         const c = new Character("Witch", witchSprite);
-        c.maxLife = c.life = 600;
-        c.spells.push(new PnjSpell(new ProjectileStat(c, frostSprite, 40, 44, 12), castSimpleProjectile));
+        c.maxLife = c.life = 600;        
+        const projectile = new ProjectileStat(c, frostSprite, 40, 44, 12);
+        projectile.hitFunc = function(target){
+            if(c.ultimatePower == 0){
+                return;
+            }
+            target.slow = c.ultimatePower;
+            const buff = new CharacterBuffEffect("Frozen", target, frostSprite, 60, 60, {}, function () {
+                target.slow = 0;
+            });
+            target.pushBuff(buff);
+        };
+        c.spells.push(new PnjSpell(projectile, castSimpleProjectile));
         c.talents = {
             life: 1,
             frostBuff: 1,
             armor: 1,
             damage: 1,
             haste: 1,
-            crit: 1,
+            crit: 1,            
         };
         return c;
     }
     createHunter() {
         const c = new Character("Hunter", elfSprite);
         c.maxLife = c.life = 700;
-        c.spells.push(new PnjSpell(new ProjectileStat(c, arrowSprite, 50, 38, 10), castSimpleProjectile));
+        c.ultimatePower = 50;
+        const projectile = new ProjectileStat(c, arrowSprite, 50, 38, 10)
+        projectile.hitFunc = function(target){
+            if(c.ultimatePower == 0){
+                return;
+            }
+            target.armorBroken = c.ultimatePower;
+            const buff = new CharacterBuffEffect("ArmorBroken", target, brokenArmorSprite, 60, 60, {}, function () {
+                target.armorBroken = 0;
+            });
+            target.pushBuff(buff);
+        };
+        c.spells.push(new PnjSpell(projectile, castSimpleProjectile));
         c.talents = {
             life: 1,
-            poisonBuff: 1,
+            breakArmorBuff: 1,
             armor: 1,
             dodge: 1,
             damage: 1,
@@ -522,7 +559,7 @@ class UpgradeFactory {
     }
     addHunter() {
         const c = heroesFactory.createHunter();
-        return this.proposePnj(c, ["Recruit the hunter", "He damages with poison"]);
+        return this.proposePnj(c, ["Recruit the hunter", "He can reduce the", "armor of the ennemy"]);
     }
     proposeSpell(spell, desc) {
         return {
@@ -639,7 +676,20 @@ class UpgradeFactory {
                     hero.canBlock = true;
                 });
             }
-
+            if (hero.talents.frostBuff >= 1 && hero.talents.frostBuff < 3) {
+                let incr = 20;
+                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase slow debuff`, `From ${hero.ultimatePower} %`, `To ${hero.ultimatePower + incr} %`], function () {
+                    hero.talents.frostBuff++;
+                    hero.ultimatePower += incr;
+                });
+            }
+            if (hero.talents.breakArmorBuff >= 1 && hero.talents.breakArmorBuff < 3) {
+                let incr = 20;
+                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase breaking armor`, `From ${hero.ultimatePower} %`, `To ${hero.ultimatePower + incr} %`], function () {
+                    hero.talents.breakArmorBuff++;
+                    hero.ultimatePower += incr;
+                });
+            }
         }
     }
 }
@@ -676,6 +726,7 @@ class Vilains {
         const sprite = new Sprite(tileSet1, 736, 80, 64, 48, 2);
         let vilain = new Character("Green Bag", sprite);
         vilain.maxLife = 800;
+        vilain.armor = 10;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 80, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
@@ -685,6 +736,7 @@ class Vilains {
         const sprite = new Sprite(tileSet1, 736, 124, 64, 48, 2);
         let vilain = new Character("Small Devil", sprite);
         vilain.maxLife = 1000;
+        vilain.armor = 20;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 100, 40, 7), castSimpleProjectile));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 4));
         return vilain;
@@ -694,6 +746,7 @@ class Vilains {
         const sprite = new Sprite(tileSet1, 736, 220, 64, 36, 2);
         let vilain = new Character("Brown Mud", sprite);
         vilain.maxLife = 1200;
+        vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
@@ -891,7 +944,7 @@ const fastHeal1 = new PlayerSpell("Fast", fastHealIcon, 100, 30, 1, 250, healCas
 const fastHeal2 = new PlayerSpell("Fast 2", fastHealIcon, 160, 30, 2, 400, healCasted);
 const slowHeal1 = new PlayerSpell("Big", slowHealIcon, 140, 90, 3, 500, healCasted);
 const slowHeal2 = new PlayerSpell("Big 2", slowHealIcon, 200, 90, 4, 800, healCasted);
-const hotHeal = new PlayerSpell("HOT", hotHealIcon, 80, 10, 5, 400 / 40, hotHealCaster);
+const hotHeal = new PlayerSpell("HOT", hotHealIcon, 80, 10, 5, 400 / 20, hotHealCaster);
 const aoeHeal = new PlayerSpell("AOE", aoeHealIcon, 70, 30, 6, 400, aoeHealCasted);
 
 
@@ -904,7 +957,7 @@ function healCasted(stat, target) {
     target.onHeal(trueHeal(stat.power * (isCrit ? 3 : 1)), isCrit);
 }
 function hotHealCaster(stat, target) {
-    target.pushBuff(new CharacterBuffEffect("HOT", target, stat.icon, 15, 30 * 20, stat, healCasted));
+    target.pushBuff(new CharacterBuffEffect("HOT", target, stat.icon, 30, 30 * 20, stat, healCasted));
 }
 function aoeHealCasted(stat, target) {
     const heal = trueHeal(stat.power / teams.length);
@@ -1256,7 +1309,7 @@ if(window.location.search){
     const lvl = params.get("lvl");
     if(lvl){
         currentLevel = parseInt(lvl) - 1;
-        teams = [heroesFactory.createPelin(), heroesFactory.createKnight()]; 
+        teams = [heroesFactory.createPelin(), heroesFactory.createKnight(), heroesFactory.createWitch(), heroesFactory.createHunter()]; 
         currentPage = new SelectUpgradeScreen();
     }  
 }
