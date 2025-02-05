@@ -1,6 +1,6 @@
 const gameDuration = 30.0;
 const CanvasWidth = 800;
-const CanvasHeigth = 450;
+const CanvasHeight = 450;
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 let tickNumber = 1;
@@ -79,11 +79,11 @@ class Sprite {
             -this.singleWidth / 2, -this.tHeight / 2, (this.singleWidth - 1), this.tHeight);
         ctx.restore();
     }
-    paintScale(x, y, width, heigth) {
+    paintScale(x, y, width, height) {
         ctx.drawImage(this.tile,
             this.tx, this.ty,
             this.singleWidth - 1, this.tHeight,
-            x, y, width, heigth);
+            x, y, width, height);
     }
 }
 
@@ -597,7 +597,7 @@ class UpgradeFactory {
         const hero = teams[getRandomInt(0, teams.length)];
         if (hero.canHaveBonus("life")) {
             let incr = 100 + hero.talents.life * 100;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase heal of ${hero.name}`, `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function () {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase max life of ${hero.name}`, `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function () {
                 hero.talents.life++;
                 hero.maxLife += incr;
                 hero.addBonus("life")
@@ -1062,7 +1062,7 @@ class Board {
         for (let i = 0; i < spells.length; i++) {
             const button = new SpellButton(spells[i]);
             button.x = 300 + i * (button.width + 2);
-            button.y = CanvasHeigth - button.height - 20;
+            button.y = CanvasHeight - button.height - 20;
             this.spellButtons.push(button)
         }
     }
@@ -1082,6 +1082,8 @@ class Board {
     }
 
     paint() {
+        if(toolTip)
+            toolTip.paint();
         for (const c of teams) {
             c.paint();
         }
@@ -1150,27 +1152,26 @@ class Board {
             this.combatEnded--;
         }
     }
-    click(x, y) {
+    click(event) {
         for (const s of this.spellButtons) {
-            if (x >= s.x && x < s.x + s.width
-                && y >= s.y && y < s.y + s.height) {
+            if (isInside(s, event)) {
                 s.click(this.spellButtons);
             }
         }
         let selectedChar = null;
         for (let m of characterMenus) {
-            if (x >= m.x && x < m.x + m.width
-                && y >= m.y && y < m.y + m.height) {
+            if (isInside(m, event)) {
                 selectedChar = m.character;
             }
         }
         if (selectedChar != null) {
-            for (let s of this.spellButtons) {
-                if (s.selected) {
-                    s.cast(selectedChar);
-                    break;
-                }
+            let spell = this.spellButtons.find(s => s.selected);            
+            if (spell) {
+                spell.cast(selectedChar);        
+            } else {
+                toolTip = new CharacterTooltip(selectedChar);
             }
+            
         }
     }
 }
@@ -1197,10 +1198,6 @@ class MenuButton {
             this.textX = this.x + this.width / 2 - textWidth / 2;
         }
         ctx.fillText(this.label, this.textX, this.y + 33);
-    }
-    isInside(event) {
-        return event.offsetX >= this.x && event.offsetX < this.x + this.width
-            && event.offsetY >= this.y && event.offsetY < this.y + this.height
     }
     mouseEnter() {
         this.mouseOver = true;
@@ -1301,6 +1298,56 @@ class DeadScreen {
         currentPage = new StartMenu();
     }
 }
+class CharacterTooltip {
+    constructor(character){
+        this.character = character;
+        this.x = CanvasWidth - 250;
+        this.y = CanvasHeight - 150;
+        this.width = 250;
+        this.height = 150;
+    }
+    paint(){
+        ctx.beginPath();
+        ctx.lineWidth = "1";
+        ctx.fillStyle = "#303030";
+        ctx.rect(this.x, this.y, this.width, this.height);
+        ctx.fill();
+        
+        let cursorY = this.y + 22;
+        let cursorX = this.x + 8;
+
+        ctx.fillStyle = this.character.isVilain ? "red" : "green";
+        ctx.font = "bold 18px Verdana";
+        ctx.fillText(this.character.name,cursorX, cursorY);
+        cursorY += 18;
+
+        ctx.fillStyle = "white";
+        ctx.font = "12px Verdana";
+        const lvl = this.character.isVilain ? currentLevel : this.character.level;
+        ctx.fillText(`Level: ${lvl}`, cursorX, cursorY);
+        cursorY += 16;
+
+        let dmg = this.character.spells[0].stat.dmg;        
+        let cooldown = Math.floor(0.34 * this.character.spells[0].stat.cooldown * (100 + this.character.slow) / (100 + this.character.haste)) / 10;
+        ctx.fillText(`Damage: ${dmg} every ${cooldown} seconds`, cursorX, cursorY);
+        cursorY += 16;
+
+        ctx.fillText(`Crit chance: ${this.character.crit}%`, cursorX, cursorY);
+        cursorY += 16;
+
+        let currentArmor = Math.max(0, this.character.armor - this.character.armorBroken);
+        let armorReduc = 100 - Math.floor(100000 / (100 + currentArmor)) / 10;
+        ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
+        cursorY += 16;
+
+        ctx.fillText(`Dodge chance: ${this.character.dodge}%`, cursorX, cursorY);        
+        cursorY += 16;
+    }
+    click(event){
+        toolTip = null;
+    }
+}
+let toolTip;
 
 let currentPage = new StartMenu();
 // Debug mode:
@@ -1311,6 +1358,7 @@ if(window.location.search){
         currentLevel = parseInt(lvl) - 1;
         teams = [heroesFactory.createPelin(), heroesFactory.createKnight(), heroesFactory.createWitch(), heroesFactory.createHunter()]; 
         currentPage = new SelectUpgradeScreen();
+        toolTip = new CharacterTooltip(teams[0]);
     }  
 }
 const tickDuration = 1000.0 / 30;
@@ -1327,16 +1375,26 @@ function paint() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     currentPage.paint();
 }
+function isInside(control, event) {
+    if(!control){
+        return false;
+    }
+    return event.offsetX >= control.x && event.offsetX < control.x + control.width
+        && event.offsetY >= control.y && event.offsetY < control.y + control.height
+}
 function onmousedown(event) {
     if (currentPage.click) {
-        currentPage.click(event.offsetX, event.offsetY);
+        currentPage.click(event);
     }
     if (currentPage.buttons) {
         for (const c of currentPage.buttons) {
-            if (c.isInside(event)) {
+            if (isInside(c, event)) {
                 c.click(event);
             }
         }
+    }
+    if(isInside(toolTip, event)){
+        toolTip.click(event);
     }
 }
 
@@ -1346,7 +1404,7 @@ function onmousemove(event) {
         return;
     let newControl = null
     for (const c of currentPage.buttons) {
-        if (c.isInside(event)) {
+        if (isInside(c, event)) {
             newControl = c;
             break;
         }
