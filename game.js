@@ -67,7 +67,7 @@ class Sprite {
         }
     }
     paintRotate(x, y, angus) {
-        if(this.forbidRotate){
+        if (this.forbidRotate) {
             this.paint(x, y, 0, false);
             return;
         }
@@ -168,12 +168,12 @@ class Character {
         const remainingArmor = Math.max(0, this.armor * (100 - this.armorBroken) / 100);
         const dmg = Math.floor(fullDamge * 100 / (100 + remainingArmor))
         this.life = Math.max(0, this.life - dmg);
-        allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit", dmg));        
-        if(this.life <= 0){
+        allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit", dmg));
+        if (this.life <= 0) {
             this.buffs = [];
             return;
         }
-        if(projectileStat.hitFunc != null){
+        if (projectileStat.hitFunc != null) {
             projectileStat.hitFunc(this);
         }
     }
@@ -246,12 +246,7 @@ class CharacterMenu {
             const offsetX = this.isLeft ? 40 : 0
             const imgX = this.x + offsetX + i * 22;
             const imgY = this.y + 32;
-            const img = this.character.buffs[i].icon;
-            if(img.paintScale){
-                img.paintScale(imgX, imgY,20, 20);
-            } else{
-                ctx.drawImage(img, imgX, imgY, 20, 20);
-            }
+            this.character.buffs[i].paintScale(imgX, imgY, 20, 20);
         }
     }
 
@@ -324,8 +319,8 @@ class ProjectileAnim {
         this.y += (this.destY - this.y) * this.stat.speed / d;
         return false;
     }
-    paint() {        
-        this.stat.icon.paintRotate(this.x, this.y, this.targetAngus + Math.PI / 2);        
+    paint() {
+        this.stat.icon.paintRotate(this.x, this.y, this.targetAngus + Math.PI / 2);
     }
 }
 class LabelAnim {
@@ -445,14 +440,14 @@ class Heroes {
     }
     createWitch() {
         const c = new Character("Witch", witchSprite);
-        c.maxLife = c.life = 600;        
+        c.maxLife = c.life = 600;
         const projectile = new ProjectileStat(c, frostSprite, 40, 44, 12);
-        projectile.hitFunc = function(target){
-            if(c.ultimatePower == 0){
+        projectile.hitFunc = function (target) {
+            if (c.ultimatePower == 0) {
                 return;
             }
             target.slow = c.ultimatePower;
-            const buff = new CharacterBuffEffect("Frozen", target, frostSprite, 60, 60, {}, function () {
+            const buff = new CharacterBuffEffect("Frozen", target, frostSprite, 60, 60, {}, `Slow attacks by ${c.ultimatePower}%`, function () {
                 target.slow = 0;
             });
             target.pushBuff(buff);
@@ -464,7 +459,7 @@ class Heroes {
             armor: 1,
             damage: 1,
             haste: 1,
-            crit: 1,            
+            crit: 1,
         };
         return c;
     }
@@ -473,12 +468,12 @@ class Heroes {
         c.maxLife = c.life = 700;
         c.ultimatePower = 50;
         const projectile = new ProjectileStat(c, arrowSprite, 50, 38, 10)
-        projectile.hitFunc = function(target){
-            if(c.ultimatePower == 0){
+        projectile.hitFunc = function (target) {
+            if (c.ultimatePower == 0) {
                 return;
             }
             target.armorBroken = c.ultimatePower;
-            const buff = new CharacterBuffEffect("ArmorBroken", target, brokenArmorSprite, 60, 60, {}, function () {
+            const buff = new CharacterBuffEffect("Broken Armor", target, brokenArmorSprite, 60, 60, {}, `Reduce armor by ${c.ultimatePower}%`, function () {
                 target.armorBroken = 0;
             });
             target.pushBuff(buff);
@@ -511,13 +506,13 @@ class UpgradeFactory {
             this.randomPick(pnjs, selected, 3);
             return selected;
         }
-        const spells = [];
-        this.addSpells(spells);
+        const upgradeSpells = [];
+        this.addSpells(upgradeSpells);
         const heros = [];
         this.addLevelUpForOneHero(heros);
         let selected = [];
-        if (spells.length != 0 && Math.random() < 0.5) {
-            this.randomPick(spells, selected, 1);
+        if (spells.length < 5 && upgradeSpells.length != 0 && Math.random() < 0.5) {
+            this.randomPick(upgradeSpells, selected, 1);
         } else if (teams.length < 7) {
             this.randomPick(pnjs, selected, 1);
         }
@@ -798,7 +793,7 @@ class EnragedAoeTrigger {
         }
         self.isEnragedAoe = true;
         const stat = new ProjectileStat(self, enragedSprite, this.dmg, 40, 15)
-        self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, enragedTick));
+        self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, `Throw a ${this.dmg} fireball to all`, enragedTick));
     }
 }
 class HasteBuffTrigger {
@@ -825,7 +820,7 @@ class HasteBuffTrigger {
         this.isRunning = true;
         self.haste += this.hasteIncr;
         const spell = this;
-        const buff = new CharacterBuffEffect("Haste", self, hasteBuffIcon, this.duration, this.duration, {}, function () {
+        const buff = new CharacterBuffEffect("Haste", self, hasteBuffIcon, this.duration, this.duration, {}, `Gain ${spell.hasteIncr} haste`, function () {
             if (spell.isRunning) {
                 spell.isRunning = false;
                 self.haste -= spell.hasteIncr;
@@ -835,17 +830,17 @@ class HasteBuffTrigger {
     }
 }
 
-
-
 class PlayerSpell {
-    constructor(name, icon, mana, castingTime, rank, power, effect) {
+    constructor(name, fullName, icon, mana, castingTime, rank, power, effect, description) {
         this.name = name;
+        this.fullName = fullName;
         this.icon = icon;
         this.mana = mana;
         this.castingTime = castingTime;
         this.rank = rank;
         this.power = power;
         this.effect = effect;
+        this.description = description;
     }
 }
 
@@ -920,6 +915,7 @@ class SpellButton {
     click(spellButtons) {
         this.selected = !this.selected;
         if (this.selected) {
+            toolTip = new SpellTooltip(this.spell);
             for (let s of spellButtons) {
                 if (s != this) {
                     s.selected = false;
@@ -927,6 +923,7 @@ class SpellButton {
             }
         } else if (!this.selected) {
             playerCastingBar = null;
+            toolTip = null;
         }
     }
     cast(target) {
@@ -940,14 +937,31 @@ class SpellButton {
     }
 }
 
-const fastHeal1 = new PlayerSpell("Fast", fastHealIcon, 100, 30, 1, 250, healCasted);
-const fastHeal2 = new PlayerSpell("Fast 2", fastHealIcon, 160, 30, 2, 400, healCasted);
-const slowHeal1 = new PlayerSpell("Big", slowHealIcon, 140, 90, 3, 500, healCasted);
-const slowHeal2 = new PlayerSpell("Big 2", slowHealIcon, 200, 90, 4, 800, healCasted);
-const hotHeal = new PlayerSpell("HOT", hotHealIcon, 80, 10, 5, 400 / 20, hotHealCaster);
-const aoeHeal = new PlayerSpell("AOE", aoeHealIcon, 70, 30, 6, 400, aoeHealCasted);
+const fastHeal1 = new PlayerSpell("Fast", "Fast heal", fastHealIcon, 100, 30, 1, 250, healCasted, "Heal any member of the teams");
+const fastHeal2 = new PlayerSpell("Fast 2", "Fast heal", fastHealIcon, 160, 30, 2, 400, healCasted, "Fast and big, but mana costly");
+const slowHeal1 = new PlayerSpell("Big", "Big heal", slowHealIcon, 140, 90, 3, 500, healCasted, "Mana efficient, but slow to cast");
+const slowHeal2 = new PlayerSpell("Big 2", "Big heal", slowHealIcon, 200, 90, 4, 800, healCasted, "Big and efficient, but slow to cast");
+const hotHeal = new PlayerSpell("HOT", "Heal over time", hotHealIcon, 80, 10, 5, 400 / 20, hotHealCaster, "Heal a little on every tick");
+const aoeHeal = new PlayerSpell("AOE", "Heal all teams", aoeHealIcon, 120, 60, 6, 500, aoeHealCasted, "Share heal by all the teams");
 
 
+function getPlayerSpellStats(spell) {
+    let minHeal = Math.floor(spell.power * (100 + playerStat.healPower) / 100);
+    let maxHeal = Math.floor(spell.power * (100 + playerStat.healPower + 10) / 100);
+    let suffix = "";
+    let crit = playerStat.crit;
+    if (spell.name == "HOT") {
+        crit = 0;
+        suffix = " over 20 sec"
+    }
+    if (spell.name == "AOE") {
+        minHeal = Math.floor(minHeal / teams.length);
+        maxHeal = Math.floor(maxHeal / teams.length);
+    }
+    let castingTimeSec = Math.ceil(10 * spell.castingTime * 100 / (30 * (100 + playerStat.haste))) / 10;
+    let mana = spell.mana;
+    return { minHeal, maxHeal, suffix, crit, castingTimeSec, mana };
+}
 function trueHeal(power) {
     const poweredHeal = Math.floor(power * (100 + playerStat.healPower + Math.random() * 10) / 100);
     return poweredHeal;
@@ -957,7 +971,7 @@ function healCasted(stat, target) {
     target.onHeal(trueHeal(stat.power * (isCrit ? 3 : 1)), isCrit);
 }
 function hotHealCaster(stat, target) {
-    target.pushBuff(new CharacterBuffEffect("HOT", target, stat.icon, 30, 30 * 20, stat, healCasted));
+    target.pushBuff(new CharacterBuffEffect("Heal over time", target, stat.icon, 30, 30 * 20, stat, `Heal on each tick`, healCasted));
 }
 function aoeHealCasted(stat, target) {
     const heal = trueHeal(stat.power / teams.length);
@@ -967,7 +981,7 @@ function aoeHealCasted(stat, target) {
 }
 
 class CharacterBuffEffect {
-    constructor(name, character, icon, period, duration, stat, onTick) {
+    constructor(name, character, icon, period, duration, stat, description, onTick) {
         this.name = name;
         this.character = character;
         this.icon = icon;
@@ -976,6 +990,7 @@ class CharacterBuffEffect {
         this.duration = duration;
         this.onTick = onTick;
         this.stat = stat;
+        this.description = description;
     }
     update() {
         if (tickNumber == this.start) {
@@ -990,6 +1005,13 @@ class CharacterBuffEffect {
         }
         return false;
     }
+    paintScale(x, y, width, height) {
+        if (this.icon.paintScale) {
+            this.icon.paintScale(x, y, width, height);
+        } else {
+            ctx.drawImage(this.icon, x, y, width, height);
+        }
+    }
 }
 
 let spells = [
@@ -998,6 +1020,7 @@ let spells = [
 ];
 
 class PlayerStat {
+    static left = 276;
     constructor() {
         this.maxMana = 800;
         this.mana = 800;
@@ -1010,24 +1033,24 @@ class PlayerStat {
         this.crit = 0;
     }
     paint() {
-        const left = 300;
+        const width = 248;
         const top = 420;
 
         ctx.beginPath();
         ctx.lineWidth = "1";
         ctx.fillStyle = "blue";
-        ctx.rect(left, top + 10, this.mana * 200 / this.maxMana, 20);
+        ctx.rect(PlayerStat.left, top + 10, this.mana * width / this.maxMana, 20);
         ctx.fill();
 
         ctx.fillStyle = "green";
         ctx.font = "12px Arial";
         let label = "" + this.mana + " ( +" + this.manaRegen + ") / " + this.maxMana;
-        ctx.fillText(label, left + 80, top + 24);
+        ctx.fillText(label, PlayerStat.left + 80, top + 24);
 
         ctx.beginPath();
         ctx.lineWidth = "1";
         ctx.strokeStyle = "gray";
-        ctx.rect(left, top + 10, 200, 20);
+        ctx.rect(PlayerStat.left + 1, top + 10, width - 2, 20);
         ctx.stroke();
     }
     update() {
@@ -1044,6 +1067,8 @@ class Board {
     constructor() {
         allAnimations = [];
         characterMenus = [];
+        toolTip = null;
+        playerCastingBar = null;
         for (let i = 0; i < teams.length; i++) {
             characterMenus.push(new CharacterMenu(teams[i], i));
             teams[i].life = teams[i].maxLife;
@@ -1061,7 +1086,7 @@ class Board {
         this.spellButtons = [];
         for (let i = 0; i < spells.length; i++) {
             const button = new SpellButton(spells[i]);
-            button.x = 300 + i * (button.width + 2);
+            button.x = PlayerStat.left + i * (button.width + 2);
             button.y = CanvasHeight - button.height - 20;
             this.spellButtons.push(button)
         }
@@ -1082,7 +1107,7 @@ class Board {
     }
 
     paint() {
-        if(toolTip)
+        if (toolTip)
             toolTip.paint();
         for (const c of teams) {
             c.paint();
@@ -1156,6 +1181,7 @@ class Board {
         for (const s of this.spellButtons) {
             if (isInside(s, event)) {
                 s.click(this.spellButtons);
+                return true;
             }
         }
         let selectedChar = null;
@@ -1164,15 +1190,21 @@ class Board {
                 selectedChar = m.character;
             }
         }
+        if (isInside(toolTip, event)) {
+            toolTip.click(event);
+            return true;
+        }
         if (selectedChar != null) {
-            let spell = this.spellButtons.find(s => s.selected);            
+            let spell = this.spellButtons.find(s => s.selected);
             if (spell) {
-                spell.cast(selectedChar);        
+                spell.cast(selectedChar);
             } else {
                 toolTip = new CharacterTooltip(selectedChar);
             }
-            
+            return true;
         }
+        toolTip = null;
+        return false;
     }
 }
 
@@ -1299,26 +1331,28 @@ class DeadScreen {
     }
 }
 class CharacterTooltip {
-    constructor(character){
+    constructor(character) {
         this.character = character;
         this.x = CanvasWidth - 250;
         this.y = CanvasHeight - 150;
         this.width = 250;
         this.height = 150;
+        this.buffY = this.y + this.height - 20 - 8;
+        this.buffX = this.x + 8 + 56;
     }
-    paint(){
+    paint() {
         ctx.beginPath();
         ctx.lineWidth = "1";
         ctx.fillStyle = "#303030";
         ctx.rect(this.x, this.y, this.width, this.height);
         ctx.fill();
-        
+
         let cursorY = this.y + 22;
         let cursorX = this.x + 8;
 
         ctx.fillStyle = this.character.isVilain ? "red" : "green";
         ctx.font = "bold 18px Verdana";
-        ctx.fillText(this.character.name,cursorX, cursorY);
+        ctx.fillText(this.character.name, cursorX, cursorY);
         cursorY += 18;
 
         ctx.fillStyle = "white";
@@ -1327,7 +1361,7 @@ class CharacterTooltip {
         ctx.fillText(`Level: ${lvl}`, cursorX, cursorY);
         cursorY += 16;
 
-        let dmg = this.character.spells[0].stat.dmg;        
+        let dmg = this.character.spells[0].stat.dmg;
         let cooldown = Math.floor(0.34 * this.character.spells[0].stat.cooldown * (100 + this.character.slow) / (100 + this.character.haste)) / 10;
         ctx.fillText(`Damage: ${dmg} every ${cooldown} seconds`, cursorX, cursorY);
         cursorY += 16;
@@ -1340,26 +1374,123 @@ class CharacterTooltip {
         ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
         cursorY += 16;
 
-        ctx.fillText(`Dodge chance: ${this.character.dodge}%`, cursorX, cursorY);        
+        ctx.fillText(`Dodge chance: ${this.character.dodge}%`, cursorX, cursorY);
+        cursorY += 16;
+        if (this.character.buffs.length >= 1) {
+            ctx.fillText(`Effects:`, this.x + 8, this.buffY + 16);
+        }
+        for (let i = 0; i < this.character.buffs.length; i++) {
+            const buffX = this.buffX + 24 * i;
+            ctx.beginPath();
+            ctx.lineWidth = "1";
+            ctx.fillStyle = "white";
+            ctx.rect(buffX, this.buffY, 22, 22);
+            ctx.fill();
+            this.character.buffs[i].paintScale(buffX + 1, this.buffY + 1, 20, 20)
+        }
+
+    }
+    click(event) {
+        for (let i = 0; i < this.character.buffs.length; i++) {
+            const buffX = this.buffX + 24 * i;
+            if (isInside({ x: buffX, y: this.buffY, width: 20, height: 20 }, event)) {
+                toolTip = new BuffTooltip(this.character.buffs[i]);
+                return true;
+            }
+        }
+        toolTip = null;
+        return false;
+    }
+}
+class BuffTooltip {
+    constructor(buff) {
+        this.buff = buff;
+        this.x = CanvasWidth - 250;
+        this.y = CanvasHeight - 150;
+        this.width = 250;
+        this.height = 150;
+    }
+    paint() {
+        ctx.beginPath();
+        ctx.lineWidth = "1";
+        ctx.fillStyle = "#303030";
+        ctx.rect(this.x, this.y, this.width, this.height);
+        ctx.fill();
+
+        let cursorY = this.y + 22;
+        let cursorX = this.x + 8;
+
+        ctx.fillStyle = "yellow";
+        ctx.font = "bold 18px Verdana";
+        ctx.fillText(this.buff.name, cursorX, cursorY);
+        cursorY += 18;
+
+        ctx.fillStyle = "white";
+        ctx.font = "12px Verdana";
+        ctx.fillText(`${this.buff.description}`, cursorX, cursorY);
         cursorY += 16;
     }
-    click(event){
+    click(event) {
         toolTip = null;
+        return true;
+    }
+}
+class SpellTooltip {
+    constructor(spell) {
+        this.spell = spell;
+        this.x = CanvasWidth - 250;
+        this.y = CanvasHeight - 150;
+        this.width = 250;
+        this.height = 150;
+        this.spellStats = getPlayerSpellStats(spell);
+    }
+    paint() {
+        ctx.beginPath();
+        ctx.lineWidth = "1";
+        ctx.fillStyle = "#303030";
+        ctx.rect(this.x, this.y, this.width, this.height);
+        ctx.fill();
+
+        let cursorY = this.y + 22;
+        let cursorX = this.x + 8;
+
+        ctx.fillStyle = "green";
+        ctx.font = "bold 18px Verdana";
+        ctx.fillText(this.spell.fullName, cursorX, cursorY);
+        cursorY += 18;
+
+        ctx.fillStyle = "white";
+        ctx.font = "12px Verdana";
+        ctx.fillText(`${this.spell.description}`, cursorX, cursorY);
+        cursorY += 16;
+        ctx.fillText(`Heal: ${this.spellStats.minHeal} - ${this.spellStats.maxHeal} ${this.spellStats.suffix}`, cursorX, cursorY);
+        cursorY += 16;
+        ctx.fillText(`Mana: ${this.spellStats.mana}`, cursorX, cursorY);
+        cursorY += 16;
+        ctx.fillText(`Casting: ${this.spellStats.castingTimeSec} sec`, cursorX, cursorY);
+        cursorY += 16;
+        ctx.fillText(`Crit chance: ${this.spellStats.crit}%`, cursorX, cursorY);
+    }
+    click(event) {
+        toolTip = null;
+        return true;
     }
 }
 let toolTip;
 
 let currentPage = new StartMenu();
 // Debug mode:
-if(window.location.search){
+if (window.location.search) {
     const params = new URLSearchParams(window.location.search);
     const lvl = params.get("lvl");
-    if(lvl){
+    if (lvl) {
         currentLevel = parseInt(lvl) - 1;
-        teams = [heroesFactory.createPelin(), heroesFactory.createKnight(), heroesFactory.createWitch(), heroesFactory.createHunter()]; 
+        teams = [heroesFactory.createPelin(), heroesFactory.createKnight(), heroesFactory.createWitch(), heroesFactory.createHunter()
+            , heroesFactory.createHunter(), heroesFactory.createHunter(), heroesFactory.createHunter()
+        ];
         currentPage = new SelectUpgradeScreen();
-        toolTip = new CharacterTooltip(teams[0]);
-    }  
+        spells = [aoeHeal, slowHeal2, fastHeal1, fastHeal2, hotHeal]
+    }
 }
 const tickDuration = 1000.0 / 30;
 function tick() {
@@ -1376,7 +1507,7 @@ function paint() {
     currentPage.paint();
 }
 function isInside(control, event) {
-    if(!control){
+    if (!control) {
         return false;
     }
     return event.offsetX >= control.x && event.offsetX < control.x + control.width
@@ -1392,9 +1523,6 @@ function onmousedown(event) {
                 c.click(event);
             }
         }
-    }
-    if(isInside(toolTip, event)){
-        toolTip.click(event);
     }
 }
 
