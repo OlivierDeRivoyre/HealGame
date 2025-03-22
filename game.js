@@ -915,7 +915,7 @@ class SpellButton {
     click(spellButtons) {
         this.selected = !this.selected;
         if (this.selected) {
-            toolTip = new SpellTooltip(this.spell);
+            tooltip.current = new SpellTooltip(this.spell);
             for (let s of spellButtons) {
                 if (s != this) {
                     s.selected = false;
@@ -923,7 +923,7 @@ class SpellButton {
             }
         } else if (!this.selected) {
             playerCastingBar = null;
-            toolTip = null;
+            tooltip.current = null;
         }
     }
     cast(target) {
@@ -1067,7 +1067,7 @@ class Board {
     constructor() {
         allAnimations = [];
         characterMenus = [];
-        toolTip = null;
+        tooltip.current = null;
         playerCastingBar = null;
         for (let i = 0; i < teams.length; i++) {
             characterMenus.push(new CharacterMenu(teams[i], i));
@@ -1107,8 +1107,8 @@ class Board {
     }
 
     paint() {
-        if (toolTip)
-            toolTip.paint();
+        if (tooltip)
+            tooltip.paint();
         for (const c of teams) {
             c.paint();
         }
@@ -1190,8 +1190,8 @@ class Board {
                 selectedChar = m.character;
             }
         }
-        if (isInside(toolTip, event)) {
-            toolTip.click(event);
+        if (isInside(tooltip, event)) {
+            tooltip.click(event);
             return true;
         }
         if (selectedChar != null) {
@@ -1199,11 +1199,11 @@ class Board {
             if (spell) {
                 spell.cast(selectedChar);
             } else {
-                toolTip = new CharacterTooltip(selectedChar);
+                tooltip.current = new CharacterTooltip(selectedChar);
             }
             return true;
         }
-        toolTip = null;
+        tooltip.current = null;
         return false;
     }
 }
@@ -1330,25 +1330,45 @@ class DeadScreen {
         currentPage = new StartMenu();
     }
 }
-class CharacterTooltip {
-    constructor(character) {
-        this.character = character;
+class Tooltip{
+    constructor() {
+        this.current = null;
+        this.isMinimized = false;
         this.x = CanvasWidth - 250;
         this.y = CanvasHeight - 150;
         this.width = 250;
-        this.height = 150;
-        this.buffY = this.y + this.height - 20 - 8;
-        this.buffX = this.x + 8 + 56;
+        this.height = 150;        
     }
     paint() {
+        if(!this.current){
+            return;
+        }
         ctx.beginPath();
         ctx.lineWidth = "1";
         ctx.fillStyle = "#303030";
         ctx.rect(this.x, this.y, this.width, this.height);
         ctx.fill();
-
-        let cursorY = this.y + 22;
-        let cursorX = this.x + 8;
+        this.current.paint(this);
+    }
+    click(event) {
+        if(!this.current){
+            return;
+        }
+        if(this.current.click){
+            this.current.click(event);
+        }
+    }
+}
+const tooltip = new Tooltip();
+class CharacterTooltip {
+    constructor(character) {
+        this.character = character;
+        this.buffY = tooltip.y + tooltip.height - 20 - 8;
+        this.buffX = tooltip.x + 8 + 56;
+    }
+    paint() {
+        let cursorY = tooltip.y + 22;
+        let cursorX = tooltip.x + 8;
 
         ctx.fillStyle = this.character.isVilain ? "red" : "green";
         ctx.font = "bold 18px Verdana";
@@ -1377,7 +1397,7 @@ class CharacterTooltip {
         ctx.fillText(`Dodge chance: ${this.character.dodge}%`, cursorX, cursorY);
         cursorY += 16;
         if (this.character.buffs.length >= 1) {
-            ctx.fillText(`Effects:`, this.x + 8, this.buffY + 16);
+            ctx.fillText(`Effects:`, tooltip.x + 8, this.buffY + 16);
         }
         for (let i = 0; i < this.character.buffs.length; i++) {
             const buffX = this.buffX + 24 * i;
@@ -1394,31 +1414,22 @@ class CharacterTooltip {
         for (let i = 0; i < this.character.buffs.length; i++) {
             const buffX = this.buffX + 24 * i;
             if (isInside({ x: buffX, y: this.buffY, width: 20, height: 20 }, event)) {
-                toolTip = new BuffTooltip(this.character.buffs[i]);
+                tooltip.current = new BuffTooltip(this.character.buffs[i]);
                 return true;
             }
         }
-        toolTip = null;
+        tooltip.current = null;
         return false;
     }
 }
 class BuffTooltip {
     constructor(buff) {
         this.buff = buff;
-        this.x = CanvasWidth - 250;
-        this.y = CanvasHeight - 150;
-        this.width = 250;
-        this.height = 150;
     }
     paint() {
-        ctx.beginPath();
-        ctx.lineWidth = "1";
-        ctx.fillStyle = "#303030";
-        ctx.rect(this.x, this.y, this.width, this.height);
-        ctx.fill();
-
-        let cursorY = this.y + 22;
-        let cursorX = this.x + 8;
+       
+        let cursorY = tooltip.y + 22;
+        let cursorX = tooltip.x + 8;
 
         ctx.fillStyle = "yellow";
         ctx.font = "bold 18px Verdana";
@@ -1431,28 +1442,18 @@ class BuffTooltip {
         cursorY += 16;
     }
     click(event) {
-        toolTip = null;
+        tooltip.current = null;
         return true;
     }
 }
 class SpellTooltip {
     constructor(spell) {
-        this.spell = spell;
-        this.x = CanvasWidth - 250;
-        this.y = CanvasHeight - 150;
-        this.width = 250;
-        this.height = 150;
-        this.spellStats = getPlayerSpellStats(spell);
+        this.spell = spell;       
+        this.spellStats = getPlayerSpellStats(spell);        
     }
     paint() {
-        ctx.beginPath();
-        ctx.lineWidth = "1";
-        ctx.fillStyle = "#303030";
-        ctx.rect(this.x, this.y, this.width, this.height);
-        ctx.fill();
-
-        let cursorY = this.y + 22;
-        let cursorX = this.x + 8;
+        let cursorY = tooltip.y + 22;
+        let cursorX = tooltip.x + 8;
 
         ctx.fillStyle = "green";
         ctx.font = "bold 18px Verdana";
@@ -1472,11 +1473,11 @@ class SpellTooltip {
         ctx.fillText(`Crit chance: ${this.spellStats.crit}%`, cursorX, cursorY);
     }
     click(event) {
-        toolTip = null;
+        tooltip.current = null;
         return true;
     }
 }
-let toolTip;
+
 
 let currentPage = new StartMenu();
 // Debug mode:
