@@ -1337,7 +1337,7 @@ class Tooltip{
         this.x = CanvasWidth - 250;
         this.y = CanvasHeight - 150;
         this.width = 250;
-        this.height = 150;        
+        this.height = 150;                
     }
     paint() {
         if(!this.current){
@@ -1346,17 +1346,24 @@ class Tooltip{
         ctx.beginPath();
         ctx.lineWidth = "1";
         ctx.fillStyle = "#303030";
-        ctx.rect(this.x, this.y, this.width, this.height);
-        ctx.fill();
-        this.current.paint(this);
+        if(this.isMinimized){
+            ctx.rect(this.x + this.width - 40, this.y + this.height - 24, 40, 24);
+        } else {        
+            ctx.rect(this.x, this.y, this.width, this.height);
+        }
+        ctx.fill();     
+        if(!this.isMinimized){
+            this.current.paint();
+        }
     }
     click(event) {
         if(!this.current){
             return;
+        } 
+        if(!this.isMinimized && this.current.click && this.current.click(event)){
+            return;            
         }
-        if(this.current.click){
-            this.current.click(event);
-        }
+        this.isMinimized = !this.isMinimized;
     }
 }
 const tooltip = new Tooltip();
@@ -1417,8 +1424,7 @@ class CharacterTooltip {
                 tooltip.current = new BuffTooltip(this.character.buffs[i]);
                 return true;
             }
-        }
-        tooltip.current = null;
+        }     
         return false;
     }
 }
@@ -1440,11 +1446,7 @@ class BuffTooltip {
         ctx.font = "12px Verdana";
         ctx.fillText(`${this.buff.description}`, cursorX, cursorY);
         cursorY += 16;
-    }
-    click(event) {
-        tooltip.current = null;
-        return true;
-    }
+    }    
 }
 class SpellTooltip {
     constructor(spell) {
@@ -1471,11 +1473,7 @@ class SpellTooltip {
         ctx.fillText(`Casting: ${this.spellStats.castingTimeSec} sec`, cursorX, cursorY);
         cursorY += 16;
         ctx.fillText(`Crit chance: ${this.spellStats.crit}%`, cursorX, cursorY);
-    }
-    click(event) {
-        tooltip.current = null;
-        return true;
-    }
+    }    
 }
 
 
