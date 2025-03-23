@@ -590,7 +590,7 @@ class UpgradeFactory {
     addLevelUpForOneHero(array) {
         const hero = teams[getRandomInt(0, teams.length)];
         if (hero.canHaveBonus("life")) {
-            let incr = 100 + hero.talents.life * 100;
+            let incr = 200 + hero.talents.life * 100;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase max life of ${hero.name}`, `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function () {
                 hero.talents.life++;
                 hero.maxLife += incr;
@@ -606,7 +606,7 @@ class UpgradeFactory {
             });
         }
         if (hero.canHaveBonus("damage")) {
-            let incr = 5;
+            let incr = 10;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase damage of ${hero.name}`, `From ${hero.spells[0].stat.dmg}`, `To ${hero.spells[0].stat.dmg + incr}`], function () {
                 hero.talents.damage++;
                 hero.spells[0].stat.dmg += incr;
@@ -622,7 +622,7 @@ class UpgradeFactory {
             });
         }
         if (hero.canHaveBonus("dodge")) {
-            let incr = Math.max(3, 10 - hero.talents.dodge);
+            let incr = Math.max(3, 12 - hero.talents.dodge);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase dodge chance`, `From ${hero.dodge} %`, `To ${hero.dodge + incr} %`], function () {
                 hero.talents.dodge++;
                 hero.dodge += incr;
@@ -638,7 +638,7 @@ class UpgradeFactory {
             });
         }
         if (hero.canHaveBonus("mana")) {
-            let incr = 100 + hero.talents.mana * 100;
+            let incr = 200 + hero.talents.mana * 100;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana`, `From ${playerStat.maxMana}`, `To ${playerStat.maxMana + incr}`], function () {
                 hero.talents.mana++;
                 playerStat.maxMana += incr;
@@ -655,7 +655,7 @@ class UpgradeFactory {
             });
         }
         if (hero.canHaveBonus("healPower")) {
-            let incr = 10;
+            let incr = 20;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase heal bonus`, `From ${playerStat.healPower} %`, `To ${playerStat.healPower + incr} %`], function () {
                 hero.talents.regen++;
                 playerStat.healPower += incr;
@@ -730,7 +730,7 @@ class Vilains {
     static  lvl2() {
         const sprite = new Sprite(tileSet1, 736, 80, 64, 48, 2);
         let vilain = new Character("Green Bag", sprite);
-        vilain.maxLife = 800;
+        vilain.maxLife = 600;
         vilain.armor = 10;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 80, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
@@ -739,81 +739,81 @@ class Vilains {
     static lvl3() {
         const sprite = new Sprite(tileSet1, 736, 124, 64, 48, 2);
         let vilain = new Character("Small Devil", sprite);
-        vilain.maxLife = 1000;
+        vilain.maxLife = 800;
         vilain.armor = 20;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 100, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 80, 40, 7), castSimpleProjectile));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 4));
         return vilain;
     }
     static lvl4() {
         const sprite = new Sprite(tileSet1, 736, 220, 64, 36, 2);
         let vilain = new Character("Brown Mud", sprite);
-        vilain.maxLife = 1200;
+        vilain.maxLife = 1000;
         vilain.armor = 40;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 85, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
     static lvl5() {
         const sprite = new Sprite(tileSet1, 860, 220, 64, 36, 2);
         let vilain = new Character("Poison Mud", sprite);
-        vilain.maxLife = 1500;
+        vilain.maxLife = 1100;
         vilain.armor = 50;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
     static lvl6() {
         const sprite = new Sprite(tileSet1, 736, 264, 64, 44, 2);
         let vilain = new Character("Crying Mummy", sprite);
-        vilain.maxLife = 1700;
+        vilain.maxLife = 1200;
         vilain.armor = 60;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
     static lvl7() {
         const sprite = new Sprite(tileSet1, 860, 264, 64, 44, 2);
         let vilain = new Character("Frost Mummy", sprite);
-        vilain.maxLife = 2000;
+        vilain.maxLife = 1300;
         vilain.armor = 60;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 110, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
     static  lvl8() {
         const sprite = new Sprite(tileSet1, 736, 360, 64, 48, 2);
         let vilain = new Character("Orc", sprite);
-        vilain.maxLife = 2500;
+        vilain.maxLife = 1400;
         vilain.armor = 70;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
     static   lvl9() {
         const sprite = new Sprite(tileSet1, 736, 312, 64, 48, 2);
         let vilain = new Character("Chaman Orc", sprite);
-        vilain.maxLife = 2500;
-        vilain.armor = 100;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.maxLife = 1500;
+        vilain.armor = 50;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 130, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
     static  lvl10() {
         const sprite = new Sprite(tileSet1, 736, 412, 64, 48, 2);
         let vilain = new Character("Enraged Orc", sprite);
-        vilain.maxLife = 3000;
+        vilain.maxLife = 1600;
         vilain.armor = 80;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 80, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
     static  giantOrc() {
         const sprite = new Sprite(tileSet1, 40, 768, 492, 68, 8);
         let vilain = new Character("Giant Orc", sprite);
-        vilain.maxLife = 6000;
-        vilain.armor = 120;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.maxLife = 2000;
+        vilain.armor = 80;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
@@ -821,16 +821,16 @@ class Vilains {
     static lvl11() {
         const sprite = new Sprite(tileSet1, 736, 454, 64, 48, 2);
         let vilain = new Character("Dark Wizard", sprite);
-        vilain.maxLife = 3000;
-        vilain.armor = 80;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.maxLife = 1700;
+        vilain.armor = 40;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 200, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
     static  lvl12() {
         const sprite = new Sprite(tileSet1, 736, 504, 64, 48, 2);
         let vilain = new Character("The Thing", sprite);
-        vilain.maxLife = 3400;
+        vilain.maxLife = 2000;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
@@ -839,54 +839,58 @@ class Vilains {
     static  lvl13() {
         const sprite = new Sprite(tileSet1, 736, 552, 64, 48, 2);
         let vilain = new Character("Little Devil", sprite);
-        vilain.maxLife = 4000;
+        vilain.maxLife = 2200;
         vilain.armor = 80;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
     static lvl14() {
         const sprite = new Sprite(tileSet1, 736, 604, 64, 36, 2);
         let vilain = new Character("Death Angel", sprite);
-        vilain.maxLife = 4500;
+        vilain.maxLife = 1500;
         vilain.armor = 40;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 80, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
     static  lvl15() {
         const sprite = new Sprite(tileSet1, 736, 644, 64, 48, 2);
         let vilain = new Character("Punk-in", sprite);
-        vilain.maxLife = 4500;
-        vilain.armor = 80;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.maxLife = 2500;
+        vilain.armor = 100;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
     static lvl16() {
         const sprite = new Sprite(tileSet1, 736, 696, 64, 48, 2);
         let vilain = new Character("Mad Doctor", sprite);
-        vilain.maxLife = 4500;
-        vilain.armor = 80;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.maxLife = 2500;
+        vilain.armor = 50;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 250, 50, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
     static  lvl16() {
         const sprite = new Sprite(tileSet1, 736, 604, 64, 36, 2);
         let vilain = new Character("Little Devil", sprite);
-        vilain.maxLife = 5000;
-        vilain.armor = 80;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.maxLife = 3000;
+        vilain.armor = 100;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 25, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
     static lvl17() {
         const sprite = new Sprite(tileSet1, 736, 746, 64, 48, 2);
         let vilain = new Character("Snail", sprite);
-        vilain.maxLife = 4500;
-        vilain.armor = 120;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.maxLife = 4000;
+        vilain.armor = 200;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 300, 80, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
@@ -895,19 +899,18 @@ class Vilains {
         let vilain = new Character("Big Zombie", sprite);
         vilain.maxLife = 5000;
         vilain.armor = 100;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 100, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 200, 50, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.4, 50));
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
-
     static giantDemon() {
         const sprite = new Sprite(tileSet1, 40, 856, 492, 68, 8);
         let vilain = new Character("Giant Demon", sprite);
-        vilain.maxLife = 7000;
-        vilain.armor = 150;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.maxLife = 10000;
+        vilain.armor = 100;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 20, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 75));
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
@@ -1080,8 +1083,10 @@ class SpellButton {
     }
     paint() {
         if(this.icon.paintScale){
-            ctx.beginPath();        
-            if(this.selected){    
+            ctx.beginPath();
+            if(playerStat.mana < this.spell.mana){
+                ctx.fillStyle = "#f99";
+            } else if(this.selected){    
                 ctx.fillStyle = "#999";
             } else {
                 ctx.fillStyle = "#ddd";
@@ -1092,11 +1097,6 @@ class SpellButton {
         } else {
             ctx.drawImage(this.icon, this.x, this.y, this.width, this.height);
         }
-      //  ctx.fillStyle = "black";
-       // ctx.font = "16px Arial";
-      //  let label = this.spell.name
-      //  ctx.fillText(label, this.x + 4, this.y + 14);
-
         if (this.selected) {
             ctx.beginPath();
             ctx.lineWidth = "3";
@@ -1234,8 +1234,20 @@ class PlayerStat {
         ctx.beginPath();
         ctx.lineWidth = "1";
         ctx.fillStyle = "blue";
-        ctx.rect(PlayerStat.left, top + 10, this.mana * width / this.maxMana, 20);
+        const manaPx = this.mana * width / this.maxMana;
+        ctx.rect(PlayerStat.left, top + 10, manaPx, 20);
         ctx.fill();
+        
+        const selectedSpellButton = currentPage.spellButtons.find(s => s.selected);
+        let selectedSpell = playerCastingBar ? playerCastingBar.spell : selectedSpellButton ? selectedSpellButton.spell : null;
+        if(selectedSpell && selectedSpell.mana < this.mana){
+            const selectedWidth = selectedSpell.mana * width / this.maxMana;
+            ctx.beginPath();
+            ctx.lineWidth = "0";
+            ctx.fillStyle = "#33f";
+            ctx.rect(PlayerStat.left + manaPx - selectedWidth, top + 10, selectedWidth, 20);
+            ctx.fill();
+        }
 
         ctx.fillStyle = "green";
         ctx.font = "12px Arial";
