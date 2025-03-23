@@ -103,6 +103,7 @@ const deadSprite = new Sprite(tileSet2, 0, 0, 32, 32, 1);
 const greenPotionSprite = new Sprite(tileSet1, 640, 672, 28, 28, 1);
 greenPotionSprite.forbidRotate = true;
 const brokenArmorSprite = new Sprite(tileSet2, 160, 128, 32, 32, 1);
+const invulnerableSprite = new Sprite(tileSet2, 64, 192, 32, 32, 1);
 
 class Character {
     constructor(name, sprite) {
@@ -754,6 +755,9 @@ class Vilains {
         vilain.isVilain = true;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 100, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.4, 50));
+        vilain.spells.push(new InvulnerableBuffTrigger(75, 8*30));
+        vilain.spells.push(new InvulnerableBuffTrigger(40, 8*30));
+        vilain.spells.push(new InvulnerableBuffTrigger(20, 8*30));
         return vilain;
     }
 }
@@ -825,6 +829,33 @@ class HasteBuffTrigger {
                 spell.isRunning = false;
                 self.haste -= spell.hasteIncr;
             }
+        });
+        self.pushBuff(buff);
+    }
+}
+
+class InvulnerableBuffTrigger {
+    constructor(lifeRatio, duration) {
+        this.lifeRatio = lifeRatio;
+        this.duration = duration;
+        this.nextLifeTrigger = null;     
+        this.isDone = false;
+    }
+    update(self) {
+        if (this.isDone) {
+            return;
+        }
+        if (this.nextLifeTrigger == null) {
+            this.nextLifeTrigger = Math.floor(self.maxLife * this.lifeRatio / 100);         
+        }
+        if (self.life > this.nextLifeTrigger) {
+            return;
+        }        
+        this.isDone = true;
+        self.dodge += 100;       
+        const durationSec = Math.floor(this.duration / 3) / 10;
+        const buff = new CharacterBuffEffect("Invulnerable", self, invulnerableSprite, this.duration, this.duration, {}, `Gain 100% invulnerable for ${durationSec} sec`, function () {                            
+            self.dodge -= 100;                            
         });
         self.pushBuff(buff);
     }
@@ -1364,7 +1395,7 @@ class Tooltip{
             return;            
         }
         this.isMinimized = !this.isMinimized;
-    }
+    } 
 }
 const tooltip = new Tooltip();
 class CharacterTooltip {
@@ -1487,8 +1518,8 @@ if (window.location.search) {
         teams = [heroesFactory.createPelin(), heroesFactory.createKnight(), heroesFactory.createWitch(), heroesFactory.createHunter()
             , heroesFactory.createHunter(), heroesFactory.createHunter(), heroesFactory.createHunter()
         ];
-        currentPage = new SelectUpgradeScreen();
         spells = [aoeHeal, slowHeal2, fastHeal1, fastHeal2, hotHeal]
+        currentPage = new SelectUpgradeScreen();
     }
 }
 const tickDuration = 1000.0 / 30;
