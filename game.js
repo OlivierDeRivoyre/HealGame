@@ -1395,6 +1395,9 @@ class Board {
                 spell.cast(selectedChar);
             } else {
                 tooltip.current = new CharacterTooltip(selectedChar);
+                if(selectedChar.isVilain){
+                    tooltip.isMinimized = false;
+                }
             }
             return true;
         }
@@ -1616,7 +1619,7 @@ class CharacterTooltip {
         for (let i = 0; i < this.character.buffs.length; i++) {
             const buffX = this.buffX + 24 * i;
             if (isInside({ x: buffX, y: this.buffY, width: 20, height: 20 }, event)) {
-                tooltip.current = new BuffTooltip(this.character.buffs[i]);
+                tooltip.current = new BuffTooltip(this.character.buffs[i]);               
                 return true;
             }
         }     
