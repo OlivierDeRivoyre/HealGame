@@ -22,9 +22,6 @@ function getRandomInt(min, max) {
 
 const tileSet1 = loadImg("0x72_DungeonTilesetII_v1.7x2");
 const tileSet2 = loadImg("Shikashi");
-
-
-const shieldHealIcon = loadImg("48");
 const enragedIcon = loadImg("106");
 const hasteBuffIcon = loadImg("76");
 
@@ -560,7 +557,7 @@ class UpgradeFactory {
     }
     proposeSpell(spell, desc) {
         return {
-            sprite: new Sprite(spell.icon, 0, 0, 48, 48, 1),
+            sprite: spell.icon,
             desc: desc,
             click: () => {
                 spells.push(spell);
@@ -716,7 +713,7 @@ class Vilains {
             Vilains.bigZombie,
             Vilains.giantDemon
         ];           
-        const vilain = factory[level % factory.length]();   
+        const vilain = factory[(level - 1) % factory.length]();   
         vilain.life = vilain.maxLife;
         vilain.reverse = true;
         vilain.isVilain = true;
@@ -1685,7 +1682,7 @@ if (window.location.search) {
         teams = [heroesFactory.createPelin(), heroesFactory.createKnight(), heroesFactory.createWitch(), heroesFactory.createHunter()
             , heroesFactory.createHunter(), heroesFactory.createHunter(), heroesFactory.createHunter()
         ];
-        spells = [aoeHeal, slowHeal2, fastHeal1, fastHeal2, hotHeal]
+        spells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
         currentPage = new SelectUpgradeScreen();
     }
 }
