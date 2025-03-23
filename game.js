@@ -22,13 +22,11 @@ function getRandomInt(min, max) {
 
 const tileSet1 = loadImg("0x72_DungeonTilesetII_v1.7x2");
 const tileSet2 = loadImg("Shikashi");
-const hotHealIcon = loadImg("3")
-const fastHealIcon = loadImg("5")
-const slowHealIcon = loadImg("8")
-const shieldHealIcon = loadImg("48")
-const aoeHealIcon = loadImg("58")
-const enragedIcon = loadImg("106")
-const hasteBuffIcon = loadImg("76")
+
+
+const shieldHealIcon = loadImg("48");
+const enragedIcon = loadImg("106");
+const hasteBuffIcon = loadImg("76");
 
 class Sprite {
     constructor(tile, tx, ty, tWidth, tHeight, nbImage) {
@@ -86,7 +84,12 @@ class Sprite {
             x, y, width, height);
     }
 }
-
+const fastHealIcon = new Sprite(tileSet2, 416, 352, 32, 32, 1);
+const fastHeal2Icon = new Sprite(tileSet2, 480, 352, 32, 32, 1);
+const slowHealIcon = new Sprite(tileSet2, 0, 288, 32, 32, 1);
+const slowHeal2Icon = new Sprite(tileSet2, 448, 288, 32, 32, 1);
+const hotHealIcon = new Sprite(tileSet2, 160, 96, 32, 32, 1);
+const aoeHealIcon = new Sprite(tileSet2, 480, 96, 32, 32, 1);
 const healerSprite = new Sprite(tileSet1, 256, 340, 288, 48, 9);
 const witchSprite = new Sprite(tileSet1, 256, 274, 288, 48, 9);
 const redKnightSprite = new Sprite(tileSet1, 256, 148, 256, 48, 8);
@@ -141,7 +144,7 @@ class Character {
         }
         this.sprite.paint(this.x, this.y, spriteNumber, this.reverse);
         if (this.life <= 0) {
-            deadSprite.paint(this.x + 10, this.y + 10);
+            deadSprite.paint(this.x + 4, this.y + 10);
         }
     }
     update() {
@@ -238,6 +241,9 @@ class CharacterMenu {
     paint() {
         if (this.isLeft) {
             this.character.sprite.paint(this.x, this.y, 0);
+            if (this.character.life <= 0) {
+                deadSprite.paint(this.x + 4, this.y + 10);
+            }
             this.paintLifeBar(this.x + 40, this.y);
         } else {
             this.character.sprite.paint(this.x + this.width - 40, this.y, 0, true);
@@ -250,7 +256,6 @@ class CharacterMenu {
             this.character.buffs[i].paintScale(imgX, imgY, 20, 20);
         }
     }
-
     paintLifeBar(left, top) {
         ctx.beginPath();
         ctx.lineWidth = "1";
@@ -270,7 +275,6 @@ class CharacterMenu {
         ctx.stroke();
     }
 }
-
 class PnjSpell {
     constructor(stat, castFunc) {
         this.stat = stat;
@@ -408,7 +412,6 @@ class LabelAnim {
         ctx.fillText(this.label, Math.floor(this.x), Math.floor(this.y));
     }
 }
-
 class Heroes {
     createPelin() {
         const c = new Character("Pelin", healerSprite);
@@ -493,7 +496,6 @@ class Heroes {
     }
 }
 const heroesFactory = new Heroes();
-
 class UpgradeFactory {
 
     propose3Upgrades() {
@@ -762,13 +764,10 @@ class Vilains {
     }
 }
 const vilainsFactory = new Vilains();
-
-
 let currentLevel = 1;
 let teams = [];
 let mobs = [];
 let characterMenus = [];
-
 function castSimpleProjectile(stat, from) {
     let target = from.selectTarget();
     if (!target) return;
@@ -833,7 +832,6 @@ class HasteBuffTrigger {
         self.pushBuff(buff);
     }
 }
-
 class InvulnerableBuffTrigger {
     constructor(lifeRatio, duration) {
         this.lifeRatio = lifeRatio;
@@ -860,7 +858,6 @@ class InvulnerableBuffTrigger {
         self.pushBuff(buff);
     }
 }
-
 class PlayerSpell {
     constructor(name, fullName, icon, mana, castingTime, rank, power, effect, description) {
         this.name = name;
@@ -874,7 +871,6 @@ class PlayerSpell {
         this.description = description;
     }
 }
-
 class PlayerCasting {
     constructor(playerSpell, target) {
         this.spell = playerSpell;
@@ -883,7 +879,11 @@ class PlayerCasting {
         this.tick = 0;
     }
     update() {
-        this.tick++;
+        if(this.target.life <= 0){
+            playerCastingBar = null;
+            return;
+        }
+        this.tick++;        
         if (this.tick <= this.endTick) {
             return;
         }
@@ -912,7 +912,6 @@ class PlayerCasting {
         ctx.stroke();
     }
 }
-
 let playerCastingBar = null;
 
 class SpellButton {
@@ -926,12 +925,23 @@ class SpellButton {
         this.selected = false;
     }
     paint() {
-        ctx.drawImage(this.icon, this.x, this.y, this.width, this.height);
-
-        ctx.fillStyle = "yellow";
-        ctx.font = "12px Arial";
-        let label = this.spell.name
-        ctx.fillText(label, this.x + 8, this.y + 38);
+        if(this.icon.paintScale){
+            ctx.beginPath();        
+            if(this.selected){    
+                ctx.fillStyle = "#999";
+            } else {
+                ctx.fillStyle = "#ddd";
+            }
+            ctx.rect(this.x, this.y, this.width, this.height);
+            ctx.fill();
+            this.icon.paintScale(this.x, this.y, this.width, this.height);   
+        } else {
+            ctx.drawImage(this.icon, this.x, this.y, this.width, this.height);
+        }
+      //  ctx.fillStyle = "black";
+       // ctx.font = "16px Arial";
+      //  let label = this.spell.name
+      //  ctx.fillText(label, this.x + 4, this.y + 14);
 
         if (this.selected) {
             ctx.beginPath();
@@ -962,16 +972,16 @@ class SpellButton {
             return;
         }
         this.selected = false;
-        if (this.spell.mana <= playerStat.mana) {
+        if (this.spell.mana <= playerStat.mana && target.life > 0) {
             playerCastingBar = new PlayerCasting(this.spell, target);
         }
     }
 }
 
 const fastHeal1 = new PlayerSpell("Fast", "Fast heal", fastHealIcon, 100, 30, 1, 250, healCasted, "Heal any member of the teams");
-const fastHeal2 = new PlayerSpell("Fast 2", "Fast heal", fastHealIcon, 160, 30, 2, 400, healCasted, "Fast and big, but mana costly");
+const fastHeal2 = new PlayerSpell("Fast 2", "Fast heal II", fastHeal2Icon, 160, 30, 2, 400, healCasted, "Fast and big, but mana costly");
 const slowHeal1 = new PlayerSpell("Big", "Big heal", slowHealIcon, 140, 90, 3, 500, healCasted, "Mana efficient, but slow to cast");
-const slowHeal2 = new PlayerSpell("Big 2", "Big heal", slowHealIcon, 200, 90, 4, 800, healCasted, "Big and efficient, but slow to cast");
+const slowHeal2 = new PlayerSpell("Big 2", "Big heal II", slowHeal2Icon, 200, 90, 4, 800, healCasted, "Big and efficient, but slow to cast");
 const hotHeal = new PlayerSpell("HOT", "Heal over time", hotHealIcon, 80, 10, 5, 400 / 20, hotHealCaster, "Heal a little on every tick");
 const aoeHeal = new PlayerSpell("AOE", "Heal all teams", aoeHealIcon, 120, 60, 6, 500, aoeHealCasted, "Share heal by all the teams");
 
