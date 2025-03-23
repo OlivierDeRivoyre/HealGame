@@ -94,7 +94,6 @@ const healerSprite = new Sprite(tileSet1, 256, 340, 288, 48, 9);
 const witchSprite = new Sprite(tileSet1, 256, 274, 288, 48, 9);
 const redKnightSprite = new Sprite(tileSet1, 256, 148, 256, 48, 8);
 const elfSprite = new Sprite(tileSet1, 256, 84, 256, 44, 8);
-const bigZombySprite = new Sprite(tileSet1, 40, 668, 492, 68, 8);
 const arrowSprite = new Sprite(tileSet1, 644, 400, 20, 48, 1);
 const frostSprite = new Sprite(tileSet2, 352, 672, 32, 32, 1);
 const swordSprite = new Sprite(tileSet1, 640, 16, 28, 48, 1);
@@ -695,23 +694,35 @@ let upgradeFactory = new UpgradeFactory();
 let rerollsNumber = 2;
 class Vilains {
     createVilainOfLevel(level) {
-        let vilain = this.selectVilain(level);
+        const factory = [
+            Vilains.lvl1,
+            Vilains.lvl2,
+            Vilains.lvl3,
+            Vilains.lvl4,
+            Vilains.lvl5,
+            Vilains.lvl6,
+            Vilains.lvl7,
+            Vilains.lvl8,
+            Vilains.lvl9,            
+            Vilains.lvl10,
+            Vilains.giantOrc,   
+            Vilains.lvl11,
+            Vilains.lvl12,
+            Vilains.lvl13,
+            Vilains.lvl14,
+            Vilains.lvl15,
+            Vilains.lvl16,
+            Vilains.lvl17,   
+            Vilains.bigZombie,
+            Vilains.giantDemon
+        ];           
+        const vilain = factory[level % factory.length]();   
         vilain.life = vilain.maxLife;
         vilain.reverse = true;
         vilain.isVilain = true;
         return vilain;
-    }
-    selectVilain(level) {
-        switch (level) {
-            case 1: return this.lvl1();
-            case 2: return this.lvl2();
-            case 3: return this.lvl3();
-            case 4: return this.lvl4();
-            default: return this.createBigZombie();
-        }
-    }
-
-    lvl1() {
+    } 
+    static lvl1() {
         const sprite = new Sprite(tileSet1, 736, 32, 64, 48, 2);
         let vilain = new Character("Brown Bag", sprite);
         vilain.maxLife = 100;
@@ -719,8 +730,7 @@ class Vilains {
         vilain.spells.push(new EnragedAoeTrigger(0.5, 250));
         return vilain;
     }
-
-    lvl2() {
+    static  lvl2() {
         const sprite = new Sprite(tileSet1, 736, 80, 64, 48, 2);
         let vilain = new Character("Green Bag", sprite);
         vilain.maxLife = 800;
@@ -729,8 +739,7 @@ class Vilains {
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
-
-    lvl3() {
+    static lvl3() {
         const sprite = new Sprite(tileSet1, 736, 124, 64, 48, 2);
         let vilain = new Character("Small Devil", sprite);
         vilain.maxLife = 1000;
@@ -739,8 +748,7 @@ class Vilains {
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 4));
         return vilain;
     }
-
-    lvl4() {
+    static lvl4() {
         const sprite = new Sprite(tileSet1, 736, 220, 64, 36, 2);
         let vilain = new Character("Brown Mud", sprite);
         vilain.maxLife = 1200;
@@ -749,18 +757,167 @@ class Vilains {
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
-
-    createBigZombie() {
-        let vilain = new Character("Big Zombie", bigZombySprite);
-        vilain.maxLife = vilain.life = 5000;
-        vilain.reverse = true;
-        vilain.isVilain = true;
+    static lvl5() {
+        const sprite = new Sprite(tileSet1, 860, 220, 64, 36, 2);
+        let vilain = new Character("Poison Mud", sprite);
+        vilain.maxLife = 1500;
+        vilain.armor = 50;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static lvl6() {
+        const sprite = new Sprite(tileSet1, 736, 264, 64, 44, 2);
+        let vilain = new Character("Crying Mummy", sprite);
+        vilain.maxLife = 1700;
+        vilain.armor = 60;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static lvl7() {
+        const sprite = new Sprite(tileSet1, 860, 264, 64, 44, 2);
+        let vilain = new Character("Frost Mummy", sprite);
+        vilain.maxLife = 2000;
+        vilain.armor = 60;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static  lvl8() {
+        const sprite = new Sprite(tileSet1, 736, 360, 64, 48, 2);
+        let vilain = new Character("Orc", sprite);
+        vilain.maxLife = 2500;
+        vilain.armor = 70;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static   lvl9() {
+        const sprite = new Sprite(tileSet1, 736, 312, 64, 48, 2);
+        let vilain = new Character("Chaman Orc", sprite);
+        vilain.maxLife = 2500;
+        vilain.armor = 100;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static  lvl10() {
+        const sprite = new Sprite(tileSet1, 736, 412, 64, 48, 2);
+        let vilain = new Character("Enraged Orc", sprite);
+        vilain.maxLife = 3000;
+        vilain.armor = 80;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static  giantOrc() {
+        const sprite = new Sprite(tileSet1, 40, 768, 492, 68, 8);
+        let vilain = new Character("Giant Orc", sprite);
+        vilain.maxLife = 6000;
+        vilain.armor = 120;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        Vilains.addInvulnerableBuff(vilain);
+        return vilain;
+    }
+    static lvl11() {
+        const sprite = new Sprite(tileSet1, 736, 454, 64, 48, 2);
+        let vilain = new Character("Dark Wizard", sprite);
+        vilain.maxLife = 3000;
+        vilain.armor = 80;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static  lvl12() {
+        const sprite = new Sprite(tileSet1, 736, 504, 64, 48, 2);
+        let vilain = new Character("The Thing", sprite);
+        vilain.maxLife = 3400;
+        vilain.armor = 80;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static  lvl13() {
+        const sprite = new Sprite(tileSet1, 736, 552, 64, 48, 2);
+        let vilain = new Character("Little Devil", sprite);
+        vilain.maxLife = 4000;
+        vilain.armor = 80;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static lvl14() {
+        const sprite = new Sprite(tileSet1, 736, 604, 64, 36, 2);
+        let vilain = new Character("Death Angel", sprite);
+        vilain.maxLife = 4500;
+        vilain.armor = 40;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static  lvl15() {
+        const sprite = new Sprite(tileSet1, 736, 644, 64, 48, 2);
+        let vilain = new Character("Punk-in", sprite);
+        vilain.maxLife = 4500;
+        vilain.armor = 80;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static lvl16() {
+        const sprite = new Sprite(tileSet1, 736, 696, 64, 48, 2);
+        let vilain = new Character("Mad Doctor", sprite);
+        vilain.maxLife = 4500;
+        vilain.armor = 80;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static  lvl16() {
+        const sprite = new Sprite(tileSet1, 736, 604, 64, 36, 2);
+        let vilain = new Character("Little Devil", sprite);
+        vilain.maxLife = 5000;
+        vilain.armor = 80;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static lvl17() {
+        const sprite = new Sprite(tileSet1, 736, 746, 64, 48, 2);
+        let vilain = new Character("Snail", sprite);
+        vilain.maxLife = 4500;
+        vilain.armor = 120;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        return vilain;
+    }
+    static bigZombie() {
+        const sprite = new Sprite(tileSet1, 40, 668, 492, 68, 8);
+        let vilain = new Character("Big Zombie", sprite);
+        vilain.maxLife = 5000;
+        vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 100, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.4, 50));
+        Vilains.addInvulnerableBuff(vilain);
+        return vilain;
+    }
+
+    static giantDemon() {
+        const sprite = new Sprite(tileSet1, 40, 856, 492, 68, 8);
+        let vilain = new Character("Giant Demon", sprite);
+        vilain.maxLife = 7000;
+        vilain.armor = 150;
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        Vilains.addInvulnerableBuff(vilain);
+        return vilain;
+    }
+    static addInvulnerableBuff(vilain){
         vilain.spells.push(new InvulnerableBuffTrigger(75, 8*30));
         vilain.spells.push(new InvulnerableBuffTrigger(40, 8*30));
         vilain.spells.push(new InvulnerableBuffTrigger(20, 8*30));
-        return vilain;
     }
 }
 const vilainsFactory = new Vilains();
