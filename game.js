@@ -242,7 +242,7 @@ class CharacterMenu {
             }
             this.paintLifeBar(this.x + 40, this.y);
         } else {
-            this.character.sprite.paint(this.x + this.width - 40, this.y, 0, true);
+            this.character.sprite.paint(this.x + this.width - 36, this.y, 0, true);
             this.paintLifeBar(this.x, this.y);
         }
         for (let i = 0; i < this.character.buffs.length; i++) {
@@ -493,9 +493,7 @@ class Heroes {
 }
 const heroesFactory = new Heroes();
 class UpgradeFactory {
-
     propose3Upgrades() {
-
         // 0-1 of lvlup spell / recruit
         // 3-2 of level up options on one character
         const pnjs = [];
@@ -590,7 +588,7 @@ class UpgradeFactory {
     addLevelUpForOneHero(array) {
         const hero = teams[getRandomInt(0, teams.length)];
         if (hero.canHaveBonus("life")) {
-            let incr = 200 + hero.talents.life * 100;
+            let incr = 50 + Math.floor(Math.random() * 5) * 50 + hero.talents.life * 50;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase max life of ${hero.name}`, `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function () {
                 hero.talents.life++;
                 hero.maxLife += incr;
@@ -598,7 +596,7 @@ class UpgradeFactory {
             });
         }
         if (hero.canHaveBonus("armor")) {
-            let incr = hero.talents.armor * 25;
+            let incr = 10 + Math.floor(Math.random() * 5) * 5;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase armor of ${hero.name}`, `From ${hero.armor}`, `To ${hero.armor + incr}`], function () {
                 hero.talents.armor++;
                 hero.armor += incr;
@@ -606,7 +604,7 @@ class UpgradeFactory {
             });
         }
         if (hero.canHaveBonus("damage")) {
-            let incr = 10;
+            let incr = 5 + Math.floor(Math.random() * 4) * 5;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase damage of ${hero.name}`, `From ${hero.spells[0].stat.dmg}`, `To ${hero.spells[0].stat.dmg + incr}`], function () {
                 hero.talents.damage++;
                 hero.spells[0].stat.dmg += incr;
@@ -614,15 +612,15 @@ class UpgradeFactory {
             });
         }
         if (hero.canHaveBonus("crit")) {
-            let incr = 25;
+            let incr = 10 + Math.floor(Math.random() * 5) * 5;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase critical chance`, `From ${hero.crit} %`, `To ${hero.crit + incr} %`], function () {
                 hero.talents.crit++;
                 hero.crit += incr;
                 hero.addBonus("crit")
             });
         }
-        if (hero.canHaveBonus("dodge")) {
-            let incr = Math.max(3, 12 - hero.talents.dodge);
+        if (hero.canHaveBonus("dodge") && hero.dodge < 50) {
+            let incr = 5 + Math.floor(Math.random() * 10);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase dodge chance`, `From ${hero.dodge} %`, `To ${hero.dodge + incr} %`], function () {
                 hero.talents.dodge++;
                 hero.dodge += incr;
@@ -630,7 +628,7 @@ class UpgradeFactory {
             });
         }
         if (hero.canHaveBonus("haste")) {
-            let incr = 20;
+            let incr = 10 + Math.floor(Math.random() * 20);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase haste`, `From ${hero.haste}`, `To ${hero.haste + incr}`], function () {
                 hero.talents.haste++;
                 hero.haste += incr;
@@ -638,7 +636,7 @@ class UpgradeFactory {
             });
         }
         if (hero.canHaveBonus("mana")) {
-            let incr = 200 + hero.talents.mana * 100;
+            let incr = 80 + Math.floor(Math.random() * 8) * 10;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana`, `From ${playerStat.maxMana}`, `To ${playerStat.maxMana + incr}`], function () {
                 hero.talents.mana++;
                 playerStat.maxMana += incr;
@@ -655,7 +653,7 @@ class UpgradeFactory {
             });
         }
         if (hero.canHaveBonus("healPower")) {
-            let incr = 20;
+            let incr = 10 + Math.floor(Math.random() * 15);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase heal bonus`, `From ${playerStat.healPower} %`, `To ${playerStat.healPower + incr} %`], function () {
                 hero.talents.regen++;
                 playerStat.healPower += incr;
@@ -751,11 +749,11 @@ class Vilains {
         vilain.maxLife = 1000;
         vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 85, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
         return vilain;
     }
     static lvl5() {
-        const sprite = new Sprite(tileSet1, 860, 220, 64, 36, 2);
+        const sprite = new Sprite(tileSet1, 928, 220, 64, 36, 2);
         let vilain = new Character("Poison Mud", sprite);
         vilain.maxLife = 1100;
         vilain.armor = 50;
@@ -769,7 +767,7 @@ class Vilains {
         vilain.maxLife = 1200;
         vilain.armor = 60;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
         return vilain;
     }
     static lvl7() {
@@ -787,7 +785,7 @@ class Vilains {
         vilain.maxLife = 1400;
         vilain.armor = 70;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 6));
         return vilain;
     }
     static   lvl9() {
@@ -833,7 +831,8 @@ class Vilains {
         vilain.maxLife = 2000;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
+        Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
     static  lvl13() {
@@ -852,6 +851,7 @@ class Vilains {
         vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 80, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
@@ -871,17 +871,19 @@ class Vilains {
         vilain.maxLife = 2500;
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 250, 50, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 40));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
     static  lvl16() {
-        const sprite = new Sprite(tileSet1, 736, 604, 64, 36, 2);
-        let vilain = new Character("Little Devil", sprite);
+        const sprite = new Sprite(tileSet1, 256, 408, 64, 44, 2);
+        let vilain = new Character("Mad Reptil", sprite);
         vilain.maxLife = 3000;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 25, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 60));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
@@ -900,7 +902,7 @@ class Vilains {
         vilain.maxLife = 5000;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 200, 50, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.4, 50));
+        vilain.spells.push(new EnragedAoeTrigger(0.4, 70));
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
@@ -911,6 +913,7 @@ class Vilains {
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 20, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 75));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
