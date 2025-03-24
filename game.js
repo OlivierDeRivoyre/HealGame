@@ -52,7 +52,6 @@ class Sprite {
             )
             ctx.restore();
         } else {
-
             ctx.drawImage(this.tile,
                 this.tx + frame * this.singleWidth, this.ty,
                 this.singleWidth - 1, this.tHeight,
@@ -187,7 +186,8 @@ class Character {
     pushBuff(buff) {
         for (let i = this.buffs.length - 1; i >= 0; i--) {
             if (this.buffs[i].name == buff.name) {
-                this.buffs.splice(i, 1);
+                this.buffs[i] = buff;
+                return;
             }
         }
         this.buffs.push(buff);
@@ -441,11 +441,9 @@ class Heroes {
     createWitch() {
         const c = new Character("Witch", witchSprite);
         c.maxLife = c.life = 600;
+        c.ultimatePower = 10;
         const projectile = new ProjectileStat(c, frostSprite, 40, 44, 12);
         projectile.hitFunc = function (target) {
-            if (c.ultimatePower == 0) {
-                return;
-            }
             target.slow = c.ultimatePower;
             const buff = new CharacterBuffEffect("Frozen", target, frostSprite, 60, 60, {}, `Slow attacks by ${c.ultimatePower}%`, function () {
                 target.slow = 0;
@@ -466,12 +464,9 @@ class Heroes {
     createHunter() {
         const c = new Character("Hunter", elfSprite);
         c.maxLife = c.life = 700;
-        c.ultimatePower = 50;
+        c.ultimatePower = 10;
         const projectile = new ProjectileStat(c, arrowSprite, 50, 38, 10)
         projectile.hitFunc = function (target) {
-            if (c.ultimatePower == 0) {
-                return;
-            }
             target.armorBroken = c.ultimatePower;
             const buff = new CharacterBuffEffect("Broken Armor", target, brokenArmorSprite, 60, 60, {}, `Reduce armor by ${c.ultimatePower}%`, function () {
                 target.armorBroken = 0;
@@ -1697,9 +1692,11 @@ if (window.location.search) {
     const lvl = params.get("lvl");
     if (lvl) {
         currentLevel = parseInt(lvl) - 1;
-        teams = [heroesFactory.createPelin(), heroesFactory.createKnight(), heroesFactory.createWitch(), heroesFactory.createHunter()
-            , heroesFactory.createHunter(), heroesFactory.createHunter(), heroesFactory.createHunter()
-        ];
+        teams = [
+            heroesFactory.createPelin(), 
+            heroesFactory.createKnight(),
+            heroesFactory.createWitch(), 
+            heroesFactory.createHunter()];
         spells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
         currentPage = new SelectUpgradeScreen();
     }
