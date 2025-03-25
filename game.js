@@ -245,11 +245,9 @@ class CharacterMenu {
             this.character.sprite.paint(this.x + this.width - 36, this.y, 0, true);
             this.paintLifeBar(this.x, this.y);
         }
-        for (let i = 0; i < this.character.buffs.length; i++) {
-            const offsetX = this.isLeft ? 40 : 0
-            const imgX = this.x + offsetX + i * 22;
-            const imgY = this.y + 32;
-            this.character.buffs[i].paintScale(imgX, imgY, 20, 20);
+        for (let i = 0; i < this.character.buffs.length; i++) {            
+            const zone = this.getBuffRect(i);
+            this.character.buffs[i].paintScale(zone.x, zone.y, zone.width, zone.height);
         }
     }
     paintLifeBar(left, top) {
@@ -269,6 +267,21 @@ class CharacterMenu {
         ctx.strokeStyle = "gray";
         ctx.rect(left, top + 10, 200, 20);
         ctx.stroke();
+    }
+    getBuffRect(i){
+        const offsetX = this.isLeft ? 40 : 0
+        const x = this.x + offsetX + i * 22;
+        const y = this.y + 32;
+        return {x, y, width: 20,  height: 20 };
+    }
+    getClickedBuff(event){
+        for (let i = 0; i < this.character.buffs.length; i++) {            
+            const zone = this.getBuffRect(i);
+            if(isInside(zone, event)){
+                return this.character.buffs[i];
+            }
+        }
+        return null;
     }
 }
 class PnjSpell {
@@ -1401,9 +1414,11 @@ class Board {
             }
         }
         let selectedChar = null;
+        let selectedBuff = null;
         for (let m of characterMenus) {
             if (isInside(m, event)) {
                 selectedChar = m.character;
+                selectedBuff = m.getClickedBuff(event);
             }
         }
         if (isInside(tooltip, event)) {
@@ -1415,7 +1430,11 @@ class Board {
             if (spell) {
                 spell.cast(selectedChar);
             } else {
-                tooltip.current = new CharacterTooltip(selectedChar);               
+                if(selectedBuff){
+                    tooltip.current = new BuffTooltip(selectedBuff);
+                } else {
+                    tooltip.current = new CharacterTooltip(selectedChar);               
+                }
                 tooltip.isMinimized = false;                
             }
             return true;
