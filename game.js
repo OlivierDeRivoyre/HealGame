@@ -532,7 +532,9 @@ class UpgradeFactory {
         };
     }
     addPnjs(array) {
-        array.push(this.addKnight());
+        if(!teams.find(p => p.isTank)){
+            array.push(this.addKnight());
+        }
         array.push(this.addWitch());
         array.push(this.addHunter());
     }
@@ -683,8 +685,8 @@ class UpgradeFactory {
 let upgradeFactory = new UpgradeFactory();
 let rerollsNumber = 2;
 class Vilains {
-    createVilainOfLevel(level) {
-        const factory = [
+    constructor(){
+        this.factory = [
             Vilains.lvl1,
             Vilains.lvl2,
             Vilains.lvl3,
@@ -705,8 +707,13 @@ class Vilains {
             Vilains.lvl17,   
             Vilains.bigZombie,
             Vilains.giantDemon
-        ];           
-        const vilain = factory[(level - 1) % factory.length]();   
+        ];   
+    }
+    isLastLevel(level){
+        return level >= this.factory.length;
+    }
+    createVilainOfLevel(level) {                 
+        const vilain = this.factory[(level - 1) %  this.factory.length]();   
         vilain.life = vilain.maxLife;
         vilain.reverse = true;
         vilain.isVilain = true;
@@ -1376,7 +1383,11 @@ class Board {
                         teams.splice(i, 1);
                     }
                 }
-                currentPage = new SelectUpgradeScreen();
+                if(vilainsFactory.isLastLevel(currentLevel)){
+                    currentPage = new EndGameScreen();
+                } else {
+                    currentPage = new SelectUpgradeScreen();
+                }
             }
         } else {
             this.combatEnded--;
@@ -1510,8 +1521,8 @@ class SelectUpgradeScreen {
         this.nextLevel();
     }
     nextLevel() {
-        currentLevel++;
-        currentPage = new Board();
+        currentLevel++;     
+        currentPage = new Board();        
     }
     reroll() {
         rerollsNumber--;
@@ -1539,6 +1550,18 @@ class DeadScreen {
     goToMainMenu() {
         currentPage = new StartMenu();
     }
+}
+class EndGameScreen {
+    constructor() {
+        this.buttons = []
+    }
+    update() { }
+    paint() {
+        ctx.fillStyle = "black";
+        ctx.font = "24px Verdana";
+        ctx.fillText("You have clean the dungeon!", 100, 100);
+        ctx.fillText("Now the world is at peace.", 100, 140);        
+    }   
 }
 class Tooltip{
     constructor() {
@@ -1699,6 +1722,8 @@ if (window.location.search) {
             heroesFactory.createKnight(),
             heroesFactory.createWitch(), 
             heroesFactory.createHunter()];
+        teams[1].armor = 100;
+        //teams[2].spells[0].stat.dmg = 100000;    
         playerSpells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
         currentPage = new SelectUpgradeScreen();
     }
