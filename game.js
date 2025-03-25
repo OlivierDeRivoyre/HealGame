@@ -503,7 +503,7 @@ class UpgradeFactory {
         const heros = [];
         this.addLevelUpForOneHero(heros);
         let selected = [];
-        if (spells.length < 5 && upgradeSpells.length != 0 && Math.random() < 0.5) {
+        if (playerSpells.length < 5 && upgradeSpells.length != 0 && Math.random() < 0.5) {
             this.randomPick(upgradeSpells, selected, 1);
         } else if (teams.length < 7) {
             this.randomPick(pnjs, selected, 1);
@@ -553,20 +553,20 @@ class UpgradeFactory {
             sprite: spell.icon,
             desc: desc,
             click: () => {
-                spells.push(spell);
+                playerSpells.push(spell);
             }
         };
     }
     addSpells(array) {
-        if (spells.indexOf(fastHeal2) == -1) {
+        if (playerSpells.indexOf(fastHeal2) == -1) {
             array.push(this.proposeSpell(fastHeal2, ["Fast Heal level 2", `Heals ${fastHeal2.power}`, `Mana: ${fastHeal2.mana}`]));
         }
-        if (spells.indexOf(slowHeal1) == -1) {
+        if (playerSpells.indexOf(slowHeal1) == -1) {
             array.push(this.proposeSpell(slowHeal1, ["Slow Heal", `Heals ${slowHeal1.power}`, `Mana: ${slowHeal1.mana}`]));
-        } else if (spells.indexOf(slowHeal2) == -1) {
+        } else if (playerSpells.indexOf(slowHeal2) == -1) {
             array.push(this.proposeSpell(slowHeal2, ["Slow Heal level 2", `Heals ${slowHeal2.power}`, `Mana: ${slowHeal2.mana}`]));
         }
-        if (spells.indexOf(aoeHeal) == -1) {
+        if (playerSpells.indexOf(aoeHeal) == -1) {
             array.push(this.proposeSpell(aoeHeal, ["Group Heal", `Share ${aoeHeal.power} heals`, `Mana: ${aoeHeal.mana}`]));
         }
     }
@@ -1207,7 +1207,7 @@ class CharacterBuffEffect {
     }
 }
 
-let spells = [
+let playerSpells = [
     fastHeal1,
     hotHeal,
 ];
@@ -1287,10 +1287,10 @@ class Board {
         playerStat.haste = teams[0].haste;
         playerStat.crit = teams[0].crit;
         playerStat.mana = playerStat.maxMana;
-        spells.sort((a, b) => a.rank - b.rank)
+        playerSpells.sort((a, b) => a.rank - b.rank)
         this.spellButtons = [];
-        for (let i = 0; i < spells.length; i++) {
-            const button = new SpellButton(spells[i]);
+        for (let i = 0; i < playerSpells.length; i++) {
+            const button = new SpellButton(playerSpells[i]);
             button.x = PlayerStat.left + i * (button.width + 2);
             button.y = CanvasHeight - button.height - 20;
             this.spellButtons.push(button)
@@ -1404,10 +1404,8 @@ class Board {
             if (spell) {
                 spell.cast(selectedChar);
             } else {
-                tooltip.current = new CharacterTooltip(selectedChar);
-                if(selectedChar.isVilain){
-                    tooltip.isMinimized = false;
-                }
+                tooltip.current = new CharacterTooltip(selectedChar);               
+                tooltip.isMinimized = false;                
             }
             return true;
         }
@@ -1467,6 +1465,10 @@ class StartMenu {
     startGame() {
         currentLevel = 1;
         teams = [heroesFactory.createPelin()];
+        playerSpells = [
+            fastHeal1,
+            hotHeal,
+        ];
         currentPage = new Board();
     }
 }
@@ -1697,7 +1699,7 @@ if (window.location.search) {
             heroesFactory.createKnight(),
             heroesFactory.createWitch(), 
             heroesFactory.createHunter()];
-        spells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
+        playerSpells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
         currentPage = new SelectUpgradeScreen();
     }
 }
