@@ -425,8 +425,9 @@ class Heroes {
     createPelin() {
         const c = new Character("Pelin", healerSprite);
         c.maxLife = c.life = 800;
-        const banana = new Sprite(tileSet2, 32, 450, 32, 32, 1);
-        c.spells.push(new PnjSpell(new ProjectileStat(c, banana, 15, 45, 10), castSimpleProjectile));
+        const wood = new Sprite(tileSet2, 0, 544, 32, 32, 1);
+        wood.forbidRotate = true;
+        c.spells.push(new PnjSpell(new ProjectileStat(c, wood, 15, 45, 10), castSimpleProjectile));
         c.talents = {
             life: 1,
             mana: 1,
@@ -1280,8 +1281,8 @@ class PlayerStat {
     }
     update() {
         const regenTick = tickNumber - this.lastCast;
-        this.manaRegen = (regenTick > 6 * 30) ? this.fullManaRegen :
-            (regenTick > 3 * 30) ? this.liteManaRegen : 0;
+        this.manaRegen = (regenTick > 4 * 30) ? this.fullManaRegen :
+            (regenTick > 1.5 * 30) ? this.liteManaRegen : 0;
         if (regenTick % 30 == 0) {
             this.mana = Math.min(this.maxMana, this.mana + this.manaRegen);
         }
@@ -1355,7 +1356,7 @@ class CharacterTooltip {
         cursorY += 16;
 
         let currentArmor = Math.max(0, this.character.armor - this.character.armorBroken);
-        let armorReduc = 100 - Math.floor(100000 / (100 + currentArmor)) / 10;
+        let armorReduc =  Math.floor(100 - Math.floor(100000 / (100 + currentArmor)) / 10);
         ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
         cursorY += 16;
 
@@ -1433,8 +1434,9 @@ class SpellTooltip {
         ctx.fillText(`Crit chance: ${this.spellStats.crit}%`, cursorX, cursorY);
     }    
 }
+let isPaused = false;
 class Board {
-    constructor() {
+    constructor() {        
         allAnimations = [];
         characterMenus = [];
         tooltip.current = null;
@@ -1459,7 +1461,8 @@ class Board {
             button.x = PlayerStat.left + i * (button.width + 2);
             button.y = CanvasHeight - button.height - 20;
             this.spellButtons.push(button)
-        }
+        }        
+        this.pauseButton = {x : CanvasWidth - 28, y : 10, width: 20, height : 20, tick:0};
     }
 
     placeCharacters() {
@@ -1476,7 +1479,8 @@ class Board {
         }
     }
 
-    paint() {
+    paint() {        
+        this.paintPauseButton();
         if (tooltip)
             tooltip.paint();
         for (const c of teams) {
@@ -1509,7 +1513,14 @@ class Board {
             }
         }
     }
-    update() {
+    paintPauseButton(){        
+        ctx.fillStyle = "silver";
+        ctx.fillRect(this.pauseButton.x, this.pauseButton.y, this.pauseButton.width, this.pauseButton.height);
+        ctx.fillStyle = (!isPaused || (++this.pauseButton.tick % 25) < 15) ? "black" : "silver";
+        ctx.font = "14px Verdana";       
+        ctx.fillText(isPaused ? ">" : "||", this.pauseButton.x+4, this.pauseButton.y + 14);
+    }
+    update() {      
         for (let i = 0; i < allAnimations.length; i++) {
             if (allAnimations[i].update()) {
                 allAnimations.splice(i--, 1);
@@ -1552,6 +1563,10 @@ class Board {
         }
     }
     click(event) {
+        if(isInside(this.pauseButton, event)){
+            isPaused = !isPaused;
+            return true;
+        }
         for (const s of this.spellButtons) {
             if (isInside(s, event)) {
                 s.click(this.spellButtons);
@@ -1748,8 +1763,10 @@ if (window.location.search) {
 }
 const tickDuration = 1000.0 / 30;
 function tick() {
-    tickNumber++;
-    update();
+    if(!isPaused){
+        tickNumber++;
+        update();
+    }
     paint();
     setTimeout(tick, tickDuration);
 }
