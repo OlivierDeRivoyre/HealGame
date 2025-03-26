@@ -1288,6 +1288,151 @@ class PlayerStat {
     }
 }
 let playerStat = new PlayerStat();
+class Tooltip{
+    constructor() {
+        this.current = null;
+        this.isMinimized = false;
+        this.x = CanvasWidth - 250;
+        this.y = CanvasHeight - 150;
+        this.width = 250;
+        this.height = 150;                
+    }
+    paint() {
+        if(!this.current){
+            return;
+        }
+        ctx.beginPath();
+        ctx.lineWidth = "1";
+        ctx.fillStyle = "#303030";
+        if(this.isMinimized){
+            ctx.rect(this.x + this.width - 40, this.y + this.height - 24, 40, 24);
+        } else {        
+            ctx.rect(this.x, this.y, this.width, this.height);
+        }
+        ctx.fill();     
+        if(!this.isMinimized){
+            this.current.paint();
+        }
+    }
+    click(event) {
+        if(!this.current){
+            return;
+        } 
+        if(!this.isMinimized && this.current.click && this.current.click(event)){
+            return;            
+        }
+        this.isMinimized = !this.isMinimized;
+    } 
+}
+const tooltip = new Tooltip();
+class CharacterTooltip {
+    constructor(character) {
+        this.character = character;
+        this.buffY = tooltip.y + tooltip.height - 20 - 8;
+        this.buffX = tooltip.x + 8 + 56;
+    }
+    paint() {
+        let cursorY = tooltip.y + 22;
+        let cursorX = tooltip.x + 8;
+
+        ctx.fillStyle = this.character.isVilain ? "red" : "green";
+        ctx.font = "bold 18px Verdana";
+        ctx.fillText(this.character.name, cursorX, cursorY);
+        cursorY += 18;
+
+        ctx.fillStyle = "white";
+        ctx.font = "12px Verdana";
+        const lvl = this.character.isVilain ? currentLevel : this.character.level;
+        ctx.fillText(`Level: ${lvl}`, cursorX, cursorY);
+        cursorY += 16;
+
+        let dmg = this.character.spells[0].stat.dmg;
+        let cooldown = Math.floor(0.34 * this.character.spells[0].stat.cooldown * (100 + this.character.slow) / (100 + this.character.haste)) / 10;
+        ctx.fillText(`Damage: ${dmg} every ${cooldown} seconds`, cursorX, cursorY);
+        cursorY += 16;
+
+        ctx.fillText(`Crit chance: ${this.character.crit}%`, cursorX, cursorY);
+        cursorY += 16;
+
+        let currentArmor = Math.max(0, this.character.armor - this.character.armorBroken);
+        let armorReduc = 100 - Math.floor(100000 / (100 + currentArmor)) / 10;
+        ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
+        cursorY += 16;
+
+        ctx.fillText(`Dodge chance: ${this.character.dodge}%`, cursorX, cursorY);
+        cursorY += 16;
+        if (this.character.buffs.length >= 1) {
+            ctx.fillText(`Effects:`, tooltip.x + 8, this.buffY + 16);
+        }
+        for (let i = 0; i < this.character.buffs.length; i++) {
+            const buffX = this.buffX + 24 * i;
+            ctx.beginPath();
+            ctx.lineWidth = "1";
+            ctx.fillStyle = "white";
+            ctx.rect(buffX, this.buffY, 22, 22);
+            ctx.fill();
+            this.character.buffs[i].paintScale(buffX + 1, this.buffY + 1, 20, 20)
+        }
+
+    }
+    click(event) {
+        for (let i = 0; i < this.character.buffs.length; i++) {
+            const buffX = this.buffX + 24 * i;
+            if (isInside({ x: buffX, y: this.buffY, width: 20, height: 20 }, event)) {
+                tooltip.current = new BuffTooltip(this.character.buffs[i]);               
+                return true;
+            }
+        }     
+        return false;
+    }
+}
+class BuffTooltip {
+    constructor(buff) {
+        this.buff = buff;
+    }
+    paint() {
+       
+        let cursorY = tooltip.y + 22;
+        let cursorX = tooltip.x + 8;
+
+        ctx.fillStyle = "yellow";
+        ctx.font = "bold 18px Verdana";
+        ctx.fillText(this.buff.name, cursorX, cursorY);
+        cursorY += 18;
+
+        ctx.fillStyle = "white";
+        ctx.font = "12px Verdana";
+        ctx.fillText(`${this.buff.description}`, cursorX, cursorY);
+        cursorY += 16;
+    }    
+}
+class SpellTooltip {
+    constructor(spell) {
+        this.spell = spell;       
+        this.spellStats = getPlayerSpellStats(spell);        
+    }
+    paint() {
+        let cursorY = tooltip.y + 22;
+        let cursorX = tooltip.x + 8;
+
+        ctx.fillStyle = "green";
+        ctx.font = "bold 18px Verdana";
+        ctx.fillText(this.spell.fullName, cursorX, cursorY);
+        cursorY += 18;
+
+        ctx.fillStyle = "white";
+        ctx.font = "12px Verdana";
+        ctx.fillText(`${this.spell.description}`, cursorX, cursorY);
+        cursorY += 16;
+        ctx.fillText(`Heal: ${this.spellStats.minHeal} - ${this.spellStats.maxHeal} ${this.spellStats.suffix}`, cursorX, cursorY);
+        cursorY += 16;
+        ctx.fillText(`Mana: ${this.spellStats.mana}`, cursorX, cursorY);
+        cursorY += 16;
+        ctx.fillText(`Casting: ${this.spellStats.castingTimeSec} sec`, cursorX, cursorY);
+        cursorY += 16;
+        ctx.fillText(`Crit chance: ${this.spellStats.crit}%`, cursorX, cursorY);
+    }    
+}
 class Board {
     constructor() {
         allAnimations = [];
@@ -1582,152 +1727,6 @@ class EndGameScreen {
         ctx.fillText("Now the world is at peace.", 100, 140);        
     }   
 }
-class Tooltip{
-    constructor() {
-        this.current = null;
-        this.isMinimized = false;
-        this.x = CanvasWidth - 250;
-        this.y = CanvasHeight - 150;
-        this.width = 250;
-        this.height = 150;                
-    }
-    paint() {
-        if(!this.current){
-            return;
-        }
-        ctx.beginPath();
-        ctx.lineWidth = "1";
-        ctx.fillStyle = "#303030";
-        if(this.isMinimized){
-            ctx.rect(this.x + this.width - 40, this.y + this.height - 24, 40, 24);
-        } else {        
-            ctx.rect(this.x, this.y, this.width, this.height);
-        }
-        ctx.fill();     
-        if(!this.isMinimized){
-            this.current.paint();
-        }
-    }
-    click(event) {
-        if(!this.current){
-            return;
-        } 
-        if(!this.isMinimized && this.current.click && this.current.click(event)){
-            return;            
-        }
-        this.isMinimized = !this.isMinimized;
-    } 
-}
-const tooltip = new Tooltip();
-class CharacterTooltip {
-    constructor(character) {
-        this.character = character;
-        this.buffY = tooltip.y + tooltip.height - 20 - 8;
-        this.buffX = tooltip.x + 8 + 56;
-    }
-    paint() {
-        let cursorY = tooltip.y + 22;
-        let cursorX = tooltip.x + 8;
-
-        ctx.fillStyle = this.character.isVilain ? "red" : "green";
-        ctx.font = "bold 18px Verdana";
-        ctx.fillText(this.character.name, cursorX, cursorY);
-        cursorY += 18;
-
-        ctx.fillStyle = "white";
-        ctx.font = "12px Verdana";
-        const lvl = this.character.isVilain ? currentLevel : this.character.level;
-        ctx.fillText(`Level: ${lvl}`, cursorX, cursorY);
-        cursorY += 16;
-
-        let dmg = this.character.spells[0].stat.dmg;
-        let cooldown = Math.floor(0.34 * this.character.spells[0].stat.cooldown * (100 + this.character.slow) / (100 + this.character.haste)) / 10;
-        ctx.fillText(`Damage: ${dmg} every ${cooldown} seconds`, cursorX, cursorY);
-        cursorY += 16;
-
-        ctx.fillText(`Crit chance: ${this.character.crit}%`, cursorX, cursorY);
-        cursorY += 16;
-
-        let currentArmor = Math.max(0, this.character.armor - this.character.armorBroken);
-        let armorReduc = 100 - Math.floor(100000 / (100 + currentArmor)) / 10;
-        ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
-        cursorY += 16;
-
-        ctx.fillText(`Dodge chance: ${this.character.dodge}%`, cursorX, cursorY);
-        cursorY += 16;
-        if (this.character.buffs.length >= 1) {
-            ctx.fillText(`Effects:`, tooltip.x + 8, this.buffY + 16);
-        }
-        for (let i = 0; i < this.character.buffs.length; i++) {
-            const buffX = this.buffX + 24 * i;
-            ctx.beginPath();
-            ctx.lineWidth = "1";
-            ctx.fillStyle = "white";
-            ctx.rect(buffX, this.buffY, 22, 22);
-            ctx.fill();
-            this.character.buffs[i].paintScale(buffX + 1, this.buffY + 1, 20, 20)
-        }
-
-    }
-    click(event) {
-        for (let i = 0; i < this.character.buffs.length; i++) {
-            const buffX = this.buffX + 24 * i;
-            if (isInside({ x: buffX, y: this.buffY, width: 20, height: 20 }, event)) {
-                tooltip.current = new BuffTooltip(this.character.buffs[i]);               
-                return true;
-            }
-        }     
-        return false;
-    }
-}
-class BuffTooltip {
-    constructor(buff) {
-        this.buff = buff;
-    }
-    paint() {
-       
-        let cursorY = tooltip.y + 22;
-        let cursorX = tooltip.x + 8;
-
-        ctx.fillStyle = "yellow";
-        ctx.font = "bold 18px Verdana";
-        ctx.fillText(this.buff.name, cursorX, cursorY);
-        cursorY += 18;
-
-        ctx.fillStyle = "white";
-        ctx.font = "12px Verdana";
-        ctx.fillText(`${this.buff.description}`, cursorX, cursorY);
-        cursorY += 16;
-    }    
-}
-class SpellTooltip {
-    constructor(spell) {
-        this.spell = spell;       
-        this.spellStats = getPlayerSpellStats(spell);        
-    }
-    paint() {
-        let cursorY = tooltip.y + 22;
-        let cursorX = tooltip.x + 8;
-
-        ctx.fillStyle = "green";
-        ctx.font = "bold 18px Verdana";
-        ctx.fillText(this.spell.fullName, cursorX, cursorY);
-        cursorY += 18;
-
-        ctx.fillStyle = "white";
-        ctx.font = "12px Verdana";
-        ctx.fillText(`${this.spell.description}`, cursorX, cursorY);
-        cursorY += 16;
-        ctx.fillText(`Heal: ${this.spellStats.minHeal} - ${this.spellStats.maxHeal} ${this.spellStats.suffix}`, cursorX, cursorY);
-        cursorY += 16;
-        ctx.fillText(`Mana: ${this.spellStats.mana}`, cursorX, cursorY);
-        cursorY += 16;
-        ctx.fillText(`Casting: ${this.spellStats.castingTimeSec} sec`, cursorX, cursorY);
-        cursorY += 16;
-        ctx.fillText(`Crit chance: ${this.spellStats.crit}%`, cursorX, cursorY);
-    }    
-}
-
 
 let currentPage = new StartMenu();
 // Debug mode:
