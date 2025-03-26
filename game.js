@@ -1416,11 +1416,11 @@ class Board {
         let selectedChar = null;
         let selectedBuff = null;
         for (let m of characterMenus) {
-            if (isInside(m, event)) {
+            if (isInside(m, event) || isInside(m.character, event)) {
                 selectedChar = m.character;
                 selectedBuff = m.getClickedBuff(event);
             }
-        }
+        }        
         if (isInside(tooltip, event)) {
             tooltip.click(event);
             return true;
