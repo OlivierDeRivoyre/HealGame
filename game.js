@@ -554,15 +554,15 @@ class UpgradeFactory {
     }
     addKnight() {
         const c = heroesFactory.createKnight();
-        return this.proposePnj(c, ["Recruit the knight", "He can reduce", "the damage with his shield"]);
+        return this.proposePnj(c, ["Recruit a new knight", "He can reduce", "the damage with his shield"]);
     }
     addWitch() {
         const c = heroesFactory.createWitch();
-        return this.proposePnj(c, ["Recruit the witch", "She can slow the", "attacks of the ennemy"]);
+        return this.proposePnj(c, ["Recruit a new witch", "She can slow the", "attacks of the ennemy"]);
     }
     addHunter() {
         const c = heroesFactory.createHunter();
-        return this.proposePnj(c, ["Recruit the hunter", "He can reduce the", "armor of the ennemy"]);
+        return this.proposePnj(c, ["Recruit a new hunter", "He can reduce the", "armor of the ennemy"]);
     }
     proposeSpell(spell, desc) {
         return {
@@ -1722,6 +1722,11 @@ class DeadScreen {
         ctx.fillStyle = "black";
         ctx.font = "24px Verdana";
         ctx.fillText("You are dead", 100, 100);
+        if(currentLevel > 1){
+            ctx.fillStyle = "gray";
+            ctx.font = "16px Verdana";
+            ctx.fillText("You reached the level " + currentLevel, 100, 180);
+        }
         for (let b of this.buttons) {
             b.paint();
         }
