@@ -102,6 +102,8 @@ const greenPotionSprite = new Sprite(tileSet1, 640, 672, 28, 28, 1);
 greenPotionSprite.forbidRotate = true;
 const brokenArmorSprite = new Sprite(tileSet2, 160, 128, 32, 32, 1);
 const invulnerableSprite = new Sprite(tileSet2, 64, 192, 32, 32, 1);
+const bombSprite = new Sprite(tileSet2, 384, 320, 32, 32, 1);
+bombSprite.forbidRotate = true;
 
 class Character {
     constructor(name, sprite) {
@@ -245,7 +247,7 @@ class CharacterMenu {
             this.character.sprite.paint(this.x + this.width - 36, this.y, 0, true);
             this.paintLifeBar(this.x, this.y);
         }
-        for (let i = 0; i < this.character.buffs.length; i++) {            
+        for (let i = 0; i < this.character.buffs.length; i++) {
             const zone = this.getBuffRect(i);
             this.character.buffs[i].paintScale(zone.x, zone.y, zone.width, zone.height);
         }
@@ -268,16 +270,16 @@ class CharacterMenu {
         ctx.rect(left, top + 10, 200, 20);
         ctx.stroke();
     }
-    getBuffRect(i){
+    getBuffRect(i) {
         const offsetX = this.isLeft ? 40 : 0
         const x = this.x + offsetX + i * 22;
         const y = this.y + 32;
-        return {x, y, width: 20,  height: 20 };
+        return { x, y, width: 20, height: 20 };
     }
-    getClickedBuff(event){
-        for (let i = 0; i < this.character.buffs.length; i++) {            
+    getClickedBuff(event) {
+        for (let i = 0; i < this.character.buffs.length; i++) {
             const zone = this.getBuffRect(i);
-            if(isInside(zone, event)){
+            if (isInside(zone, event)) {
                 return this.character.buffs[i];
             }
         }
@@ -546,7 +548,7 @@ class UpgradeFactory {
         };
     }
     addPnjs(array) {
-        if(!teams.find(p => p.isTank)){
+        if (!teams.find(p => p.isTank)) {
             array.push(this.addKnight());
         }
         array.push(this.addWitch());
@@ -699,7 +701,7 @@ class UpgradeFactory {
 let upgradeFactory = new UpgradeFactory();
 let rerollsNumber = 2;
 class Vilains {
-    constructor(){
+    constructor() {
         this.factory = [
             Vilains.lvl1,
             Vilains.lvl2,
@@ -709,30 +711,30 @@ class Vilains {
             Vilains.lvl6,
             Vilains.lvl7,
             Vilains.lvl8,
-            Vilains.lvl9,            
+            Vilains.lvl9,
             Vilains.lvl10,
-            Vilains.giantOrc,   
+            Vilains.giantOrc,
             Vilains.lvl11,
             Vilains.lvl12,
             Vilains.lvl13,
             Vilains.lvl14,
             Vilains.lvl15,
             Vilains.lvl16,
-            Vilains.lvl17,   
+            Vilains.lvl17,
             Vilains.bigZombie,
             Vilains.giantDemon
-        ];   
+        ];
     }
-    isLastLevel(level){
+    isLastLevel(level) {
         return level >= this.factory.length;
     }
-    createVilainOfLevel(level) {                 
-        const vilain = this.factory[(level - 1) %  this.factory.length]();   
+    createVilainOfLevel(level) {
+        const vilain = this.factory[(level - 1) % this.factory.length]();
         vilain.life = vilain.maxLife;
         vilain.reverse = true;
         vilain.isVilain = true;
         return vilain;
-    } 
+    }
     static lvl1() {
         const sprite = new Sprite(tileSet1, 736, 32, 64, 48, 2);
         let vilain = new Character("Brown Bag", sprite);
@@ -741,7 +743,7 @@ class Vilains {
         vilain.spells.push(new EnragedAoeTrigger(0.5, 250));
         return vilain;
     }
-    static  lvl2() {
+    static lvl2() {
         const sprite = new Sprite(tileSet1, 736, 80, 64, 48, 2);
         let vilain = new Character("Green Bag", sprite);
         vilain.maxLife = 600;
@@ -795,7 +797,7 @@ class Vilains {
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
-    static  lvl8() {
+    static lvl8() {
         const sprite = new Sprite(tileSet1, 736, 360, 64, 48, 2);
         let vilain = new Character("Orc", sprite);
         vilain.maxLife = 1400;
@@ -804,16 +806,16 @@ class Vilains {
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 6));
         return vilain;
     }
-    static   lvl9() {
+    static lvl9() {
         const sprite = new Sprite(tileSet1, 736, 312, 64, 48, 2);
         let vilain = new Character("Chaman Orc", sprite);
         vilain.maxLife = 1500;
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 130, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new RandomAttackTrigger(0.8, 500, 100));
         return vilain;
     }
-    static  lvl10() {
+    static lvl10() {
         const sprite = new Sprite(tileSet1, 736, 412, 64, 48, 2);
         let vilain = new Character("Enraged Orc", sprite);
         vilain.maxLife = 1600;
@@ -822,7 +824,7 @@ class Vilains {
         vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
         return vilain;
     }
-    static  giantOrc() {
+    static giantOrc() {
         const sprite = new Sprite(tileSet1, 40, 768, 492, 68, 8);
         let vilain = new Character("Giant Orc", sprite);
         vilain.maxLife = 2000;
@@ -838,10 +840,10 @@ class Vilains {
         vilain.maxLife = 1700;
         vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 200, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new RandomAttackTrigger(0.7, 500, 80));
         return vilain;
     }
-    static  lvl12() {
+    static lvl12() {
         const sprite = new Sprite(tileSet1, 736, 504, 64, 48, 2);
         let vilain = new Character("The Thing", sprite);
         vilain.maxLife = 2000;
@@ -851,7 +853,7 @@ class Vilains {
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
-    static  lvl13() {
+    static lvl13() {
         const sprite = new Sprite(tileSet1, 736, 552, 64, 48, 2);
         let vilain = new Character("Little Devil", sprite);
         vilain.maxLife = 2200;
@@ -866,12 +868,12 @@ class Vilains {
         vilain.maxLife = 1500;
         vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 80, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new RandomAttackTrigger(0.7, 500, 100));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
-    static  lvl15() {
+    static lvl15() {
         const sprite = new Sprite(tileSet1, 736, 644, 64, 48, 2);
         let vilain = new Character("Punk-in", sprite);
         vilain.maxLife = 2500;
@@ -892,7 +894,7 @@ class Vilains {
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
-    static  lvl16() {
+    static lvl16() {
         const sprite = new Sprite(tileSet1, 256, 408, 64, 44, 2);
         let vilain = new Character("Mad Reptil", sprite);
         vilain.maxLife = 3000;
@@ -918,7 +920,7 @@ class Vilains {
         vilain.maxLife = 5000;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 200, 50, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.4, 70));
+        vilain.spells.push(new EnragedAoeTrigger(0.4, 70));    
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
@@ -930,13 +932,14 @@ class Vilains {
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 20, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 75));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
+        vilain.spells.push(new RandomAttackTrigger(0.7, 500, 120));
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
-    static addInvulnerableBuff(vilain){
-        vilain.spells.push(new InvulnerableBuffTrigger(75, 8*30));
-        vilain.spells.push(new InvulnerableBuffTrigger(40, 8*30));
-        vilain.spells.push(new InvulnerableBuffTrigger(20, 8*30));
+    static addInvulnerableBuff(vilain) {
+        vilain.spells.push(new InvulnerableBuffTrigger(75, 8 * 30));
+        vilain.spells.push(new InvulnerableBuffTrigger(40, 8 * 30));
+        vilain.spells.push(new InvulnerableBuffTrigger(20, 8 * 30));
     }
 }
 const vilainsFactory = new Vilains();
@@ -949,14 +952,6 @@ function castSimpleProjectile(stat, from) {
     if (!target) return;
     const projectile = new ProjectileAnim(stat, from, target);
     allAnimations.push(projectile);
-}
-function enragedTick(stat, boss) {
-    for (const c of teams) {
-        if (c.life > 0) {
-            const projectile = new ProjectileAnim(stat, boss, c);
-            allAnimations.push(projectile);
-        }
-    }
 }
 class EnragedAoeTrigger {
     constructor(lifeRatio, dmg) {
@@ -972,7 +967,48 @@ class EnragedAoeTrigger {
         }
         self.isEnragedAoe = true;
         const stat = new ProjectileStat(self, enragedSprite, this.dmg, 40, 15)
-        self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, `Throw a ${this.dmg} fireball to all`, enragedTick));
+        self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, 
+            `Throw a ${this.dmg} fireball to all`, EnragedAoeTrigger.enragedTick));
+    }
+    static enragedTick(stat, boss) {
+        for (const c of teams) {
+            if (c.life > 0) {
+                const projectile = new ProjectileAnim(stat, boss, c);
+                allAnimations.push(projectile);
+            }
+        }
+    }
+}
+class RandomAttackTrigger {
+    constructor(lifeRatio, dmg, cooldown) {
+        this.lifeRatio = lifeRatio;
+        this.dmg = dmg;
+        this.cooldown = cooldown;
+        this.triggered = false;
+    }
+    update(self) {
+        if (this.triggered) {
+            return;
+        }
+        if (self.life > self.maxLife * this.lifeRatio) {
+            return;
+        }
+        this.triggered = true;
+        const stat = new ProjectileStat(self, bombSprite, this.dmg, this.cooldown, 8);
+        stat.lastTarget = null;
+        self.pushBuff(new CharacterBuffEffect("Explosive", self, bombSprite, this.cooldown, 100000, stat, 
+            `Deal ${this.dmg} damage to random character`, RandomAttackTrigger.randomAttackTick));
+    }
+    static randomAttackTick(stat, boss) {
+        const alive = teams.filter(c => c.life > 0 && c != stat.lastTarget);
+        if (alive.length == 0) {
+            stat.lastTarget = null;
+            return;
+        }
+        const target = alive[getRandomInt(0, alive.length)];
+        stat.lastTarget = target;
+        const projectile = new ProjectileAnim(stat, boss, target);
+        allAnimations.push(projectile);
     }
 }
 class HasteBuffTrigger {
@@ -1012,7 +1048,7 @@ class InvulnerableBuffTrigger {
     constructor(lifeRatio, duration) {
         this.lifeRatio = lifeRatio;
         this.duration = duration;
-        this.nextLifeTrigger = null;     
+        this.nextLifeTrigger = null;
         this.isDone = false;
     }
     update(self) {
@@ -1020,16 +1056,16 @@ class InvulnerableBuffTrigger {
             return;
         }
         if (this.nextLifeTrigger == null) {
-            this.nextLifeTrigger = Math.floor(self.maxLife * this.lifeRatio / 100);         
+            this.nextLifeTrigger = Math.floor(self.maxLife * this.lifeRatio / 100);
         }
         if (self.life > this.nextLifeTrigger) {
             return;
-        }        
+        }
         this.isDone = true;
-        self.dodge += 100;       
+        self.dodge += 100;
         const durationSec = Math.floor(this.duration / 3) / 10;
-        const buff = new CharacterBuffEffect("Invulnerable", self, invulnerableSprite, this.duration, this.duration, {}, `Gain 100% invulnerable for ${durationSec} sec`, function () {                            
-            self.dodge -= 100;                            
+        const buff = new CharacterBuffEffect("Invulnerable", self, invulnerableSprite, this.duration, this.duration, {}, `Gain 100% invulnerable for ${durationSec} sec`, function () {
+            self.dodge -= 100;
         });
         self.pushBuff(buff);
     }
@@ -1055,11 +1091,11 @@ class PlayerCasting {
         this.tick = 0;
     }
     update() {
-        if(this.target.life <= 0){
+        if (this.target.life <= 0) {
             playerCastingBar = null;
             return;
         }
-        this.tick++;        
+        this.tick++;
         if (this.tick <= this.endTick) {
             return;
         }
@@ -1101,18 +1137,18 @@ class SpellButton {
         this.selected = false;
     }
     paint() {
-        if(this.icon.paintScale){
+        if (this.icon.paintScale) {
             ctx.beginPath();
-            if(playerStat.mana < this.spell.mana){
+            if (playerStat.mana < this.spell.mana) {
                 ctx.fillStyle = "#f99";
-            } else if(this.selected){    
+            } else if (this.selected) {
                 ctx.fillStyle = "#999";
             } else {
                 ctx.fillStyle = "#ddd";
             }
             ctx.rect(this.x, this.y, this.width, this.height);
             ctx.fill();
-            this.icon.paintScale(this.x, this.y, this.width, this.height);   
+            this.icon.paintScale(this.x, this.y, this.width, this.height);
         } else {
             ctx.drawImage(this.icon, this.x, this.y, this.width, this.height);
         }
@@ -1256,10 +1292,10 @@ class PlayerStat {
         const manaPx = this.mana * width / this.maxMana;
         ctx.rect(PlayerStat.left, top + 10, manaPx, 20);
         ctx.fill();
-        
+
         const selectedSpellButton = currentPage.spellButtons.find(s => s.selected);
         let selectedSpell = playerCastingBar ? playerCastingBar.spell : selectedSpellButton ? selectedSpellButton.spell : null;
-        if(selectedSpell && selectedSpell.mana < this.mana){
+        if (selectedSpell && selectedSpell.mana < this.mana) {
             const selectedWidth = selectedSpell.mana * width / this.maxMana;
             ctx.beginPath();
             ctx.lineWidth = "0";
@@ -1289,41 +1325,41 @@ class PlayerStat {
     }
 }
 let playerStat = new PlayerStat();
-class Tooltip{
+class Tooltip {
     constructor() {
         this.current = null;
         this.isMinimized = false;
         this.x = CanvasWidth - 250;
         this.y = CanvasHeight - 150;
         this.width = 250;
-        this.height = 150;                
+        this.height = 150;
     }
     paint() {
-        if(!this.current){
+        if (!this.current) {
             return;
         }
         ctx.beginPath();
         ctx.lineWidth = "1";
         ctx.fillStyle = "#303030";
-        if(this.isMinimized){
+        if (this.isMinimized) {
             ctx.rect(this.x + this.width - 40, this.y + this.height - 24, 40, 24);
-        } else {        
+        } else {
             ctx.rect(this.x, this.y, this.width, this.height);
         }
-        ctx.fill();     
-        if(!this.isMinimized){
+        ctx.fill();
+        if (!this.isMinimized) {
             this.current.paint();
         }
     }
     click(event) {
-        if(!this.current){
+        if (!this.current) {
             return;
-        } 
-        if(!this.isMinimized && this.current.click && this.current.click(event)){
-            return;            
+        }
+        if (!this.isMinimized && this.current.click && this.current.click(event)) {
+            return;
         }
         this.isMinimized = !this.isMinimized;
-    } 
+    }
 }
 const tooltip = new Tooltip();
 class CharacterTooltip {
@@ -1356,7 +1392,7 @@ class CharacterTooltip {
         cursorY += 16;
 
         let currentArmor = Math.max(0, this.character.armor - this.character.armorBroken);
-        let armorReduc =  Math.floor(100 - Math.floor(100000 / (100 + currentArmor)) / 10);
+        let armorReduc = Math.floor(100 - Math.floor(100000 / (100 + currentArmor)) / 10);
         ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
         cursorY += 16;
 
@@ -1380,10 +1416,10 @@ class CharacterTooltip {
         for (let i = 0; i < this.character.buffs.length; i++) {
             const buffX = this.buffX + 24 * i;
             if (isInside({ x: buffX, y: this.buffY, width: 20, height: 20 }, event)) {
-                tooltip.current = new BuffTooltip(this.character.buffs[i]);               
+                tooltip.current = new BuffTooltip(this.character.buffs[i]);
                 return true;
             }
-        }     
+        }
         return false;
     }
 }
@@ -1392,7 +1428,7 @@ class BuffTooltip {
         this.buff = buff;
     }
     paint() {
-       
+
         let cursorY = tooltip.y + 22;
         let cursorX = tooltip.x + 8;
 
@@ -1405,12 +1441,12 @@ class BuffTooltip {
         ctx.font = "12px Verdana";
         ctx.fillText(`${this.buff.description}`, cursorX, cursorY);
         cursorY += 16;
-    }    
+    }
 }
 class SpellTooltip {
     constructor(spell) {
-        this.spell = spell;       
-        this.spellStats = getPlayerSpellStats(spell);        
+        this.spell = spell;
+        this.spellStats = getPlayerSpellStats(spell);
     }
     paint() {
         let cursorY = tooltip.y + 22;
@@ -1432,11 +1468,11 @@ class SpellTooltip {
         ctx.fillText(`Casting: ${this.spellStats.castingTimeSec} sec`, cursorX, cursorY);
         cursorY += 16;
         ctx.fillText(`Crit chance: ${this.spellStats.crit}%`, cursorX, cursorY);
-    }    
+    }
 }
 let isPaused = false;
 class Board {
-    constructor() {        
+    constructor() {
         allAnimations = [];
         characterMenus = [];
         tooltip.current = null;
@@ -1461,8 +1497,8 @@ class Board {
             button.x = PlayerStat.left + i * (button.width + 2);
             button.y = CanvasHeight - button.height - 20;
             this.spellButtons.push(button)
-        }        
-        this.pauseButton = {x : CanvasWidth - 28, y : 10, width: 20, height : 20, tick:0};
+        }
+        this.pauseButton = { x: CanvasWidth - 28, y: 10, width: 20, height: 20, tick: 0 };
     }
 
     placeCharacters() {
@@ -1479,7 +1515,7 @@ class Board {
         }
     }
 
-    paint() {        
+    paint() {
         this.paintPauseButton();
         if (tooltip)
             tooltip.paint();
@@ -1513,14 +1549,14 @@ class Board {
             }
         }
     }
-    paintPauseButton(){        
+    paintPauseButton() {
         ctx.fillStyle = "silver";
         ctx.fillRect(this.pauseButton.x, this.pauseButton.y, this.pauseButton.width, this.pauseButton.height);
         ctx.fillStyle = (!isPaused || (++this.pauseButton.tick % 25) < 15) ? "black" : "silver";
-        ctx.font = "14px Verdana";       
-        ctx.fillText(isPaused ? ">" : "||", this.pauseButton.x+4, this.pauseButton.y + 14);
+        ctx.font = "14px Verdana";
+        ctx.fillText(isPaused ? ">" : "||", this.pauseButton.x + 4, this.pauseButton.y + 14);
     }
-    update() {      
+    update() {
         for (let i = 0; i < allAnimations.length; i++) {
             if (allAnimations[i].update()) {
                 allAnimations.splice(i--, 1);
@@ -1552,7 +1588,7 @@ class Board {
                         teams.splice(i, 1);
                     }
                 }
-                if(vilainsFactory.isLastLevel(currentLevel)){
+                if (vilainsFactory.isLastLevel(currentLevel)) {
                     currentPage = new EndGameScreen();
                 } else {
                     currentPage = new SelectUpgradeScreen();
@@ -1563,7 +1599,7 @@ class Board {
         }
     }
     click(event) {
-        if(isInside(this.pauseButton, event)){
+        if (isInside(this.pauseButton, event)) {
             isPaused = !isPaused;
             return true;
         }
@@ -1580,7 +1616,7 @@ class Board {
                 selectedChar = m.character;
                 selectedBuff = m.getClickedBuff(event);
             }
-        }        
+        }
         if (isInside(tooltip, event)) {
             tooltip.click(event);
             return true;
@@ -1590,12 +1626,12 @@ class Board {
             if (spell) {
                 spell.cast(selectedChar);
             } else {
-                if(selectedBuff){
+                if (selectedBuff) {
                     tooltip.current = new BuffTooltip(selectedBuff);
                 } else {
-                    tooltip.current = new CharacterTooltip(selectedChar);               
+                    tooltip.current = new CharacterTooltip(selectedChar);
                 }
-                tooltip.isMinimized = false;                
+                tooltip.isMinimized = false;
             }
             return true;
         }
@@ -1700,8 +1736,8 @@ class SelectUpgradeScreen {
         this.nextLevel();
     }
     nextLevel() {
-        currentLevel++;     
-        currentPage = new Board();        
+        currentLevel++;
+        currentPage = new Board();
     }
     reroll() {
         rerollsNumber--;
@@ -1722,7 +1758,7 @@ class DeadScreen {
         ctx.fillStyle = "black";
         ctx.font = "24px Verdana";
         ctx.fillText("You are dead", 100, 100);
-        if(currentLevel > 1){
+        if (currentLevel > 1) {
             ctx.fillStyle = "gray";
             ctx.font = "16px Verdana";
             ctx.fillText("You reached the level " + currentLevel, 100, 180);
@@ -1744,8 +1780,8 @@ class EndGameScreen {
         ctx.fillStyle = "black";
         ctx.font = "24px Verdana";
         ctx.fillText("You have clean the dungeon!", 100, 100);
-        ctx.fillText("Now the world is at peace.", 100, 140);        
-    }   
+        ctx.fillText("Now the world is at peace.", 100, 140);
+    }
 }
 
 let currentPage = new StartMenu();
@@ -1756,9 +1792,9 @@ if (window.location.search) {
     if (lvl) {
         currentLevel = parseInt(lvl) - 1;
         teams = [
-            heroesFactory.createPelin(), 
+            heroesFactory.createPelin(),
             heroesFactory.createKnight(),
-            heroesFactory.createWitch(), 
+            heroesFactory.createWitch(),
             heroesFactory.createHunter()];
         teams[1].armor = 100;
         //teams[2].spells[0].stat.dmg = 100000;    
@@ -1768,7 +1804,7 @@ if (window.location.search) {
 }
 const tickDuration = 1000.0 / 30;
 function tick() {
-    if(!isPaused){
+    if (!isPaused) {
         tickNumber++;
         update();
     }
