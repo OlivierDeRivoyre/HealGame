@@ -92,6 +92,7 @@ const redKnightSprite = new Sprite(tileSet1, 256, 148, 256, 48, 8);
 const elfSprite = new Sprite(tileSet1, 256, 84, 256, 44, 8);
 const berserkerSprite1 = new Sprite(tileSet1, 256, 528, 256, 52, 8);
 const berserkerSprite2 = new Sprite(tileSet1, 256, 592, 256, 52, 8);
+const necroSprite = new Sprite(tileSet1, 736, 800, 256, 52, 8);
 const arrowSprite = new Sprite(tileSet1, 644, 400, 20, 48, 1);
 const frostSprite = new Sprite(tileSet2, 352, 672, 32, 32, 1);
 const swordSprite = new Sprite(tileSet1, 640, 16, 28, 48, 1);
@@ -107,6 +108,9 @@ const brokenArmorSprite = new Sprite(tileSet2, 160, 128, 32, 32, 1);
 const invulnerableSprite = new Sprite(tileSet2, 64, 192, 32, 32, 1);
 const bombSprite = new Sprite(tileSet2, 384, 320, 32, 32, 1);
 bombSprite.forbidRotate = true;
+const boneSprite = new Sprite(tileSet2, 0, 704, 32, 32, 1);
+boneSprite.forbidRotate = true;
+const skeletonSprite = new Sprite(tileSet1, 736, 172, 64, 48, 2);
 
 class Character {
     constructor(name, sprite) {
@@ -135,7 +139,7 @@ class Character {
         this.dodge = 5;
         this.canBlock = false;
         this.slow = 0;
-        this.ultimatePower = 0;       
+        this.ultimatePower = 0;
     }
     paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
@@ -547,6 +551,74 @@ class Heroes {
         };
         return c;
     }
+    createNecro(){
+        const c = new Character("Necro", necroSprite);
+        c.maxLife = c.life = 600;        
+        c.ultimatePower = 10;
+        const projectile = new ProjectileStat(c, skeletonSprite, 40, 60, 10);        
+        c.spells.push(new PnjSpell(projectile, function(stat, from){
+            const existings = allAnimations.filter(a => a.id == NecroSkeleton.ID);
+            if(existings.length >= c.ultimatePower){
+                return;
+            }        
+            const minY = 80;
+            const maxY = 350;
+            const i = existings.length;
+            const x = (i % 5 == 0) ? 520 : (i % 5 == 1) ? 490 : (i % 5 == 2) ? 280 : (i % 5 == 3) ? 320 : 400;
+            let space = 50;
+            let y = minY + Math.floor(Math.random() * 6) * space;
+            while(existings.find(s => s.y == y && s.x == x)){
+                y = Math.floor(y + space);
+                if(y > maxY){
+                    y = minY;
+                    space /= 2;
+                }
+            }
+            const skeleton = new NecroSkeleton(c, x, y);
+            allAnimations.push(skeleton);
+        }));    
+          
+        c.talents = {
+            life: 1,
+            armor: 1,
+            dodge: 1,
+            damage: 1,
+            haste: 1,
+            crit: 1,
+        };
+        return c;
+    }
+}
+class NecroSkeleton {
+    static ID = "Skeleton";
+    constructor(necro, x, y){
+        this.id = NecroSkeleton.ID;
+        this.necro = necro;
+        this.x = x;
+        this.y = y;
+        this.currentX = necro.x;
+        this.currentY = necro.y
+    }
+    update()
+    {       
+        if(this.currentX != this.x   && this.currentY != this.y){
+            const d = Math.sqrt(square(this.x - this.currentX) + square(this.y - this.currentY));
+            const speed = 3;
+            if (d <= speed) {
+                this.currentX = this.x;
+                this.currentY = this.y;
+                
+            } else {
+                this.currentX += (this.x - this.currentX) * speed / d;
+                this.currentY += (this.y - this.currentY) * speed / d;
+            }
+        }
+        return this.necro.life <= 0;
+    }
+    paint(){
+        let spriteNumber = Math.floor(tickNumber / 8) % 2;
+        skeletonSprite.paint(this.currentX, this.currentY, spriteNumber);
+    }
 }
 const heroesFactory = new Heroes();
 class UpgradeFactory {
@@ -590,6 +662,7 @@ class UpgradeFactory {
         }
         array.push(this.addWitch());
         array.push(this.addHunter());
+        array.push(this.addNecro());        
     }
     proposePnj(pnj, desc) {
         return {
@@ -615,6 +688,10 @@ class UpgradeFactory {
     addBerserker() {
         const c = heroesFactory.createBerserker();
         return this.proposePnj(c, ["Recruit a new berserker", "A tank without armor", "that do more damage", "when below half life"]);
+    }
+    addNecro() {
+        const c = heroesFactory.createNecro();
+        return this.proposePnj(c, ["Recruit a new necromancer", "The Necro collects bones", "of dying hero or monster", "to summons skeletons"]);
     }
     proposeSpell(spell, desc) {
         return {
@@ -1689,7 +1766,6 @@ class Board {
         return false;
     }
 }
-
 class MenuButton {
     constructor(x, y, label, click) {
         this.x = x;
@@ -1720,7 +1796,6 @@ class MenuButton {
         this.mouseOver = false;
     }
 }
-
 class StartMenu {
     constructor() {
         this.buttons = [new MenuButton(500, 350, "Start", this.startGame)]
@@ -1748,7 +1823,6 @@ class StartMenu {
         currentPage = new Board();
     }
 }
-
 class SelectUpgradeScreen {
     constructor() {
         this.upgrades = upgradeFactory.propose3Upgrades();
@@ -1798,7 +1872,6 @@ class SelectUpgradeScreen {
         this.nextLevel();
     }
 }
-
 class DeadScreen {
     constructor() {
         this.buttons = [new MenuButton(500, 350, "Ok", this.goToMainMenu)]
@@ -1843,10 +1916,11 @@ if (window.location.search) {
         currentLevel = parseInt(lvl) - 1;
         teams = [
             heroesFactory.createPelin(),
-      //      heroesFactory.createKnight(),
-      //      heroesFactory.createWitch(),
-      //      heroesFactory.createHunter(),
-            heroesFactory.createBerserker()
+            heroesFactory.createKnight(),
+            heroesFactory.createWitch(),
+            heroesFactory.createHunter(),
+            heroesFactory.createBerserker(),
+            heroesFactory.createNecro(),
         ];
         teams[1].armor = 100;
         //teams[2].spells[0].stat.dmg = 100000;    
