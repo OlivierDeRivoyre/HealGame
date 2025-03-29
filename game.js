@@ -135,7 +135,7 @@ class Character {
         this.dodge = 5;
         this.canBlock = false;
         this.slow = 0;
-        this.ultimatePower = 0;
+        this.ultimatePower = 0;       
     }
     paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
@@ -167,8 +167,9 @@ class Character {
             allAnimations.push(new LabelAnim("dodge", this, "dodge", 0));
             return;
         }
-        const isCrit = Math.random() * 100 < projectileStat.from.crit;
-        const fullDamge = isCrit ? projectileStat.dmg * 2 : projectileStat.dmg;
+        const isCrit = Math.random() * 100 < projectileStat.from.crit;       
+        const baseDamage =  projectileStat.from.isBerserk ? projectileStat.dmg * 2 : projectileStat.dmg;
+        const fullDamge = isCrit ? baseDamage * 2 : baseDamage;
         const remainingArmor = Math.max(0, this.armor * (100 - this.armorBroken) / 100);
         const dmg = Math.floor(fullDamge * 100 / (100 + remainingArmor))
         this.life = Math.max(0, this.life - dmg);
@@ -196,6 +197,14 @@ class Character {
             }
         }
         this.buffs.push(buff);
+    }
+    removeBuff(buff) {
+        for (let i = this.buffs.length - 1; i >= 0; i--) {
+            if (this.buffs[i].name == buff.name) {
+                this.buffs.splice(i, 1)
+                return;
+            }
+        }
     }
     canHaveBonus(bonusKey) {
         if (!this.talents[bonusKey]) {
@@ -301,7 +310,8 @@ class PnjSpell {
         this.tick++;
         if (this.tick >= this.nextCastTick) {
             this.tick = null;
-            this.nextCastTick = Math.floor(this.cooldown * (100 + pnj.slow) / (100 + pnj.haste));
+            const haste = pnj.haste + pnj.isBerserk ? 30 : 0;
+            this.nextCastTick = Math.floor(this.cooldown * (100 + pnj.slow) / (100 + haste));
             this.castFunc(this.stat, pnj);
         }
     }
@@ -509,7 +519,25 @@ class Heroes {
         c.maxLife = c.life = 1200;
         c.isBerserker = true;
         c.isTank = true;
-        c.spells.push(new PnjSpell(new ProjectileStat(c, axeSprite, 40, 37, 7), castSimpleProjectile));
+        const projectile = new ProjectileStat(c, axeSprite, 40, 37, 7);
+        c.spells.push(new PnjSpell(projectile, castSimpleProjectile));    
+        c.onUpdate = function(){
+            const shouldBeBerserk = c.life <= c.maxLife / 2;
+            if(shouldBeBerserk == c.isBerserk){
+                return;
+            }
+            const buff = new CharacterBuffEffect("Berserk", c, berserkerSprite2, 600000, 600000, {}, 
+                `Double base damage and add 30 haste`, function () {});
+            if(shouldBeBerserk){                               
+                c.pushBuff(buff);
+                c.isBerserk = true;
+                c.sprite = berserkerSprite2;
+            } else {
+                c.removeBuff(buff);
+                c.sprite = berserkerSprite1;
+                c.isBerserk = false;
+            }
+        };        
         c.talents = {
             life: 1,
             dodge: 1,
@@ -1815,9 +1843,9 @@ if (window.location.search) {
         currentLevel = parseInt(lvl) - 1;
         teams = [
             heroesFactory.createPelin(),
-            heroesFactory.createKnight(),
-            heroesFactory.createWitch(),
-            heroesFactory.createHunter(),
+      //      heroesFactory.createKnight(),
+      //      heroesFactory.createWitch(),
+      //      heroesFactory.createHunter(),
             heroesFactory.createBerserker()
         ];
         teams[1].armor = 100;
