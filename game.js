@@ -90,11 +90,14 @@ const healerSprite = new Sprite(tileSet1, 256, 340, 288, 48, 9);
 const witchSprite = new Sprite(tileSet1, 256, 274, 288, 48, 9);
 const redKnightSprite = new Sprite(tileSet1, 256, 148, 256, 48, 8);
 const elfSprite = new Sprite(tileSet1, 256, 84, 256, 44, 8);
+const berserkerSprite1 = new Sprite(tileSet1, 256, 528, 256, 52, 8);
+const berserkerSprite2 = new Sprite(tileSet1, 256, 592, 256, 52, 8);
 const arrowSprite = new Sprite(tileSet1, 644, 400, 20, 48, 1);
 const frostSprite = new Sprite(tileSet2, 352, 672, 32, 32, 1);
 const swordSprite = new Sprite(tileSet1, 640, 16, 28, 48, 1);
 const knifeSprite = new Sprite(tileSet1, 580, 16, 24, 32, 1);
 const hamerSprite = new Sprite(tileSet1, 640, 76, 28, 48, 1);
+const axeSprite = new Sprite(tileSet1, 676, 320, 28, 34, 1);
 const enragedSprite = new Sprite(tileSet2, 32, 0, 32, 32, 1);
 enragedSprite.correctAngus = - 3 * Math.PI / 4;
 const deadSprite = new Sprite(tileSet2, 0, 0, 32, 32, 1);
@@ -501,6 +504,21 @@ class Heroes {
         };
         return c;
     }
+    createBerserker(){
+        const c = new Character("Berserker", berserkerSprite1);
+        c.maxLife = c.life = 1200;
+        c.isBerserker = true;
+        c.isTank = true;
+        c.spells.push(new PnjSpell(new ProjectileStat(c, axeSprite, 40, 37, 7), castSimpleProjectile));
+        c.talents = {
+            life: 1,
+            dodge: 1,
+            damage: 1,
+            haste: 1,
+            crit: 1,
+        };
+        return c;
+    }
 }
 const heroesFactory = new Heroes();
 class UpgradeFactory {
@@ -534,9 +552,16 @@ class UpgradeFactory {
             array.splice(r, 1);
         }
     }
-
     click(upgrade) {
         upgrade.click();
+    }
+    addPnjs(array) {
+        if (!teams.find(p => p.isTank)) {
+            array.push(this.addKnight());
+            array.push(this.addBerserker());
+        }
+        array.push(this.addWitch());
+        array.push(this.addHunter());
     }
     proposePnj(pnj, desc) {
         return {
@@ -547,17 +572,10 @@ class UpgradeFactory {
             }
         };
     }
-    addPnjs(array) {
-        if (!teams.find(p => p.isTank)) {
-            array.push(this.addKnight());
-        }
-        array.push(this.addWitch());
-        array.push(this.addHunter());
-    }
     addKnight() {
         const c = heroesFactory.createKnight();
         return this.proposePnj(c, ["Recruit a new knight", "He can reduce", "the damage with his shield"]);
-    }
+    }    
     addWitch() {
         const c = heroesFactory.createWitch();
         return this.proposePnj(c, ["Recruit a new witch", "She can slow the", "attacks of the ennemy"]);
@@ -565,6 +583,10 @@ class UpgradeFactory {
     addHunter() {
         const c = heroesFactory.createHunter();
         return this.proposePnj(c, ["Recruit a new hunter", "He can reduce the", "armor of the ennemy"]);
+    }
+    addBerserker() {
+        const c = heroesFactory.createBerserker();
+        return this.proposePnj(c, ["Recruit a new berserker", "A tank without armor", "that do more damage", "when below half life"]);
     }
     proposeSpell(spell, desc) {
         return {
@@ -1724,7 +1746,7 @@ class SelectUpgradeScreen {
             ctx.fillStyle = "black";
             ctx.font = "16px Verdana";
             for (let line = 0; line < upgrade.desc.length; line++) {
-                ctx.fillText(upgrade.desc[line], 50 + i * 250, 200 + line * 24);
+                ctx.fillText(upgrade.desc[line], 50 + i * 250, 180 + line * 24 + (line != 0 ? 20 : 0));
             }
         }
         for (let b of this.buttons) {
@@ -1795,7 +1817,9 @@ if (window.location.search) {
             heroesFactory.createPelin(),
             heroesFactory.createKnight(),
             heroesFactory.createWitch(),
-            heroesFactory.createHunter()];
+            heroesFactory.createHunter(),
+            heroesFactory.createBerserker()
+        ];
         teams[1].armor = 100;
         //teams[2].spells[0].stat.dmg = 100000;    
         playerSpells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
