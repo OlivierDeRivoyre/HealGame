@@ -171,8 +171,8 @@ class Character {
             allAnimations.push(new LabelAnim("dodge", this, "dodge", 0));
             return;
         }
-        const isCrit = Math.random() * 100 < projectileStat.from.crit;       
-        const baseDamage =  projectileStat.from.isBerserk ? projectileStat.dmg * 2 : projectileStat.dmg;
+        const isCrit = Math.random() * 100 < projectileStat.from.crit;
+        const baseDamage = projectileStat.from.isBerserk ? projectileStat.dmg * 2 : projectileStat.dmg;
         const fullDamge = isCrit ? baseDamage * 2 : baseDamage;
         const remainingArmor = Math.max(0, this.armor * (100 - this.armorBroken) / 100);
         const dmg = Math.floor(fullDamge * 100 / (100 + remainingArmor))
@@ -313,7 +313,7 @@ class PnjSpell {
     update(pnj) {
         this.tick++;
         if (this.tick >= this.nextCastTick) {
-            this.tick = null;
+            this.tick = 0;
             const haste = pnj.haste + pnj.isBerserk ? 30 : 0;
             this.nextCastTick = Math.floor(this.cooldown * (100 + pnj.slow) / (100 + haste));
             this.castFunc(this.stat, pnj);
@@ -518,21 +518,21 @@ class Heroes {
         };
         return c;
     }
-    createBerserker(){
+    createBerserker() {
         const c = new Character("Berserker", berserkerSprite1);
         c.maxLife = c.life = 1200;
         c.isBerserker = true;
         c.isTank = true;
         const projectile = new ProjectileStat(c, axeSprite, 40, 37, 7);
-        c.spells.push(new PnjSpell(projectile, castSimpleProjectile));    
-        c.onUpdate = function(){
+        c.spells.push(new PnjSpell(projectile, castSimpleProjectile));
+        c.onUpdate = function () {
             const shouldBeBerserk = c.life <= c.maxLife / 2;
-            if(shouldBeBerserk == c.isBerserk){
+            if (shouldBeBerserk == c.isBerserk) {
                 return;
             }
-            const buff = new CharacterBuffEffect("Berserk", c, berserkerSprite2, 600000, 600000, {}, 
-                `Double base damage and add 30 haste`, function () {});
-            if(shouldBeBerserk){                               
+            const buff = new CharacterBuffEffect("Berserk", c, berserkerSprite2, 600000, 600000, {},
+                `Double base damage and add 30 haste`, function () { });
+            if (shouldBeBerserk) {
                 c.pushBuff(buff);
                 c.isBerserk = true;
                 c.sprite = berserkerSprite2;
@@ -541,7 +541,7 @@ class Heroes {
                 c.sprite = berserkerSprite1;
                 c.isBerserk = false;
             }
-        };        
+        };
         c.talents = {
             life: 1,
             dodge: 1,
@@ -551,38 +551,37 @@ class Heroes {
         };
         return c;
     }
-    createNecro(){
+    createNecro() {
         const c = new Character("Necro", necroSprite);
-        c.maxLife = c.life = 600;        
+        c.maxLife = c.life = 600;
         c.ultimatePower = 10;
-        const projectile = new ProjectileStat(c, skeletonSprite, 40, 60, 10);        
-        c.spells.push(new PnjSpell(projectile, function(stat, from){
+        const projectile = new ProjectileStat(c, skeletonSprite, 40, 60, 10);
+        c.spells.push(new PnjSpell(projectile, function (stat, from) {
             const existings = allAnimations.filter(a => a.id == NecroSkeleton.ID);
-            if(existings.length >= c.ultimatePower){
+            if (existings.length >= c.ultimatePower) {
                 return;
-            }        
+            }
             const minY = 80;
-            const maxY = 350;
+            const maxY = 300;
             const i = existings.length;
             const x = (i % 5 == 0) ? 520 : (i % 5 == 1) ? 490 : (i % 5 == 2) ? 280 : (i % 5 == 3) ? 320 : 400;
             let space = 50;
             let y = minY + Math.floor(Math.random() * 6) * space;
-            while(existings.find(s => s.y == y && s.x == x)){
+            while (existings.find(s => s.y == y && s.x == x)) {
                 y = Math.floor(y + space);
-                if(y > maxY){
+                if (y > maxY) {
                     y = minY;
                     space /= 2;
                 }
             }
             const skeleton = new NecroSkeleton(c, x, y);
             allAnimations.push(skeleton);
-        }));    
-          
+        }));
+
         c.talents = {
             life: 1,
             armor: 1,
             dodge: 1,
-            damage: 1,
             haste: 1,
             crit: 1,
         };
@@ -591,33 +590,59 @@ class Heroes {
 }
 class NecroSkeleton {
     static ID = "Skeleton";
-    constructor(necro, x, y){
+    constructor(necro, x, y) {
         this.id = NecroSkeleton.ID;
         this.necro = necro;
         this.x = x;
         this.y = y;
+        this.sprite = skeletonSprite;
+        this.width = this.sprite.singleWidth;
+        this.height = this.sprite.tHeight;
         this.currentX = necro.x;
         this.currentY = necro.y
+        this.tick = 0;        
+        this.nextCastTick = 30;
+        this.cooldown = 60;
     }
-    update()
-    {       
-        if(this.currentX != this.x   && this.currentY != this.y){
-            const d = Math.sqrt(square(this.x - this.currentX) + square(this.y - this.currentY));
-            const speed = 3;
-            if (d <= speed) {
-                this.currentX = this.x;
-                this.currentY = this.y;
-                
-            } else {
-                this.currentX += (this.x - this.currentX) * speed / d;
-                this.currentY += (this.y - this.currentY) * speed / d;
-            }
+    update() {
+        if (!this.move()) {
+            this.castSpell();
         }
         return this.necro.life <= 0;
     }
-    paint(){
+    move() {
+        if (this.currentX == this.x && this.currentY == this.y) {
+            return false;
+        }
+        const d = Math.sqrt(square(this.x - this.currentX) + square(this.y - this.currentY));
+        const speed = 3;
+        if (d <= speed) {
+            this.currentX = this.x;
+            this.currentY = this.y;
+
+        } else {
+            this.currentX += (this.x - this.currentX) * speed / d;
+            this.currentY += (this.y - this.currentY) * speed / d;
+        }
+        return true;
+    }
+    castSpell(){
+        this.tick++;
+        if (this.tick >= this.nextCastTick) {
+            this.tick = 0;       
+            this.nextCastTick = Math.floor(this.cooldown * 100 / (100 + this.necro.haste));            
+            let target = this.necro.selectTarget();
+            if (!target) {
+                 return;
+            }
+            const boneStat = new ProjectileStat(this.necro, boneSprite, 20, 60, 6);
+            const projectile = new ProjectileAnim(boneStat, this, target);
+            allAnimations.push(projectile);
+        }
+    }
+    paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
-        skeletonSprite.paint(this.currentX, this.currentY, spriteNumber);
+        this.sprite.paint(this.currentX, this.currentY, spriteNumber);
     }
 }
 const heroesFactory = new Heroes();
@@ -662,7 +687,7 @@ class UpgradeFactory {
         }
         array.push(this.addWitch());
         array.push(this.addHunter());
-        array.push(this.addNecro());        
+        array.push(this.addNecro());
     }
     proposePnj(pnj, desc) {
         return {
@@ -676,7 +701,7 @@ class UpgradeFactory {
     addKnight() {
         const c = heroesFactory.createKnight();
         return this.proposePnj(c, ["Recruit a new knight", "He can reduce", "the damage with his shield"]);
-    }    
+    }
     addWitch() {
         const c = heroesFactory.createWitch();
         return this.proposePnj(c, ["Recruit a new witch", "She can slow the", "attacks of the ennemy"]);
@@ -1047,7 +1072,7 @@ class Vilains {
         vilain.maxLife = 5000;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 200, 50, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.4, 70));    
+        vilain.spells.push(new EnragedAoeTrigger(0.4, 70));
         Vilains.addInvulnerableBuff(vilain);
         return vilain;
     }
@@ -1094,7 +1119,7 @@ class EnragedAoeTrigger {
         }
         self.isEnragedAoe = true;
         const stat = new ProjectileStat(self, enragedSprite, this.dmg, 40, 15)
-        self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat, 
+        self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat,
             `Throw a ${this.dmg} fireball to all`, EnragedAoeTrigger.enragedTick));
     }
     static enragedTick(stat, boss) {
@@ -1123,7 +1148,7 @@ class RandomAttackTrigger {
         this.triggered = true;
         const stat = new ProjectileStat(self, bombSprite, this.dmg, this.cooldown, 8);
         stat.lastTarget = null;
-        self.pushBuff(new CharacterBuffEffect("Explosive", self, bombSprite, this.cooldown, 100000, stat, 
+        self.pushBuff(new CharacterBuffEffect("Explosive", self, bombSprite, this.cooldown, 100000, stat,
             `Deal ${this.dmg} damage to random character`, RandomAttackTrigger.randomAttackTick));
     }
     static randomAttackTick(stat, boss) {
@@ -1356,7 +1381,6 @@ function aoeHealCasted(stat, target) {
         c.onHeal(heal, false);
     }
 }
-
 class CharacterBuffEffect {
     constructor(name, character, icon, period, duration, stat, description, onTick) {
         this.name = name;
@@ -1390,12 +1414,10 @@ class CharacterBuffEffect {
         }
     }
 }
-
 let playerSpells = [
     fastHeal1,
     hotHeal,
 ];
-
 class PlayerStat {
     static left = 276;
     constructor() {
@@ -1809,6 +1831,7 @@ class StartMenu {
         ctx.fillText("Your power is to heal.", 100, 150);
         ctx.fillText("Descent to the dungeon, gather a group and", 100, 200);
         ctx.fillText("increase your stats to clean the dungeon.", 100, 230);
+        ctx.fillText("Pelin shall not die.", 100, 280);
         for (let b of this.buttons) {
             b.paint();
         }
