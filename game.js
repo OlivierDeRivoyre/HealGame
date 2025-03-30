@@ -849,12 +849,12 @@ class UpgradeFactory {
             let newValue = hero.convertDeadIntoSkeletonChance + incr;
             if (newValue <= 100) {
                 this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
-                    `Increase chance to get`, `new skeleton when monster`, `or ally die.`, 
-                    `From ${oldValue} %`, `To ${newValue} %`], function () {
-                        hero.talents.convertDeadIntoSkeleton++;
-                        playerStat.convertDeadIntoSkeletonChance += incr;
-                        hero.addBonus("convertDeadIntoSkeleton")
-                    });
+                    `Increase chance to get`, `new skeleton when monster`, `or ally die.`,
+                `From ${oldValue} %`, `To ${newValue} %`], function () {
+                    hero.talents.convertDeadIntoSkeleton++;
+                    playerStat.convertDeadIntoSkeletonChance += incr;
+                    hero.addBonus("convertDeadIntoSkeleton")
+                });
             }
         }
 
@@ -1570,12 +1570,12 @@ class CharacterTooltip {
         let dmg = this.character.spells[0].stat.dmg;
         let cooldown = Math.floor(0.34 * this.character.spells[0].stat.cooldown * (100 + this.character.slow) / (100 + this.character.haste)) / 10;
         let mainSpell = `Damage: ${dmg} every ${cooldown} seconds`;
-        if(this.character.convertDeadIntoSkeletonChance > 0){
+        if (this.character.convertDeadIntoSkeletonChance > 0) {
             mainSpell = `Summon up to ${this.character.ultimatePower} skeletons`
         }
         ctx.fillText(mainSpell, cursorX, cursorY);
         cursorY += 16;
-        if(this.character.convertDeadIntoSkeletonChance == 0){
+        if (this.character.convertDeadIntoSkeletonChance == 0) {
             ctx.fillText(`Crit chance: ${this.character.crit}%`, cursorX, cursorY);
         } else {
             ctx.fillText(`Convert death into skeleton: ${this.character.convertDeadIntoSkeletonChance}%`, cursorX, cursorY);
@@ -1795,7 +1795,7 @@ class Board {
             playerCastingBar.update();
         playerStat.update();
         if (this.combatEnded == null) {
-            if (teams.filter(c => c.life > 0).length == 0 || mobs.filter(c => c.life > 0).length == 0) {
+            if (teams[0].life <= 0 || mobs.filter(c => c.life > 0).length == 0) {
                 this.combatEnded = 80;
             }
         }
@@ -1803,19 +1803,35 @@ class Board {
             if (teams[0].life <= 0) {
                 currentPage = new DeadScreen();
             } else {
-                for (let i = teams.length - 1; i >= 0; i--) {
-                    if (teams[i].life <= 0) {
-                        teams.splice(i, 1);
-                    }
-                }
+               
                 if (vilainsFactory.isLastLevel(currentLevel)) {
                     currentPage = new EndGameScreen();
                 } else {
-                    currentPage = new SelectUpgradeScreen();
+                    this.onLevelCleared();
+                    
                 }
             }
         } else {
             this.combatEnded--;
+        }
+    }
+    onLevelCleared() {
+        const deadCount = teams.filter(c => c.life <= 0).length + 1;
+        const necros = teams.filter(c => c.life > 0 && c.convertDeadIntoSkeletonChance > 0);
+        let newSkeletons = 0;
+        for (let i = 0; i < deadCount; i++) {
+            for (let necro of necros) {
+                if (Math.random() * 100 < necro.convertDeadIntoSkeletonChance) {
+                    necro.ultimatePower++;
+                    newSkeletons++;
+                    break;
+                }
+            }
+        }
+        if(newSkeletons > 0){
+            currentPage = new NecroLevelScreen(newSkeletons);
+        } else{
+            currentPage = new SelectUpgradeScreen();
         }
     }
     click(event) {
@@ -1858,6 +1874,7 @@ class Board {
         for (let skeleton of allAnimations.filter(a => a.type == NecroSkeleton.AnymType)) {
             if (isInside(skeleton, event)) {
                 tooltip.current = new SkeletonTooltip(skeleton);
+                tooltip.isMinimized = false;
                 return true;
             }
         }
@@ -1921,6 +1938,27 @@ class StartMenu {
             hotHeal,
         ];
         currentPage = new Board();
+    }
+}
+class NecroLevelScreen {
+    constructor(newSkeletons) {
+        this.newSkeletons = newSkeletons;
+        this.buttons = [new MenuButton(500, 350, "Ok", this.nextPage)]
+    }
+    update() { }
+    paint() {
+        ctx.fillStyle = "black";
+        ctx.font = "24px Verdana";
+        const text = this.newSkeletons == 1 ? 
+            `A new skeleton has join your Necro` :
+            `Your Necro have ${this.newSkeletons} new skeletons`;
+        ctx.fillText(text, 100, 100);     
+        for (let b of this.buttons) {
+            b.paint();
+        }
+    }
+    nextPage() {
+        currentPage = new SelectUpgradeScreen();
     }
 }
 class SelectUpgradeScreen {
@@ -2016,10 +2054,10 @@ if (window.location.search) {
         currentLevel = parseInt(lvl) - 1;
         teams = [
             heroesFactory.createPelin(),
-       //     heroesFactory.createKnight(),
-       //     heroesFactory.createWitch(),
-       //     heroesFactory.createHunter(),
-      //      heroesFactory.createBerserker(),
+            heroesFactory.createKnight(),
+            heroesFactory.createWitch(),
+            heroesFactory.createHunter(),
+            heroesFactory.createBerserker(),
             heroesFactory.createNecro(),
         ];
         teams[1].armor = 100;
