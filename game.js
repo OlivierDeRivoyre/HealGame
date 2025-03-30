@@ -555,9 +555,9 @@ class Heroes {
         const c = new Character("Necro", necroSprite);
         c.maxLife = c.life = 600;
         c.ultimatePower = 10;
-        const projectile = new ProjectileStat(c, skeletonSprite, 40, 60, 10);
+        const projectile = new ProjectileStat(c, skeletonSprite, 20, 60, 10);
         c.spells.push(new PnjSpell(projectile, function (stat, from) {
-            const existings = allAnimations.filter(a => a.id == NecroSkeleton.ID);
+            const existings = allAnimations.filter(a => a.type == NecroSkeleton.AnymType);
             if (existings.length >= c.ultimatePower) {
                 return;
             }
@@ -567,14 +567,14 @@ class Heroes {
             const x = (i % 5 == 0) ? 520 : (i % 5 == 1) ? 490 : (i % 5 == 2) ? 280 : (i % 5 == 3) ? 320 : 400;
             let space = 50;
             let y = minY + Math.floor(Math.random() * 6) * space;
-            while (existings.find(s => s.y == y && s.x == x)) {
+            while (existings.find(s => s.destY == y && s.destY == x)) {
                 y = Math.floor(y + space);
                 if (y > maxY) {
                     y = minY;
                     space /= 2;
                 }
             }
-            const skeleton = new NecroSkeleton(c, x, y);
+            const skeleton = new NecroSkeleton(c, x, y, existings.length + 1);
             allAnimations.push(skeleton);
         }));
 
@@ -589,20 +589,22 @@ class Heroes {
     }
 }
 class NecroSkeleton {
-    static ID = "Skeleton";
-    constructor(necro, x, y) {
-        this.id = NecroSkeleton.ID;
-        this.necro = necro;
-        this.x = x;
-        this.y = y;
+    static AnymType = "Skeleton";
+    constructor(necro, x, y, id) {
+        this.type = NecroSkeleton.AnymType;
+        this.necro = necro;        
+        this.destX = x;
+        this.destY = y;
+        this.id = id;
         this.sprite = skeletonSprite;
         this.width = this.sprite.singleWidth;
         this.height = this.sprite.tHeight;
-        this.currentX = necro.x;
-        this.currentY = necro.y
+        this.x = necro.x;
+        this.y = necro.y
         this.tick = 0;        
         this.nextCastTick = 30;
         this.cooldown = 60;
+        this.damage = 20;
     }
     update() {
         if (!this.move()) {
@@ -611,18 +613,18 @@ class NecroSkeleton {
         return this.necro.life <= 0;
     }
     move() {
-        if (this.currentX == this.x && this.currentY == this.y) {
+        if (this.x == this.destX && this.y == this.destY) {
             return false;
         }
-        const d = Math.sqrt(square(this.x - this.currentX) + square(this.y - this.currentY));
+        const d = Math.sqrt(square(this.destX - this.x) + square(this.destY - this.y));
         const speed = 3;
         if (d <= speed) {
-            this.currentX = this.x;
-            this.currentY = this.y;
+            this.x = this.destX;
+            this.y = this.destY;
 
         } else {
-            this.currentX += (this.x - this.currentX) * speed / d;
-            this.currentY += (this.y - this.currentY) * speed / d;
+            this.x += (this.destX - this.x) * speed / d;
+            this.y += (this.destY - this.y) * speed / d;
         }
         return true;
     }
@@ -630,19 +632,22 @@ class NecroSkeleton {
         this.tick++;
         if (this.tick >= this.nextCastTick) {
             this.tick = 0;       
-            this.nextCastTick = Math.floor(this.cooldown * 100 / (100 + this.necro.haste));            
+            this.nextCastTick = this.getCooldown();          
             let target = this.necro.selectTarget();
             if (!target) {
                  return;
             }
-            const boneStat = new ProjectileStat(this.necro, boneSprite, 20, 60, 6);
+            const boneStat = new ProjectileStat(this.necro, boneSprite, this.damage, this.cooldown, 6);
             const projectile = new ProjectileAnim(boneStat, this, target);
             allAnimations.push(projectile);
         }
     }
+    getCooldown(){
+        return Math.floor(this.cooldown * 100 / (100 + this.necro.haste)); 
+    }
     paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
-        this.sprite.paint(this.currentX, this.currentY, spriteNumber);
+        this.sprite.paint(this.x, this.y, spriteNumber);
     }
 }
 const heroesFactory = new Heroes();
@@ -1572,6 +1577,35 @@ class CharacterTooltip {
         return false;
     }
 }
+class SkeletonTooltip {
+    constructor(skeleton) {
+        this.skeleton = skeleton;
+        this.buffY = tooltip.y + tooltip.height - 20 - 8;
+        this.buffX = tooltip.x + 8 + 56;
+    }
+    paint() {
+        let cursorY = tooltip.y + 22;
+        let cursorX = tooltip.x + 8;
+
+        ctx.fillStyle = "darkgreen";
+        ctx.font = "bold 18px Verdana";
+        ctx.fillText(`Skeleton ${this.skeleton.id}/${this.skeleton.necro.ultimatePower}`, cursorX, cursorY);
+        cursorY += 18;
+
+        ctx.fillStyle = "white";
+        ctx.font = "12px Verdana";
+        let dmg = this.skeleton.damage;
+        let cooldown = Math.floor(0.34 * this.skeleton.getCooldown()) / 10;
+        ctx.fillText(`Damage: ${dmg} every ${cooldown} seconds`, cursorX, cursorY);
+        cursorY += 16;
+
+        ctx.fillText(`Crit chance: ${this.skeleton.necro.crit}%`, cursorX, cursorY);
+        cursorY += 16;
+    }
+    click(event) {       
+        return false;
+    }
+}
 class BuffTooltip {
     constructor(buff) {
         this.buff = buff;
@@ -1783,6 +1817,12 @@ class Board {
                 tooltip.isMinimized = false;
             }
             return true;
+        }
+        for (let skeleton of allAnimations.filter(a => a.type == NecroSkeleton.AnymType)) {
+            if (isInside(skeleton, event)) {
+                tooltip.current = new SkeletonTooltip(skeleton);
+                return true;
+            }
         }
         tooltip.current = null;
         return false;
