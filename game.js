@@ -1828,6 +1828,7 @@ class Board {
                 }
             }
         }
+        teams = teams.filter(c => c.life> 0);
         if(newSkeletons > 0){
             currentPage = new NecroLevelScreen(newSkeletons);
         } else{
@@ -1925,7 +1926,7 @@ class StartMenu {
         ctx.fillText("Your power is to heal.", 100, 150);
         ctx.fillText("Descent to the dungeon, gather a group and", 100, 200);
         ctx.fillText("increase your stats to clean the dungeon.", 100, 230);
-        ctx.fillText("Pelin shall not die.", 100, 280);
+        ctx.fillText("Pelin shall not die. There is no resurection for no one.", 100, 280);
         for (let b of this.buttons) {
             b.paint();
         }
@@ -1980,6 +1981,11 @@ class SelectUpgradeScreen {
         ctx.fillStyle = "black";
         ctx.font = "30px Verdana";
         ctx.fillText("Select a bonus", 250, 40);
+        if(rerollsNumber == 0){
+            ctx.fillStyle = "gray";
+            ctx.font = "10px Verdana";
+            ctx.fillText("Skip to get 2 new rerolls on next level", CanvasWidth - 208, 65);
+        }
         for (let i = 0; i < this.upgrades.length; i++) {
             const upgrade = this.upgrades[i];
             upgrade.sprite.paint(50 + i * 250, 100);
