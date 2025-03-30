@@ -276,9 +276,17 @@ class CharacterMenu {
         ctx.rect(left, top + 10, this.character.life * 200 / this.character.maxLife, 20);
         ctx.fill();
 
+        let label = `${this.character.life} / ${this.character.maxLife}`
+        if (this.character.life <= 0) {
+            label = "Dead";
+            ctx.beginPath();
+            ctx.lineWidth = "1";
+            ctx.fillStyle = "gray";
+            ctx.rect(left, top + 10, 200, 20);
+            ctx.fill();
+        }
         ctx.fillStyle = "black";
         ctx.font = "12px Arial";
-        let label = "" + this.character.life + " / " + this.character.maxLife
         ctx.fillText(label, left + 80, top + 24);
 
         ctx.beginPath();
@@ -1803,12 +1811,12 @@ class Board {
             if (teams[0].life <= 0) {
                 currentPage = new DeadScreen();
             } else {
-               
+
                 if (vilainsFactory.isLastLevel(currentLevel)) {
                     currentPage = new EndGameScreen();
                 } else {
                     this.onLevelCleared();
-                    
+
                 }
             }
         } else {
@@ -1828,10 +1836,10 @@ class Board {
                 }
             }
         }
-        teams = teams.filter(c => c.life> 0);
-        if(newSkeletons > 0){
+        teams = teams.filter(c => c.life > 0);
+        if (newSkeletons > 0) {
             currentPage = new NecroLevelScreen(newSkeletons);
-        } else{
+        } else {
             currentPage = new SelectUpgradeScreen();
         }
     }
@@ -1950,10 +1958,10 @@ class NecroLevelScreen {
     paint() {
         ctx.fillStyle = "black";
         ctx.font = "24px Verdana";
-        const text = this.newSkeletons == 1 ? 
+        const text = this.newSkeletons == 1 ?
             `A new skeleton has join your Necro` :
             `Your Necro have ${this.newSkeletons} new skeletons`;
-        ctx.fillText(text, 100, 100);     
+        ctx.fillText(text, 100, 100);
         for (let b of this.buttons) {
             b.paint();
         }
@@ -1981,7 +1989,7 @@ class SelectUpgradeScreen {
         ctx.fillStyle = "black";
         ctx.font = "30px Verdana";
         ctx.fillText("Select a bonus", 250, 40);
-        if(rerollsNumber == 0){
+        if (rerollsNumber == 0) {
             ctx.fillStyle = "gray";
             ctx.font = "10px Verdana";
             ctx.fillText("Skip to get 2 new rerolls on next level", CanvasWidth - 208, 65);
