@@ -140,6 +140,7 @@ class Character {
         this.canBlock = false;
         this.slow = 0;
         this.ultimatePower = 0;
+        this.convertDeadIntoSkeletonChance = 0;
     }
     paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
@@ -554,7 +555,8 @@ class Heroes {
     createNecro() {
         const c = new Character("Necro", necroSprite);
         c.maxLife = c.life = 600;
-        c.ultimatePower = 10;
+        c.convertDeadIntoSkeletonChance = 20;
+        c.ultimatePower = 1;
         const projectile = new ProjectileStat(c, skeletonSprite, 20, 60, 10);
         c.spells.push(new PnjSpell(projectile, function (stat, from) {
             const existings = allAnimations.filter(a => a.type == NecroSkeleton.AnymType);
@@ -584,6 +586,7 @@ class Heroes {
             dodge: 1,
             haste: 1,
             crit: 1,
+            convertDeadIntoSkeleton: 1,
         };
         return c;
     }
@@ -592,7 +595,7 @@ class NecroSkeleton {
     static AnymType = "Skeleton";
     constructor(necro, x, y, id) {
         this.type = NecroSkeleton.AnymType;
-        this.necro = necro;        
+        this.necro = necro;
         this.destX = x;
         this.destY = y;
         this.id = id;
@@ -601,7 +604,7 @@ class NecroSkeleton {
         this.height = this.sprite.tHeight;
         this.x = necro.x;
         this.y = necro.y
-        this.tick = 0;        
+        this.tick = 0;
         this.nextCastTick = 30;
         this.cooldown = 60;
         this.damage = 20;
@@ -628,22 +631,22 @@ class NecroSkeleton {
         }
         return true;
     }
-    castSpell(){
+    castSpell() {
         this.tick++;
         if (this.tick >= this.nextCastTick) {
-            this.tick = 0;       
-            this.nextCastTick = this.getCooldown();          
+            this.tick = 0;
+            this.nextCastTick = this.getCooldown();
             let target = this.necro.selectTarget();
             if (!target) {
-                 return;
+                return;
             }
             const boneStat = new ProjectileStat(this.necro, boneSprite, this.damage, this.cooldown, 6);
             const projectile = new ProjectileAnim(boneStat, this, target);
             allAnimations.push(projectile);
         }
     }
-    getCooldown(){
-        return Math.floor(this.cooldown * 100 / (100 + this.necro.haste)); 
+    getCooldown() {
+        return Math.floor(this.cooldown * 100 / (100 + this.necro.haste));
     }
     paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
@@ -759,7 +762,8 @@ class UpgradeFactory {
         const hero = teams[getRandomInt(0, teams.length)];
         if (hero.canHaveBonus("life")) {
             let incr = 50 + Math.floor(Math.random() * 5) * 50 + hero.talents.life * 50;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase max life of ${hero.name}`, `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function () {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase max life of ${hero.name}`,
+            `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function () {
                 hero.talents.life++;
                 hero.maxLife += incr;
                 hero.addBonus("life")
@@ -767,7 +771,8 @@ class UpgradeFactory {
         }
         if (hero.canHaveBonus("armor")) {
             let incr = 10 + Math.floor(Math.random() * 5) * 5;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase armor of ${hero.name}`, `From ${hero.armor}`, `To ${hero.armor + incr}`], function () {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase armor of ${hero.name}`,
+            `From ${hero.armor}`, `To ${hero.armor + incr}`], function () {
                 hero.talents.armor++;
                 hero.armor += incr;
                 hero.addBonus("armor")
@@ -775,7 +780,8 @@ class UpgradeFactory {
         }
         if (hero.canHaveBonus("damage")) {
             let incr = 5 + Math.floor(Math.random() * 4) * 5;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase damage of ${hero.name}`, `From ${hero.spells[0].stat.dmg}`, `To ${hero.spells[0].stat.dmg + incr}`], function () {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase damage of ${hero.name}`,
+            `From ${hero.spells[0].stat.dmg}`, `To ${hero.spells[0].stat.dmg + incr}`], function () {
                 hero.talents.damage++;
                 hero.spells[0].stat.dmg += incr;
                 hero.addBonus("damage")
@@ -783,7 +789,8 @@ class UpgradeFactory {
         }
         if (hero.canHaveBonus("crit")) {
             let incr = 10 + Math.floor(Math.random() * 5) * 5;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase critical chance`, `From ${hero.crit} %`, `To ${hero.crit + incr} %`], function () {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase critical chance`,
+            `From ${hero.crit} %`, `To ${hero.crit + incr} %`], function () {
                 hero.talents.crit++;
                 hero.crit += incr;
                 hero.addBonus("crit")
@@ -791,7 +798,8 @@ class UpgradeFactory {
         }
         if (hero.canHaveBonus("dodge") && hero.dodge < 50) {
             let incr = 5 + Math.floor(Math.random() * 10);
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase dodge chance`, `From ${hero.dodge} %`, `To ${hero.dodge + incr} %`], function () {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase dodge chance`,
+            `From ${hero.dodge} %`, `To ${hero.dodge + incr} %`], function () {
                 hero.talents.dodge++;
                 hero.dodge += incr;
                 hero.addBonus("dodge")
@@ -799,7 +807,8 @@ class UpgradeFactory {
         }
         if (hero.canHaveBonus("haste")) {
             let incr = 10 + Math.floor(Math.random() * 20);
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase haste`, `From ${hero.haste}`, `To ${hero.haste + incr}`], function () {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase haste`,
+            `From ${hero.haste}`, `To ${hero.haste + incr}`], function () {
                 hero.talents.haste++;
                 hero.haste += incr;
                 hero.addBonus("haste")
@@ -807,7 +816,8 @@ class UpgradeFactory {
         }
         if (hero.canHaveBonus("mana")) {
             let incr = 80 + Math.floor(Math.random() * 8) * 10;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana`, `From ${playerStat.maxMana}`, `To ${playerStat.maxMana + incr}`], function () {
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana`,
+            `From ${playerStat.maxMana}`, `To ${playerStat.maxMana + incr}`], function () {
                 hero.talents.mana++;
                 playerStat.maxMana += incr;
                 hero.addBonus("mana")
@@ -815,39 +825,59 @@ class UpgradeFactory {
         }
         if (hero.canHaveBonus("regen")) {
             let incr = 1 + hero.talents.regen;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana regen`, `From ${playerStat.liteManaRegen} mana/s`, `To ${playerStat.liteManaRegen + incr} mana/s`], function () {
-                hero.talents.regen++;
-                playerStat.liteManaRegen += incr;
-                playerStat.fullManaRegen += incr * 4;
-                hero.addBonus("regen")
-            });
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
+                `Increase mana regen`, `From ${playerStat.liteManaRegen} mana/s`, `To ${playerStat.liteManaRegen + incr} mana/s`],
+                function () {
+                    hero.talents.regen++;
+                    playerStat.liteManaRegen += incr;
+                    playerStat.fullManaRegen += incr * 4;
+                    hero.addBonus("regen")
+                });
         }
         if (hero.canHaveBonus("healPower")) {
             let incr = 10 + Math.floor(Math.random() * 15);
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase heal bonus`, `From ${playerStat.healPower} %`, `To ${playerStat.healPower + incr} %`], function () {
-                hero.talents.regen++;
-                playerStat.healPower += incr;
-                hero.addBonus("healPower")
-            });
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
+                `Increase heal bonus`, `From ${playerStat.healPower} %`, `To ${playerStat.healPower + incr} %`], function () {
+                    hero.talents.healPower++;
+                    playerStat.healPower += incr;
+                    hero.addBonus("healPower")
+                });
+        }
+        if (hero.canHaveBonus("convertDeadIntoSkeleton")) {
+            let incr = 10 + Math.floor(Math.random() * 15);
+            let oldValue = hero.convertDeadIntoSkeletonChance;
+            let newValue = hero.convertDeadIntoSkeletonChance + incr;
+            if (newValue <= 100) {
+                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
+                    `Increase chance to get`, `new skeleton when monster`, `or ally die.`, 
+                    `From ${oldValue} %`, `To ${newValue} %`], function () {
+                        hero.talents.convertDeadIntoSkeleton++;
+                        playerStat.convertDeadIntoSkeletonChance += incr;
+                        hero.addBonus("convertDeadIntoSkeleton")
+                    });
+            }
         }
 
         if (hero.level >= 3) {
             if (hero.talents.blockBuff == 1) {
-                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Learn to block`, `30% chance to block`], function () {
-                    hero.talents.blockBuff++;
-                    hero.canBlock = true;
-                });
+                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Learn to block`,
+                    `30% chance to block`], function () {
+                        hero.talents.blockBuff++;
+                        hero.canBlock = true;
+                    });
             }
             if (hero.talents.frostBuff >= 1 && hero.talents.frostBuff < 3) {
                 let incr = 20;
-                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase slow debuff`, `From ${hero.ultimatePower} %`, `To ${hero.ultimatePower + incr} %`], function () {
+                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase slow debuff`,
+                `From ${hero.ultimatePower} %`, `To ${hero.ultimatePower + incr} %`], function () {
                     hero.talents.frostBuff++;
                     hero.ultimatePower += incr;
                 });
             }
             if (hero.talents.breakArmorBuff >= 1 && hero.talents.breakArmorBuff < 3) {
                 let incr = 20;
-                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase breaking armor`, `From ${hero.ultimatePower} %`, `To ${hero.ultimatePower + incr} %`], function () {
+                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase breaking armor`,
+                `From ${hero.ultimatePower} %`, `To ${hero.ultimatePower + incr} %`], function () {
                     hero.talents.breakArmorBuff++;
                     hero.ultimatePower += incr;
                 });
@@ -1539,10 +1569,17 @@ class CharacterTooltip {
 
         let dmg = this.character.spells[0].stat.dmg;
         let cooldown = Math.floor(0.34 * this.character.spells[0].stat.cooldown * (100 + this.character.slow) / (100 + this.character.haste)) / 10;
-        ctx.fillText(`Damage: ${dmg} every ${cooldown} seconds`, cursorX, cursorY);
+        let mainSpell = `Damage: ${dmg} every ${cooldown} seconds`;
+        if(this.character.convertDeadIntoSkeletonChance > 0){
+            mainSpell = `Summon up to ${this.character.ultimatePower} skeletons`
+        }
+        ctx.fillText(mainSpell, cursorX, cursorY);
         cursorY += 16;
-
-        ctx.fillText(`Crit chance: ${this.character.crit}%`, cursorX, cursorY);
+        if(this.character.convertDeadIntoSkeletonChance == 0){
+            ctx.fillText(`Crit chance: ${this.character.crit}%`, cursorX, cursorY);
+        } else {
+            ctx.fillText(`Convert death into skeleton: ${this.character.convertDeadIntoSkeletonChance}%`, cursorX, cursorY);
+        }
         cursorY += 16;
 
         let currentArmor = Math.max(0, this.character.armor - this.character.armorBroken);
@@ -1602,7 +1639,7 @@ class SkeletonTooltip {
         ctx.fillText(`Crit chance: ${this.skeleton.necro.crit}%`, cursorX, cursorY);
         cursorY += 16;
     }
-    click(event) {       
+    click(event) {
         return false;
     }
 }
@@ -1979,10 +2016,10 @@ if (window.location.search) {
         currentLevel = parseInt(lvl) - 1;
         teams = [
             heroesFactory.createPelin(),
-            heroesFactory.createKnight(),
-            heroesFactory.createWitch(),
-            heroesFactory.createHunter(),
-            heroesFactory.createBerserker(),
+       //     heroesFactory.createKnight(),
+       //     heroesFactory.createWitch(),
+       //     heroesFactory.createHunter(),
+      //      heroesFactory.createBerserker(),
             heroesFactory.createNecro(),
         ];
         teams[1].armor = 100;
