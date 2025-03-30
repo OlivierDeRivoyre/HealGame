@@ -141,6 +141,7 @@ class Character {
         this.slow = 0;
         this.ultimatePower = 0;
         this.convertDeadIntoSkeletonChance = 0;
+        this.isBerserk = false;
     }
     paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
@@ -323,7 +324,7 @@ class PnjSpell {
         this.tick++;
         if (this.tick >= this.nextCastTick) {
             this.tick = 0;
-            const haste = pnj.haste + pnj.isBerserk ? 30 : 0;
+            const haste = pnj.haste + (pnj.isBerserk ? 30 : 0);
             this.nextCastTick = Math.floor(this.cooldown * (100 + pnj.slow) / (100 + haste));
             this.castFunc(this.stat, pnj);
         }
@@ -944,7 +945,7 @@ class Vilains {
         vilain.maxLife = 600;
         vilain.armor = 10;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 80, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 30));
         return vilain;
     }
     static lvl3() {
@@ -952,8 +953,8 @@ class Vilains {
         let vilain = new Character("Small Devil", sprite);
         vilain.maxLife = 800;
         vilain.armor = 20;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 80, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 4));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 60, 50, 7), castSimpleProjectile));
+        vilain.spells.push(new HasteBuffTrigger(0.7, 150, 30 * 15));
         return vilain;
     }
     static lvl4() {
@@ -961,8 +962,8 @@ class Vilains {
         let vilain = new Character("Brown Mud", sprite);
         vilain.maxLife = 1000;
         vilain.armor = 40;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 85, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 60, 7), castSimpleProjectile));
+        vilain.spells.push(new HasteBuffTrigger(0.8, 150, 30 * 15));
         return vilain;
     }
     static lvl5() {
@@ -971,7 +972,7 @@ class Vilains {
         vilain.maxLife = 1100;
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 85));
         return vilain;
     }
     static lvl6() {
@@ -989,7 +990,7 @@ class Vilains {
         vilain.maxLife = 1300;
         vilain.armor = 60;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 110, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new EnragedAoeTrigger(0.9, 50));
         return vilain;
     }
     static lvl8() {
@@ -1016,7 +1017,7 @@ class Vilains {
         vilain.maxLife = 1600;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 80, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new EnragedAoeTrigger(0.8, 80));
         return vilain;
     }
     static giantOrc() {
@@ -1025,8 +1026,8 @@ class Vilains {
         vilain.maxLife = 2000;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
-        Vilains.addInvulnerableBuff(vilain);
+        vilain.spells.push(new EnragedAoeTrigger(0.6, 80));
+        Vilains.addInvulnerableBuff(vilain, 6);
         return vilain;
     }
     static lvl11() {
@@ -1045,7 +1046,7 @@ class Vilains {
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
-        Vilains.addInvulnerableBuff(vilain);
+        Vilains.addInvulnerableBuff(vilain, 8);
         return vilain;
     }
     static lvl13() {
@@ -1054,7 +1055,7 @@ class Vilains {
         vilain.maxLife = 2200;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new EnragedAoeTrigger(0.4, 100));
         return vilain;
     }
     static lvl14() {
@@ -1065,7 +1066,7 @@ class Vilains {
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 80, 40, 7), castSimpleProjectile));
         vilain.spells.push(new RandomAttackTrigger(0.7, 500, 100));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
-        Vilains.addInvulnerableBuff(vilain);
+        Vilains.addInvulnerableBuff(vilain, 8);
         return vilain;
     }
     static lvl15() {
@@ -1074,8 +1075,8 @@ class Vilains {
         vilain.maxLife = 2500;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
-        Vilains.addInvulnerableBuff(vilain);
+        vilain.spells.push(new EnragedAoeTrigger(0.9, 60));
+        Vilains.addInvulnerableBuff(vilain, 10);
         return vilain;
     }
     static lvl16() {
@@ -1084,9 +1085,9 @@ class Vilains {
         vilain.maxLife = 2500;
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 250, 50, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 40));
+        vilain.spells.push(new EnragedAoeTrigger(0.6, 50));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
-        Vilains.addInvulnerableBuff(vilain);
+        Vilains.addInvulnerableBuff(vilain, 12);
         return vilain;
     }
     static lvl16() {
@@ -1097,7 +1098,7 @@ class Vilains {
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 25, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 60));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
-        Vilains.addInvulnerableBuff(vilain);
+        Vilains.addInvulnerableBuff(vilain, 8);
         return vilain;
     }
     static lvl17() {
@@ -1106,7 +1107,7 @@ class Vilains {
         vilain.maxLife = 4000;
         vilain.armor = 200;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 300, 80, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 50));
+        vilain.spells.push(new EnragedAoeTrigger(0.75, 50));
         return vilain;
     }
     static bigZombie() {
@@ -1116,7 +1117,7 @@ class Vilains {
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 200, 50, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.4, 70));
-        Vilains.addInvulnerableBuff(vilain);
+        Vilains.addInvulnerableBuff(vilain, 10);
         return vilain;
     }
     static giantDemon() {
@@ -1128,13 +1129,13 @@ class Vilains {
         vilain.spells.push(new EnragedAoeTrigger(0.5, 75));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
         vilain.spells.push(new RandomAttackTrigger(0.7, 500, 120));
-        Vilains.addInvulnerableBuff(vilain);
+        Vilains.addInvulnerableBuff(vilain, 10);
         return vilain;
     }
-    static addInvulnerableBuff(vilain) {
-        vilain.spells.push(new InvulnerableBuffTrigger(75, 8 * 30));
-        vilain.spells.push(new InvulnerableBuffTrigger(40, 8 * 30));
-        vilain.spells.push(new InvulnerableBuffTrigger(20, 8 * 30));
+    static addInvulnerableBuff(vilain, duration) {
+        vilain.spells.push(new InvulnerableBuffTrigger(75, duration * 30));
+        vilain.spells.push(new InvulnerableBuffTrigger(40, duration * 30));
+        vilain.spells.push(new InvulnerableBuffTrigger(20, duration * 30));
     }
 }
 const vilainsFactory = new Vilains();
