@@ -686,7 +686,7 @@ class NecroSkeleton {
         this.sprite.paint(this.x, this.y, spriteNumber);
     }
 }
-const heroesFactory = new Heroes();
+let heroesFactory = new Heroes();
 class UpgradeFactory {
     propose3UpgradesForPelin() {
         const upgrades = [];
