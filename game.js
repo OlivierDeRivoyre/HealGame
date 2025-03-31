@@ -664,6 +664,14 @@ class NecroSkeleton {
 }
 const heroesFactory = new Heroes();
 class UpgradeFactory {
+    propose3UpgradesForPelin() {
+        const upgrades = [];
+        this.addSpells(upgrades);
+        this.addLevelUpForTheHero(teams[0], upgrades);
+        let selected = [];
+        this.randomPick(upgrades, selected, 3);
+        return selected;
+    }
     propose3Upgrades() {
         // 0-1 of lvlup spell / recruit
         // 3-2 of level up options on one character
@@ -674,14 +682,10 @@ class UpgradeFactory {
             this.randomPick(pnjs, selected, 3);
             return selected;
         }
-        const upgradeSpells = [];
-        this.addSpells(upgradeSpells);
         const heros = [];
         this.addLevelUpForOneHero(heros);
         let selected = [];
-        if (playerSpells.length < 5 && upgradeSpells.length != 0 && Math.random() < 0.5) {
-            this.randomPick(upgradeSpells, selected, 1);
-        } else if (teams.length < 7) {
+        if (teams.length < 7) {
             this.randomPick(pnjs, selected, 1);
         }
         this.randomPick(heros, selected, 3);
@@ -768,7 +772,13 @@ class UpgradeFactory {
         });
     }
     addLevelUpForOneHero(array) {
-        const hero = teams[getRandomInt(0, teams.length)];
+        if (teams.length <= 1) {
+            return;
+        }
+        const hero = teams[getRandomInt(1, teams.length)];// Not Pelin
+        this.addLevelUpForTheHero(hero, array);
+    }
+    addLevelUpForTheHero(hero, array) {
         if (hero.canHaveBonus("life")) {
             let incr = 50 + Math.floor(Math.random() * 5) * 50 + hero.talents.life * 50;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase max life of ${hero.name}`,
@@ -1841,13 +1851,13 @@ class Board {
             }
         }
         teams = teams.filter(c => c.life > 0);
-        if(currentLevel % 3 == 0 && rerollsNumber < 3){
+        if (currentLevel % 3 == 0 && rerollsNumber < 3) {
             rerollsNumber++;
         }
         if (newSkeletons > 0) {
             currentPage = new NecroLevelScreen(newSkeletons);
         } else {
-            currentPage = new SelectUpgradeScreen();
+            currentPage = new SelectUpgradeScreen(1);
         }
     }
     click(event) {
@@ -1930,7 +1940,7 @@ class MenuButton {
 }
 class StartMenu {
     constructor() {
-        this.buttons = [new MenuButton(500, 350, "Start", this.startGame)]
+        this.buttons = [new MenuButton(500, 350, "Start", () => this.startGame())]
     }
     update() { }
     paint() {
@@ -1960,7 +1970,7 @@ class StartMenu {
 class NecroLevelScreen {
     constructor(newSkeletons) {
         this.newSkeletons = newSkeletons;
-        this.buttons = [new MenuButton(500, 350, "Ok", this.nextPage)]
+        this.buttons = [new MenuButton(500, 350, "Ok", () => this.nextPage())]
     }
     update() { }
     paint() {
@@ -1975,33 +1985,53 @@ class NecroLevelScreen {
         }
     }
     nextPage() {
-        currentPage = new SelectUpgradeScreen();
+        currentPage = new SelectUpgradeScreen(1);
     }
 }
 class SelectUpgradeScreen {
-    constructor() {
-        this.upgrades = upgradeFactory.propose3Upgrades();
+    constructor(step) {
+        this.step = step;
+        if (this.step == 1 && currentLevel % 3 != 0) {
+            this.step = 2;
+        }
+        if (this.step == 1) {
+            this.upgrades = upgradeFactory.propose3UpgradesForPelin();
+            if (this.upgrades.length == 0) {
+                this.step = 2;
+            }
+        }
+        if (this.step == 2) {
+            this.upgrades = upgradeFactory.propose3Upgrades();
+        }
         this.buttons = []
         for (let i = 0; i < this.upgrades.length; i++) {
             this.buttons.push(new MenuButton(50 + i * 250, 350, "OK", () => this.selectUpgrade(i)))
         }
         if (rerollsNumber > 0) {
             this.buttons.push(new MenuButton(CanvasWidth - 210, 10, `Reroll (${rerollsNumber})`, () => this.reroll()))
-        } 
+        }
     }
     update() { }
 
     paint() {
         ctx.fillStyle = "black";
         ctx.font = "30px Verdana";
-        ctx.fillText("Select a bonus", 250, 40);       
+        if (this.step == 1) {
+            ctx.fillText("Select an upgrade for Pelin", 40, 40);
+        } else if (this.step == 2) {
+            ctx.fillText("Improve your team", 40, 40);
+        } else {
+            ctx.fillText("Select a level up bonus", 40, 40);
+        }
         for (let i = 0; i < this.upgrades.length; i++) {
             const upgrade = this.upgrades[i];
             upgrade.sprite.paint(50 + i * 250, 100);
             ctx.fillStyle = "black";
             ctx.font = "16px Verdana";
+            const cursorX = 50 + i * 250;
+            const cursorY = 180;
             for (let line = 0; line < upgrade.desc.length; line++) {
-                ctx.fillText(upgrade.desc[line], 50 + i * 250, 180 + line * 24 + (line != 0 ? 20 : 0));
+                ctx.fillText(upgrade.desc[line], cursorX, cursorY + line * 24 + (line != 0 ? 20 : 0));
             }
         }
         for (let b of this.buttons) {
@@ -2009,21 +2039,23 @@ class SelectUpgradeScreen {
         }
     }
     selectUpgrade(index) {
-        upgradeFactory.click(this.upgrades[index]);
-        this.nextLevel();
-    }
-    nextLevel() {
-        currentLevel++;
-        currentPage = new Board();
+        const upgrade = this.upgrades[index];
+        upgradeFactory.click(upgrade);
+        if (this.step == 1) {
+            currentPage = new SelectUpgradeScreen(this.step + 1);
+        } else {
+            currentLevel++;
+            currentPage = new Board();
+        }
     }
     reroll() {
         rerollsNumber--;
-        currentPage = new SelectUpgradeScreen();
-    }   
+        currentPage = new SelectUpgradeScreen(this.step);
+    }
 }
 class DeadScreen {
     constructor() {
-        this.buttons = [new MenuButton(500, 350, "Ok", this.goToMainMenu)]
+        this.buttons = [new MenuButton(500, 350, "Ok", () => this.goToMainMenu())]
     }
     update() { }
     paint() {
@@ -2070,11 +2102,15 @@ if (window.location.search) {
             heroesFactory.createHunter(),
             heroesFactory.createBerserker(),
             heroesFactory.createNecro(),
+            heroesFactory.createNecro(),
+            heroesFactory.createNecro(),
+            heroesFactory.createNecro(),
+            heroesFactory.createNecro(),
         ];
         teams[1].armor = 100;
         //teams[2].spells[0].stat.dmg = 100000;    
         playerSpells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
-        currentPage = new SelectUpgradeScreen();
+        currentPage = new SelectUpgradeScreen(1);
     }
 }
 const tickDuration = 1000.0 / 30;
