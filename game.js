@@ -924,6 +924,9 @@ class Vilains {
     isLastLevel(level) {
         return level >= this.factory.length;
     }
+    levelCount() {
+        return this.factory.length;
+    }
     createVilainOfLevel(level) {
         const vilain = this.factory[(level - 1) % this.factory.length]();
         vilain.life = vilain.maxLife;
@@ -1838,6 +1841,9 @@ class Board {
             }
         }
         teams = teams.filter(c => c.life > 0);
+        if(currentLevel % 3 == 0 && rerollsNumber < 3){
+            rerollsNumber++;
+        }
         if (newSkeletons > 0) {
             currentPage = new NecroLevelScreen(newSkeletons);
         } else {
@@ -1942,6 +1948,7 @@ class StartMenu {
     }
     startGame() {
         currentLevel = 1;
+        rerollsNumber = 2;
         teams = [heroesFactory.createPelin()];
         playerSpells = [
             fastHeal1,
@@ -1980,21 +1987,14 @@ class SelectUpgradeScreen {
         }
         if (rerollsNumber > 0) {
             this.buttons.push(new MenuButton(CanvasWidth - 210, 10, `Reroll (${rerollsNumber})`, () => this.reroll()))
-        } else {
-            this.buttons.push(new MenuButton(CanvasWidth - 210, 10, `Skip`, () => this.skip()));
-        }
+        } 
     }
     update() { }
 
     paint() {
         ctx.fillStyle = "black";
         ctx.font = "30px Verdana";
-        ctx.fillText("Select a bonus", 250, 40);
-        if (rerollsNumber == 0) {
-            ctx.fillStyle = "gray";
-            ctx.font = "10px Verdana";
-            ctx.fillText("Skip to get 2 new rerolls on next level", CanvasWidth - 208, 65);
-        }
+        ctx.fillText("Select a bonus", 250, 40);       
         for (let i = 0; i < this.upgrades.length; i++) {
             const upgrade = this.upgrades[i];
             upgrade.sprite.paint(50 + i * 250, 100);
@@ -2019,11 +2019,7 @@ class SelectUpgradeScreen {
     reroll() {
         rerollsNumber--;
         currentPage = new SelectUpgradeScreen();
-    }
-    skip() {
-        rerollsNumber += 3;
-        this.nextLevel();
-    }
+    }   
 }
 class DeadScreen {
     constructor() {
@@ -2037,7 +2033,7 @@ class DeadScreen {
         if (currentLevel > 1) {
             ctx.fillStyle = "gray";
             ctx.font = "16px Verdana";
-            ctx.fillText("You reached the level " + currentLevel, 100, 180);
+            ctx.fillText(`You reached the level ${currentLevel} / ${vilainsFactory.levelCount()}`, 100, 180);
         }
         for (let b of this.buttons) {
             b.paint();
