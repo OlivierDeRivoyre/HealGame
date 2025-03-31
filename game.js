@@ -140,6 +140,7 @@ class Character {
         this.canBlock = false;
         this.slow = 0;
         this.ultimatePower = 0;
+        this.collectedBones = 0;
         this.convertDeadIntoSkeletonChance = 0;
         this.isBerserk = false;
     }
@@ -591,7 +592,7 @@ class Heroes {
         const name = this.getName(["Eira", "Kaida", "Zara", "Calan"]);        
         const c = new Character(name, "Necro", necroSprite);
         c.maxLife = c.life = 600;
-        c.convertDeadIntoSkeletonChance = 20;
+        c.convertDeadIntoSkeletonChance = 40;
         c.ultimatePower = 1;
         const projectile = new ProjectileStat(c, skeletonSprite, 20, 60, 10);
         c.spells.push(new PnjSpell(projectile, function (stat, from) {
@@ -894,13 +895,13 @@ class UpgradeFactory {
                 });
         }
         if (hero.canHaveBonus("convertDeadIntoSkeleton")) {
-            let incr = 10 + Math.floor(Math.random() * 15);
+            let incr = 10 + Math.floor(Math.random() * 25);
             let oldValue = hero.convertDeadIntoSkeletonChance;
             let newValue = hero.convertDeadIntoSkeletonChance + incr;
             if (newValue <= 100) {
                 this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
-                    `Increase chance to get`, `new skeleton when monster`, `or ally die.`,
-                `From ${oldValue} %`, `To ${newValue} %`], function () {
+                    `Increase the number of`, `collected bones when monster`, `or ally die.`,
+                `From [${oldValue} - 100]`, `To [${newValue} - 100]`], function () {
                     hero.talents.convertDeadIntoSkeleton++;
                     playerStat.convertDeadIntoSkeletonChance += incr;
                     hero.addBonus("convertDeadIntoSkeleton")
@@ -1234,13 +1235,13 @@ class RandomAttackTrigger {
             return;
         }
         this.triggered = true;
-        const stat = new ProjectileStat(self, bombSprite, this.dmg, this.cooldown, 8);
+        const stat = new ProjectileStat(self, bombSprite, this.dmg, this.cooldown, 6);
         stat.lastTarget = null;
         self.pushBuff(new CharacterBuffEffect("Explosive", self, bombSprite, this.cooldown, 100000, stat,
             `Deal ${this.dmg} damage to random character`, RandomAttackTrigger.randomAttackTick));
     }
     static randomAttackTick(stat, boss) {
-        const alive = teams.filter(c => c.life > 0 && c != stat.lastTarget);
+        const alive = teams.filter(c => c.life > 0 && c != stat.lastTarget && c != boss.target);
         if (alive.length == 0) {
             stat.lastTarget = null;
             return;
@@ -1631,7 +1632,7 @@ class CharacterTooltip {
         if (this.character.convertDeadIntoSkeletonChance == 0) {
             ctx.fillText(`Crit chance: ${this.character.crit}%`, cursorX, cursorY);
         } else {
-            ctx.fillText(`Convert death into skeleton: ${this.character.convertDeadIntoSkeletonChance}%`, cursorX, cursorY);
+            ctx.fillText(`Collected: ${this.character.collectedBones} / 100 bones`, cursorX, cursorY);
         }
         cursorY += 16;
 
@@ -1876,12 +1877,14 @@ class Board {
         const necros = teams.filter(c => c.life > 0 && c.convertDeadIntoSkeletonChance > 0);
         let newSkeletons = 0;
         for (let i = 0; i < deadCount; i++) {
-            for (let necro of necros) {
-                if (Math.random() * 100 < necro.convertDeadIntoSkeletonChance) {
+            for (let necro of necros) {                
+                let collected = getRandomInt(necro.convertDeadIntoSkeletonChance, 100);
+                necro.collectedBones += collected;
+                while(necro.collectedBones >= 100){
+                    necro.collectedBones -= 100;
                     necro.ultimatePower++;
                     newSkeletons++;
-                    break;
-                }
+                }                
             }
         }
         teams = teams.filter(c => c.life > 0);
@@ -2131,10 +2134,10 @@ if (window.location.search) {
         currentLevel = parseInt(lvl) - 1;
         teams = [
             heroesFactory.createPelin(),
-     //       heroesFactory.createKnight(),
-     //       heroesFactory.createWitch(),
-     //       heroesFactory.createHunter(),
-     //       heroesFactory.createBerserker(),
+         //   heroesFactory.createKnight(),
+            heroesFactory.createWitch(),
+            heroesFactory.createHunter(),
+            heroesFactory.createBerserker(),
              heroesFactory.createNecro()
         ];
       //  teams[1].armor = 100;
