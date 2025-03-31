@@ -293,9 +293,14 @@ class CharacterMenu {
             ctx.rect(left, top + 10, 200, 20);
             ctx.fill();
         }
+        
+        ctx.fillStyle = "#FBC";
+        ctx.font = "12px Arial";
+        ctx.fillText(this.character.name, left + 5, top + 24);
+
         ctx.fillStyle = "black";
         ctx.font = "12px Arial";
-        ctx.fillText(label, left + 80, top + 24);
+        ctx.fillText(label, left + 90, top + 24);
 
         ctx.beginPath();
         ctx.lineWidth = "1";
@@ -505,7 +510,7 @@ class Heroes {
         return c;
     }
     createWitch() {
-        const name = this.getName(["Hecate", "Lilith", "Morgan", "Baba"]);
+        const name = this.getName(["Lilith", "Hecate", "Morgan", "Baba"]);
         const c = new Character(name, "Witch", witchSprite);
         c.maxLife = c.life = 600;
         c.ultimatePower = 10;
