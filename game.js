@@ -169,12 +169,12 @@ class Character {
             this.onUpdate(this);
         }
     }
-    getArmor(){     
-        const remainingArmor = Math.max(0, this.armor * (100 - this.armorBroken) / 100);   
-        return Math.floor(this.isBerserk ? remainingArmor * 4 : remainingArmor);        
+    getArmor() {
+        const remainingArmor = Math.max(0, this.armor * (100 - this.armorBroken) / 100);
+        return Math.floor(this.isBerserk ? remainingArmor * 4 : remainingArmor);
     }
     onHit(projectileStat) {
-        if(this.life <= 0){
+        if (this.life <= 0) {
             return;
         }
         if (Math.random() * 100 < this.dodge) {
@@ -183,7 +183,7 @@ class Character {
         }
         const isCrit = Math.random() * 100 < projectileStat.from.crit;
         const baseDamage = projectileStat.from.isBerserk ? projectileStat.dmg * 2 : projectileStat.dmg;
-        const fullDamge = isCrit ? baseDamage * 2 : baseDamage;        
+        const fullDamge = isCrit ? baseDamage * 2 : baseDamage;
         const dmg = Math.floor(fullDamge * 100 / (100 + this.getArmor()))
         this.life = Math.max(0, this.life - dmg);
         allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit", dmg));
@@ -330,7 +330,7 @@ class PnjSpell {
     update(pnj) {
         this.tick++;
         if (this.tick >= this.nextCastTick) {
-            this.tick = 0;           
+            this.tick = 0;
             this.nextCastTick = Math.ceil(this.cooldown * (100 + pnj.slow) / (100 + pnj.haste));
             this.castFunc(this.stat, pnj);
         }
@@ -457,7 +457,7 @@ class LabelAnim {
     }
 }
 class Heroes {
-    constructor(){
+    constructor() {
         this.usedNames = [];
     }
     createPelin() {
@@ -476,14 +476,14 @@ class Heroes {
         };
         return c;
     }
-    getName(names){
-        for(let name of names){
-            if(this.usedNames.indexOf(name) == -1){
+    getName(names) {
+        for (let name of names) {
+            if (this.usedNames.indexOf(name) == -1) {
                 return name;
             }
         }
-        for(let name of names){
-            if(!teams.find(p => p.name == name)){
+        for (let name of names) {
+            if (!teams.find(p => p.name == name)) {
                 return name;
             }
         }
@@ -581,7 +581,7 @@ class Heroes {
         };
         c.talents = {
             life: 1,
-            armor: 1,            
+            armor: 1,
             damage: 1,
             haste: 1,
             crit: 1,
@@ -589,7 +589,7 @@ class Heroes {
         return c;
     }
     createNecro() {
-        const name = this.getName(["Eira", "Kaida", "Zara", "Calan"]);        
+        const name = this.getName(["Eira", "Kaida", "Zara", "Calan"]);
         const c = new Character(name, "Necro", necroSprite);
         c.maxLife = c.life = 600;
         c.convertDeadIntoSkeletonChance = 40;
@@ -600,19 +600,10 @@ class Heroes {
             if (existings.length >= c.ultimatePower) {
                 return;
             }
-            const minY = 80;
-            const maxY = 300;
-            const i = existings.length;
-            const x = (i % 5 == 0) ? 520 : (i % 5 == 1) ? 490 : (i % 5 == 2) ? 280 : (i % 5 == 3) ? 320 : 400;
-            let space = 50;
-            let y = minY + Math.floor(Math.random() * 6) * space;
-            while (existings.find(s => s.destY == y && s.destY == x)) {
-                y = Math.floor(y + space);
-                if (y > maxY) {
-                    y = minY;
-                    space /= 2;
-                }
-            }
+            const space = 50;
+            const angus = Math.PI / 2 + existings.length * Math.PI * 2 / c.ultimatePower;
+            const x = Math.floor(c.x + space * Math.cos(angus));
+            const y = Math.floor(c.y + space * Math.sin(angus));
             const skeleton = new NecroSkeleton(c, x, y, existings.length + 1);
             allAnimations.push(skeleton);
         }));
@@ -986,7 +977,7 @@ class Vilains {
     }
     static lvl2() {
         const sprite = new Sprite(tileSet1, 736, 80, 64, 48, 2);
-        let vilain = new Character("Green Bag", "Monster",sprite);
+        let vilain = new Character("Green Bag", "Monster", sprite);
         vilain.maxLife = 600;
         vilain.armor = 10;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 80, 40, 7), castSimpleProjectile));
@@ -995,7 +986,7 @@ class Vilains {
     }
     static lvl3() {
         const sprite = new Sprite(tileSet1, 736, 124, 64, 48, 2);
-        let vilain = new Character("Small Devil", "Monster",sprite);
+        let vilain = new Character("Small Devil", "Monster", sprite);
         vilain.maxLife = 800;
         vilain.armor = 20;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 60, 50, 7), castSimpleProjectile));
@@ -1004,7 +995,7 @@ class Vilains {
     }
     static lvl4() {
         const sprite = new Sprite(tileSet1, 736, 220, 64, 36, 2);
-        let vilain = new Character("Brown Mud", "Monster",sprite);
+        let vilain = new Character("Brown Mud", "Monster", sprite);
         vilain.maxLife = 1000;
         vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 60, 7), castSimpleProjectile));
@@ -1013,7 +1004,7 @@ class Vilains {
     }
     static lvl5() {
         const sprite = new Sprite(tileSet1, 928, 220, 64, 36, 2);
-        let vilain = new Character("Poison Mud", "Monster",sprite);
+        let vilain = new Character("Poison Mud", "Monster", sprite);
         vilain.maxLife = 1100;
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 40, 7), castSimpleProjectile));
@@ -1022,7 +1013,7 @@ class Vilains {
     }
     static lvl6() {
         const sprite = new Sprite(tileSet1, 736, 264, 64, 44, 2);
-        let vilain = new Character("Crying Mummy", "Monster",sprite);
+        let vilain = new Character("Crying Mummy", "Monster", sprite);
         vilain.maxLife = 1200;
         vilain.armor = 60;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 40, 7), castSimpleProjectile));
@@ -1031,7 +1022,7 @@ class Vilains {
     }
     static lvl7() {
         const sprite = new Sprite(tileSet1, 860, 264, 64, 44, 2);
-        let vilain = new Character("Frost Mummy", "Monster",sprite);
+        let vilain = new Character("Frost Mummy", "Monster", sprite);
         vilain.maxLife = 1300;
         vilain.armor = 60;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 110, 40, 7), castSimpleProjectile));
@@ -1049,7 +1040,7 @@ class Vilains {
     }
     static lvl9() {
         const sprite = new Sprite(tileSet1, 736, 312, 64, 48, 2);
-        let vilain = new Character("Chaman Orc", "Monster",sprite);
+        let vilain = new Character("Chaman Orc", "Monster", sprite);
         vilain.maxLife = 1500;
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 130, 40, 7), castSimpleProjectile));
@@ -1058,7 +1049,7 @@ class Vilains {
     }
     static lvl10() {
         const sprite = new Sprite(tileSet1, 736, 412, 64, 48, 2);
-        let vilain = new Character("Enraged Orc", "Monster",sprite);
+        let vilain = new Character("Enraged Orc", "Monster", sprite);
         vilain.maxLife = 1600;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 80, 40, 7), castSimpleProjectile));
@@ -1067,7 +1058,7 @@ class Vilains {
     }
     static giantOrc() {
         const sprite = new Sprite(tileSet1, 40, 768, 492, 68, 8);
-        let vilain = new Character("Giant Orc", "Monster",sprite);
+        let vilain = new Character("Giant Orc", "Monster", sprite);
         vilain.maxLife = 2000;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
@@ -1077,7 +1068,7 @@ class Vilains {
     }
     static lvl11() {
         const sprite = new Sprite(tileSet1, 736, 454, 64, 48, 2);
-        let vilain = new Character("Dark Wizard", "Monster",sprite);
+        let vilain = new Character("Dark Wizard", "Monster", sprite);
         vilain.maxLife = 1700;
         vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 200, 40, 7), castSimpleProjectile));
@@ -1086,7 +1077,7 @@ class Vilains {
     }
     static lvl12() {
         const sprite = new Sprite(tileSet1, 736, 504, 64, 48, 2);
-        let vilain = new Character("The Thing","Monster",sprite);
+        let vilain = new Character("The Thing", "Monster", sprite);
         vilain.maxLife = 2000;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
@@ -1096,7 +1087,7 @@ class Vilains {
     }
     static lvl13() {
         const sprite = new Sprite(tileSet1, 736, 552, 64, 48, 2);
-        let vilain = new Character("Little Devil", "Monster",sprite);
+        let vilain = new Character("Little Devil", "Monster", sprite);
         vilain.maxLife = 2200;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 40, 7), castSimpleProjectile));
@@ -1105,7 +1096,7 @@ class Vilains {
     }
     static lvl14() {
         const sprite = new Sprite(tileSet1, 736, 604, 64, 36, 2);
-        let vilain = new Character("Death Angel","Monster", sprite);
+        let vilain = new Character("Death Angel", "Monster", sprite);
         vilain.maxLife = 1500;
         vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 80, 40, 7), castSimpleProjectile));
@@ -1116,7 +1107,7 @@ class Vilains {
     }
     static lvl15() {
         const sprite = new Sprite(tileSet1, 736, 644, 64, 48, 2);
-        let vilain = new Character("Punk-in","Monster", sprite);
+        let vilain = new Character("Punk-in", "Monster", sprite);
         vilain.maxLife = 2500;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 40, 7), castSimpleProjectile));
@@ -1126,7 +1117,7 @@ class Vilains {
     }
     static lvl16() {
         const sprite = new Sprite(tileSet1, 736, 696, 64, 48, 2);
-        let vilain = new Character("Mad Doctor", "Monster",sprite);
+        let vilain = new Character("Mad Doctor", "Monster", sprite);
         vilain.maxLife = 2500;
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 250, 50, 7), castSimpleProjectile));
@@ -1137,7 +1128,7 @@ class Vilains {
     }
     static lvl16() {
         const sprite = new Sprite(tileSet1, 256, 408, 64, 44, 2);
-        let vilain = new Character("Mad Reptil", "Monster",sprite);
+        let vilain = new Character("Mad Reptil", "Monster", sprite);
         vilain.maxLife = 3000;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 25, 7), castSimpleProjectile));
@@ -1148,7 +1139,7 @@ class Vilains {
     }
     static lvl17() {
         const sprite = new Sprite(tileSet1, 736, 746, 64, 48, 2);
-        let vilain = new Character("Snail", "Monster",sprite);
+        let vilain = new Character("Snail", "Monster", sprite);
         vilain.maxLife = 4000;
         vilain.armor = 200;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 300, 80, 7), castSimpleProjectile));
@@ -1157,7 +1148,7 @@ class Vilains {
     }
     static bigZombie() {
         const sprite = new Sprite(tileSet1, 40, 668, 492, 68, 8);
-        let vilain = new Character("Big Zombie", "Monster",sprite);
+        let vilain = new Character("Big Zombie", "Monster", sprite);
         vilain.maxLife = 5000;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 200, 50, 7), castSimpleProjectile));
@@ -1167,7 +1158,7 @@ class Vilains {
     }
     static giantDemon() {
         const sprite = new Sprite(tileSet1, 40, 856, 492, 68, 8);
-        let vilain = new Character("Giant Demon","Monster", sprite);
+        let vilain = new Character("Giant Demon", "Monster", sprite);
         vilain.maxLife = 10000;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 20, 7), castSimpleProjectile));
@@ -1694,7 +1685,7 @@ class SkeletonTooltip {
         cursorY += 16;
 
         ctx.fillText(`Crit chance: ${this.skeleton.necro.crit}%`, cursorX, cursorY);
-        cursorY += 16;        
+        cursorY += 16;
     }
     click(event) {
         return false;
@@ -1877,14 +1868,14 @@ class Board {
         const necros = teams.filter(c => c.life > 0 && c.convertDeadIntoSkeletonChance > 0);
         let newSkeletons = 0;
         for (let i = 0; i < deadCount; i++) {
-            for (let necro of necros) {                
+            for (let necro of necros) {
                 let collected = getRandomInt(necro.convertDeadIntoSkeletonChance, 100);
                 necro.collectedBones += collected;
-                while(necro.collectedBones >= 100){
+                while (necro.collectedBones >= 100) {
                     necro.collectedBones -= 100;
                     necro.ultimatePower++;
                     newSkeletons++;
-                }                
+                }
             }
         }
         teams = teams.filter(c => c.life > 0);
@@ -2134,15 +2125,16 @@ if (window.location.search) {
         currentLevel = parseInt(lvl) - 1;
         teams = [
             heroesFactory.createPelin(),
-         //   heroesFactory.createKnight(),
+            heroesFactory.createKnight(),
             heroesFactory.createWitch(),
             heroesFactory.createHunter(),
             heroesFactory.createBerserker(),
-             heroesFactory.createNecro()
+            heroesFactory.createNecro()
         ];
-      //  teams[1].armor = 100;
-       // teams[1].crit = 50;
+        //  teams[1].armor = 100;
+        // teams[1].crit = 50;
         //teams[2].spells[0].stat.dmg = 100000;    
+        teams[teams.length - 1].ultimatePower = 3;
         playerSpells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
         currentPage = new SelectUpgradeScreen(1);
     }
