@@ -168,6 +168,10 @@ class Character {
             this.onUpdate(this);
         }
     }
+    getArmor(){     
+        const remainingArmor = Math.max(0, this.armor * (100 - this.armorBroken) / 100);   
+        return Math.floor(this.isBerserk ? remainingArmor * 4 : remainingArmor);        
+    }
     onHit(projectileStat) {
         if(this.life <= 0){
             return;
@@ -178,9 +182,8 @@ class Character {
         }
         const isCrit = Math.random() * 100 < projectileStat.from.crit;
         const baseDamage = projectileStat.from.isBerserk ? projectileStat.dmg * 2 : projectileStat.dmg;
-        const fullDamge = isCrit ? baseDamage * 2 : baseDamage;
-        const remainingArmor = Math.max(0, this.armor * (100 - this.armorBroken) / 100);
-        const dmg = Math.floor(fullDamge * 100 / (100 + remainingArmor))
+        const fullDamge = isCrit ? baseDamage * 2 : baseDamage;        
+        const dmg = Math.floor(fullDamge * 100 / (100 + this.getArmor()))
         this.life = Math.max(0, this.life - dmg);
         allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit", dmg));
         if (this.life <= 0) {
@@ -326,9 +329,8 @@ class PnjSpell {
     update(pnj) {
         this.tick++;
         if (this.tick >= this.nextCastTick) {
-            this.tick = 0;
-            const haste = pnj.haste + (pnj.isBerserk ? 30 : 0);
-            this.nextCastTick = Math.floor(this.cooldown * (100 + pnj.slow) / (100 + haste));
+            this.tick = 0;           
+            this.nextCastTick = Math.ceil(this.cooldown * (100 + pnj.slow) / (100 + pnj.haste));
             this.castFunc(this.stat, pnj);
         }
     }
@@ -555,6 +557,7 @@ class Heroes {
         const c = new Character(name, "Berserker", berserkerSprite1);
         c.maxLife = c.life = 1200;
         c.isBerserker = true;
+        c.armor = 50;
         c.isTank = true;
         const projectile = new ProjectileStat(c, axeSprite, 40, 37, 7);
         c.spells.push(new PnjSpell(projectile, castSimpleProjectile));
@@ -564,7 +567,7 @@ class Heroes {
                 return;
             }
             const buff = new CharacterBuffEffect("Berserk", c, berserkerSprite2, 600000, 600000, {},
-                `Double base damage and add 30 haste`, function () { });
+                `Boost base damage and armor`, function () { });
             if (shouldBeBerserk) {
                 c.pushBuff(buff);
                 c.isBerserk = true;
@@ -577,7 +580,7 @@ class Heroes {
         };
         c.talents = {
             life: 1,
-            dodge: 1,
+            armor: 1,            
             damage: 1,
             haste: 1,
             crit: 1,
@@ -737,6 +740,7 @@ class UpgradeFactory {
     proposePnj(pnj, desc) {
         return {
             sprite: pnj.sprite,
+            title: "Recruit",
             desc: desc,
             click: () => {
                 teams.push(pnj);
@@ -758,7 +762,7 @@ class UpgradeFactory {
     }
     addBerserker() {
         const c = heroesFactory.createBerserker();
-        return this.proposePnj(c, ["Recruit a new berserker", "A tank without armor", "that do more damage", "when below half life"]);
+        return this.proposePnj(c, ["Recruit a new berserker", "A tank that double", "its damages and armor", "when below half life"]);
     }
     addNecro() {
         const c = heroesFactory.createNecro();
@@ -767,6 +771,7 @@ class UpgradeFactory {
     proposeSpell(spell, desc) {
         return {
             sprite: spell.icon,
+            title: "New spell",
             desc: desc,
             click: () => {
                 playerSpells.push(spell);
@@ -789,6 +794,7 @@ class UpgradeFactory {
     pushLevelUp(array, hero, desc, action) {
         array.push({
             sprite: hero.sprite,
+            title: hero.name,
             desc: desc,
             click: () => {
                 hero.level++;
@@ -1629,7 +1635,7 @@ class CharacterTooltip {
         }
         cursorY += 16;
 
-        let currentArmor = Math.max(0, this.character.armor - this.character.armorBroken);
+        let currentArmor = this.character.getArmor();
         let armorReduc = Math.floor(100 - Math.floor(100000 / (100 + currentArmor)) / 10);
         ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
         cursorY += 16;
@@ -2125,14 +2131,14 @@ if (window.location.search) {
         currentLevel = parseInt(lvl) - 1;
         teams = [
             heroesFactory.createPelin(),
-            heroesFactory.createKnight(),
-            heroesFactory.createWitch(),
-            heroesFactory.createHunter(),
-            heroesFactory.createBerserker(),
-            heroesFactory.createNecro()
+     //       heroesFactory.createKnight(),
+     //       heroesFactory.createWitch(),
+     //       heroesFactory.createHunter(),
+     //       heroesFactory.createBerserker(),
+             heroesFactory.createNecro()
         ];
-        teams[1].armor = 100;
-        teams[1].crit = 50;
+      //  teams[1].armor = 100;
+       // teams[1].crit = 50;
         //teams[2].spells[0].stat.dmg = 100000;    
         playerSpells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
         currentPage = new SelectUpgradeScreen(1);
