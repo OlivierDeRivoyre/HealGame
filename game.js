@@ -740,7 +740,7 @@ class UpgradeFactory {
     proposePnj(pnj, desc) {
         return {
             sprite: pnj.sprite,
-            title: "Recruit",
+            verb: "Recruit",
             desc: desc,
             click: () => {
                 teams.push(pnj);
@@ -771,7 +771,7 @@ class UpgradeFactory {
     proposeSpell(spell, desc) {
         return {
             sprite: spell.icon,
-            title: "New spell",
+            verb: "Learn",
             desc: desc,
             click: () => {
                 playerSpells.push(spell);
@@ -794,7 +794,7 @@ class UpgradeFactory {
     pushLevelUp(array, hero, desc, action) {
         array.push({
             sprite: hero.sprite,
-            title: hero.name,
+            verb: "Level up",
             desc: desc,
             click: () => {
                 hero.level++;
@@ -2040,7 +2040,7 @@ class SelectUpgradeScreen {
         }
         this.buttons = []
         for (let i = 0; i < this.upgrades.length; i++) {
-            this.buttons.push(new MenuButton(50 + i * 250, 350, "OK", () => this.selectUpgrade(i)))
+            this.buttons.push(new MenuButton(50 + i * 250, 350, this.upgrades[i].verb, () => this.selectUpgrade(i)))
         }
         if (rerollsNumber > 0) {
             this.buttons.push(new MenuButton(CanvasWidth - 210, 10, `Reroll (${rerollsNumber})`, () => this.reroll()))
