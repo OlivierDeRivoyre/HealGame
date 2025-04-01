@@ -293,7 +293,7 @@ class CharacterMenu {
             ctx.rect(left, top + 10, 200, 20);
             ctx.fill();
         }
-        
+
         ctx.fillStyle = "#FBC";
         ctx.font = "12px Arial";
         ctx.fillText(this.character.name, left + 5, top + 24);
@@ -710,7 +710,13 @@ class UpgradeFactory {
         this.addLevelUpForOneHero(heros);
         let selected = [];
         if (teams.length < 7) {
-            this.randomPick(pnjs, selected, 1);
+            let proba = teams.length <= 2 ? 1 
+                : teams.length <= 3 ? 0.7 
+                : teams.length <= 4 ? 0.4
+                :  0.3; 
+            if (!teams.find(p => p.isTank) || Math.random() < 0.6) {
+                this.randomPick(pnjs, selected, 1);
+            }
         }
         this.randomPick(heros, selected, 3);
         return selected;
@@ -899,11 +905,11 @@ class UpgradeFactory {
             if (newValue <= 100) {
                 this.pushLevelUp(array, hero, [
                     `Level up ${hero.name} to level ${hero.level + 1}`,
-                    `Increase the number of `, 
+                    `Increase the number of `,
                     `collected bones on death.`,
-                    `Boss:[${oldValue}-${oldValue + range}]->[${newValue}-${newValue+range}]`,
-                    `Ally:[${oldValue*3}-${oldValue*3 + range}]->[${newValue*3}-${newValue*3+range}]`,
-                    ], function () {
+                    `Boss:[${oldValue}-${oldValue + range}]->[${newValue}-${newValue + range}]`,
+                    `Ally:[${oldValue * 3}-${oldValue * 3 + range}]->[${newValue * 3}-${newValue * 3 + range}]`,
+                ], function () {
                     hero.talents.convertDeadIntoSkeleton++;
                     playerStat.convertDeadIntoSkeletonChance += incr;
                     hero.addBonus("convertDeadIntoSkeleton")
@@ -1881,8 +1887,8 @@ class Board {
         for (let i = 0; i < deadCount; i++) {
             for (let necro of necros) {
                 let collected = getRandomInt(necro.convertDeadIntoSkeletonChance, necro.convertDeadIntoSkeletonChance + 40);
-                if(i != 0){
-                    collected*=3;
+                if (i != 0) {
+                    collected *= 3;
                 }
                 necro.collectedBones += collected;
                 while (necro.collectedBones >= 100) {
