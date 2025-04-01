@@ -143,6 +143,7 @@ class Character {
         this.collectedBones = 0;
         this.convertDeadIntoSkeletonChance = 0;
         this.isBerserk = false;
+        this.berserkArmor = 0;
     }
     paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
@@ -171,7 +172,10 @@ class Character {
     }
     getArmor() {
         const remainingArmor = Math.max(0, this.armor * (100 - this.armorBroken) / 100);
-        return Math.floor(this.isBerserk ? remainingArmor * 4 : remainingArmor);
+        return Math.floor(remainingArmor);
+    }
+    getBerserkArmor(){
+        return this.isBerserk ? this.berserkArmor : 0;
     }
     onHit(projectileStat) {
         if (this.life <= 0) {
@@ -184,7 +188,7 @@ class Character {
         const isCrit = Math.random() * 100 < projectileStat.from.crit;
         const baseDamage = projectileStat.from.isBerserk ? projectileStat.dmg * 2 : projectileStat.dmg;
         const fullDamge = isCrit ? baseDamage * 2 : baseDamage;
-        const dmg = Math.floor(fullDamge * 100 / (100 + this.getArmor()))
+        const dmg = Math.floor(1 + fullDamge * 100 * 100 / ((100 + this.getArmor()) * (100 + this.getBerserkArmor())));
         this.life = Math.max(0, this.life - dmg);
         allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit", dmg));
         if (this.life <= 0) {
@@ -572,10 +576,10 @@ class Heroes {
     createBerserker() {
         const name = this.getName(["Ragnak", "Erik", "Vald", "Gorm"]);
         const c = new Character(name, "Berserker", berserkerSprite1);
-        c.maxLife = c.life = 1200;
-        c.isBerserker = true;
-        c.armor = 50;
+        c.maxLife = c.life = 950;
+        c.isBerserker = true;        
         c.isTank = true;
+        c.berserkArmor = 43;
         const projectile = new ProjectileStat(c, axeSprite, 40, 37, 7);
         c.spells.push(new PnjSpell(projectile, castSimpleProjectile));
         c.onUpdate = function () {
@@ -601,6 +605,7 @@ class Heroes {
             damage: 1,
             haste: 1,
             crit: 1,
+            berserkArmor : 1,
         };
         return c;
     }
@@ -928,6 +933,17 @@ class UpgradeFactory {
                     hero.addBonus("convertDeadIntoSkeleton")
                 });
             }
+        }
+        if (hero.canHaveBonus("berserkArmor")) {
+            const incr = 30 + Math.floor(Math.random() * 50);
+            const oldReduc = Math.floor(100 - 100 * 100 / (100 + hero.berserkArmor));
+            const newReduc = Math.floor(100 - 100 * 100 / (100 + hero.berserkArmor + incr));
+            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
+                `Increase damage reduction`, `when under berserk effect`, `From ${oldReduc} %`, `To ${newReduc} %`], function () {
+                    hero.talents.berserkArmor++;
+                    playerStat.berserkArmor += incr;
+                    hero.addBonus("berserkArmor")
+                });
         }
 
         if (hero.level >= 3) {
@@ -1663,7 +1679,12 @@ class CharacterTooltip {
         ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
         cursorY += 16;
 
-        ctx.fillText(`Dodge chance: ${this.character.dodge}%`, cursorX, cursorY);
+        let dodgeText = `Dodge chance: ${this.character.dodge}%`;
+        if(this.character.isBerserker){
+            const reduc = Math.floor(100 - 100*100 / (100 + this.character.berserkArmor));
+            dodgeText = `Dodge:${this.character.dodge}%. Berserk dmg reduc:${reduc}%`;
+        }
+        ctx.fillText(dodgeText, cursorX, cursorY);
         cursorY += 16;
         if (this.character.buffs.length >= 1) {
             ctx.fillText(`Effects:`, tooltip.x + 8, this.buffY + 16);
@@ -2159,9 +2180,9 @@ if (window.location.search) {
         currentLevel = parseInt(lvl) - 1;
         teams = [
             heroesFactory.createPelin(),
-            heroesFactory.createKnight(),
-            heroesFactory.createWitch(),
-            heroesFactory.createHunter(),
+          //  heroesFactory.createKnight(),
+          //  heroesFactory.createWitch(),
+          //  heroesFactory.createHunter(),
             heroesFactory.createBerserker(),
             heroesFactory.createNecro()
         ];
