@@ -888,13 +888,15 @@ class UpgradeFactory {
             });
         }
         if (hero.canHaveBonus("regen")) {
-            let incr = 1 + hero.talents.regen;
+            let incr = 1 + Math.random() * 3;
+            let liteIncr = Math.floor(incr);
+            let fullIncr = Math.floor(incr * 4);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
-                `Increase mana regen`, `From ${playerStat.liteManaRegen} mana/s`, `To ${playerStat.liteManaRegen + incr} mana/s`],
+                `Increase mana regen`, `From ${playerStat.fullManaRegen} mana/s`, `To ${playerStat.fullManaRegen + fullIncr} mana/s`],
                 function () {
                     hero.talents.regen++;
-                    playerStat.liteManaRegen += incr;
-                    playerStat.fullManaRegen += incr * 4;
+                    playerStat.liteManaRegen += liteIncr;
+                    playerStat.fullManaRegen += fullIncr;
                     hero.addBonus("regen")
                 });
         }
@@ -1572,11 +1574,11 @@ class PlayerStat {
         ctx.strokeStyle = "gray";
         ctx.rect(PlayerStat.left + 1, top + 10, width - 2, 20);
         ctx.stroke();
-    }
+    }    
     update() {
         const regenTick = tickNumber - this.lastCast;
-        this.manaRegen = (regenTick > 4 * 30) ? this.fullManaRegen :
-            (regenTick > 1.5 * 30) ? this.liteManaRegen : 0;
+        this.manaRegen = (regenTick > 2.5 * 30) ? this.fullManaRegen :
+            (regenTick > 0.5 * 30) ? this.liteManaRegen : 0;
         if (regenTick % 30 == 0) {
             this.mana = Math.min(this.maxMana, this.mana + this.manaRegen);
         }
