@@ -925,7 +925,7 @@ class UpgradeFactory {
                     `Level up ${hero.name} to level ${hero.level + 1}`,
                     `Increase the number of `,
                     `collected bones on death.`,
-                    `Boss:[${oldValue}-${oldValue + range}]->[${newValue}-${newValue + range}]`,
+                    `Mob:[${oldValue}-${oldValue + range}]->[${newValue}-${newValue + range}]`,
                     `Ally:[${oldValue * 3}-${oldValue * 3 + range}]->[${newValue * 3}-${newValue * 3 + range}]`,
                 ], function () {
                     hero.talents.convertDeadIntoSkeleton++;
