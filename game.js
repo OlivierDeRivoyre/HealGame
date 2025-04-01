@@ -100,6 +100,7 @@ const axeSprite = new Sprite(tileSet1, 676, 320, 28, 34, 1);
 const fireballSprite = new Sprite(tileSet2, 32, 0, 32, 32, 1);
 const hasteBuffSprite = new Sprite(tileSet2, 256, 672, 32, 32, 1);
 fireballSprite.correctAngus = - 3 * Math.PI / 4;
+const loseLifeProjectileSprite = new Sprite(tileSet2, 480, 160, 32, 32, 1);
 const deadSprite = new Sprite(tileSet2, 0, 0, 32, 32, 1);
 const greenPotionSprite = new Sprite(tileSet1, 640, 672, 28, 28, 1);
 greenPotionSprite.forbidRotate = true;
@@ -990,13 +991,14 @@ class Vilains {
             Vilains.lvl9,
             Vilains.lvl10,
             Vilains.giantOrc,
-            Vilains.lvl11,
             Vilains.lvl12,
             Vilains.lvl13,
             Vilains.lvl14,
             Vilains.lvl15,
             Vilains.lvl16,
             Vilains.lvl17,
+            Vilains.lvl18,
+            Vilains.lvl19,
             Vilains.bigZombie,
             Vilains.giantDemon
         ];
@@ -1019,7 +1021,7 @@ class Vilains {
         let vilain = new Character("Brown Bag", "Monster", sprite);
         vilain.maxLife = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 80, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 250));
+        vilain.spells.push(new FireballAoeTrigger(0.5, 250));
         return vilain;
     }
     static lvl2() {
@@ -1028,7 +1030,7 @@ class Vilains {
         vilain.maxLife = 300;
         vilain.armor = 10;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 100, 30, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 60));
+        vilain.spells.push(new FireballAoeTrigger(0.5, 60));
         return vilain;
     }
     static lvl3() {
@@ -1046,7 +1048,7 @@ class Vilains {
         vilain.maxLife = 800;
         vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 60, 7), castSimpleProjectile));
-        vilain.spells.push(new HasteBuffTrigger(0.8, 150, 30 * 15));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 15));
         return vilain;
     }
     static lvl5() {
@@ -1055,7 +1057,7 @@ class Vilains {
         vilain.maxLife = 1000;
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 85));
+        vilain.spells.push(new FireballAoeTrigger(0.5, 85));
         return vilain;
     }
     static lvl6() {
@@ -1073,7 +1075,7 @@ class Vilains {
         vilain.maxLife = 1300;
         vilain.armor = 60;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 110, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.9, 50));
+        vilain.spells.push(new FireballAoeTrigger(0.9, 50));
         return vilain;
     }
     static lvl8() {
@@ -1083,6 +1085,7 @@ class Vilains {
         vilain.armor = 70;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 6));
+        vilain.spells.push(new OnLoseLifeAoeTrigger(30, 250));
         return vilain;
     }
     static lvl9() {
@@ -1100,7 +1103,7 @@ class Vilains {
         vilain.maxLife = 1600;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 80, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.8, 80));
+        vilain.spells.push(new FireballAoeTrigger(0.8, 80));
         return vilain;
     }
     static giantOrc() {
@@ -1109,11 +1112,12 @@ class Vilains {
         vilain.maxLife = 2000;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.6, 80));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 6));
+        vilain.spells.push(new OnLoseLifeAoeTrigger(25, 350));
         Vilains.addInvulnerableBuff(vilain, 6);
         return vilain;
     }
-    static lvl11() {
+    static lvl12() {
         const sprite = new Sprite(tileSet1, 736, 454, 64, 48, 2);
         let vilain = new Character("Dark Wizard", "Monster", sprite);
         vilain.maxLife = 1700;
@@ -1122,26 +1126,26 @@ class Vilains {
         vilain.spells.push(new RandomAttackTrigger(0.7, 500, 80));
         return vilain;
     }
-    static lvl12() {
+    static lvl13() {
         const sprite = new Sprite(tileSet1, 736, 504, 64, 48, 2);
         let vilain = new Character("The Thing", "Monster", sprite);
         vilain.maxLife = 2000;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
-        Vilains.addInvulnerableBuff(vilain, 8);
+        Vilains.addInvulnerableBuff(vilain, 8);        
         return vilain;
     }
-    static lvl13() {
+    static lvl14() {
         const sprite = new Sprite(tileSet1, 736, 552, 64, 48, 2);
         let vilain = new Character("Little Devil", "Monster", sprite);
         vilain.maxLife = 2200;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.4, 100));
+        vilain.spells.push(new FireballAoeTrigger(0.4, 100));
         return vilain;
     }
-    static lvl14() {
+    static lvl15() {
         const sprite = new Sprite(tileSet1, 736, 604, 64, 36, 2);
         let vilain = new Character("Death Angel", "Monster", sprite);
         vilain.maxLife = 1500;
@@ -1152,45 +1156,46 @@ class Vilains {
         Vilains.addInvulnerableBuff(vilain, 8);
         return vilain;
     }
-    static lvl15() {
+    static lvl16() {
         const sprite = new Sprite(tileSet1, 736, 644, 64, 48, 2);
         let vilain = new Character("Punk-in", "Monster", sprite);
         vilain.maxLife = 2500;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.9, 60));
+        vilain.spells.push(new FireballAoeTrigger(0.9, 60));
         Vilains.addInvulnerableBuff(vilain, 10);
         return vilain;
     }
-    static lvl16() {
+    static lvl17() {
         const sprite = new Sprite(tileSet1, 736, 696, 64, 48, 2);
         let vilain = new Character("Mad Doctor", "Monster", sprite);
         vilain.maxLife = 2500;
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 250, 50, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.6, 50));
+        vilain.spells.push(new FireballAoeTrigger(0.6, 50));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
         Vilains.addInvulnerableBuff(vilain, 12);
         return vilain;
     }
-    static lvl16() {
+    static lvl18() {
         const sprite = new Sprite(tileSet1, 256, 408, 64, 44, 2);
         let vilain = new Character("Mad Reptil", "Monster", sprite);
         vilain.maxLife = 3000;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 25, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 60));
+        vilain.spells.push(new FireballAoeTrigger(0.5, 60));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
         Vilains.addInvulnerableBuff(vilain, 8);
         return vilain;
     }
-    static lvl17() {
+    static lvl19() {
         const sprite = new Sprite(tileSet1, 736, 746, 64, 48, 2);
         let vilain = new Character("Snail", "Monster", sprite);
         vilain.maxLife = 4000;
         vilain.armor = 200;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 300, 80, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.75, 50));
+        vilain.spells.push(new FireballAoeTrigger(0.75, 50));
+        vilain.spells.push(new OnLoseLifeAoeTrigger(15, 100));
         return vilain;
     }
     static bigZombie() {
@@ -1199,19 +1204,20 @@ class Vilains {
         vilain.maxLife = 5000;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 200, 50, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.4, 70));
+        vilain.spells.push(new FireballAoeTrigger(0.4, 70));
         Vilains.addInvulnerableBuff(vilain, 10);
         return vilain;
     }
     static giantDemon() {
         const sprite = new Sprite(tileSet1, 40, 856, 492, 68, 8);
-        let vilain = new Character("Giant Demon", "Monster", sprite);
+        let vilain = new Character("Final boss", "Monster", sprite);
         vilain.maxLife = 10000;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 20, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 75));
+        vilain.spells.push(new FireballAoeTrigger(0.5, 50));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
         vilain.spells.push(new RandomAttackTrigger(0.7, 500, 120));
+        vilain.spells.push(new OnLoseLifeAoeTrigger(45, 150));
         Vilains.addInvulnerableBuff(vilain, 10);
         return vilain;
     }
@@ -1232,7 +1238,7 @@ function castSimpleProjectile(stat, from) {
     const projectile = new ProjectileAnim(stat, from, target);
     allAnimations.push(projectile);
 }
-class EnragedAoeTrigger {
+class FireballAoeTrigger {
     constructor(lifeRatio, dmg) {
         this.lifeRatio = lifeRatio;
         this.dmg = dmg;
@@ -1247,15 +1253,48 @@ class EnragedAoeTrigger {
         self.isEnragedAoe = true;
         const stat = new ProjectileStat(self, fireballSprite, this.dmg, 40, 15)
         self.pushBuff(new CharacterBuffEffect("Hellfire", self, fireballSprite, 45, 100000, stat,
-            `Throw a ${this.dmg} fireball to all`, EnragedAoeTrigger.enragedTick));
+            `Throw a ${this.dmg} fireball to all`, FireballAoeTrigger.fireTick));
     }
-    static enragedTick(stat, boss) {
+    static fireTick(stat, boss) {
         for (const c of teams) {
             if (c.life > 0) {
                 const projectile = new ProjectileAnim(stat, boss, c);
                 allAnimations.push(projectile);
             }
         }
+    }
+}
+class OnLoseLifeAoeTrigger {
+    constructor(lifeRatio, dmg) {
+        this.lifeRatio = lifeRatio;
+        this.dmg = dmg;
+        this.nextStep = null;
+    }
+    update(self) {
+        if (self.life <= 0) {
+            return;
+        }
+        if (this.nextStep == null) {
+            this.nextStep = 99;
+            this.addBuffIcon(self);
+        }
+        if (100 * self.life / self.maxLife > this.nextStep) {
+            return;
+        }
+        this.nextStep = Math.max(0, this.nextStep - this.lifeRatio);
+        this.addBuffIcon(self);
+        const stat = new ProjectileStat(self, loseLifeProjectileSprite, this.dmg, 40, 15);
+        for (const c of teams) {
+            if (c.life > 0) {
+                const projectile = new ProjectileAnim(stat, self, c);
+                allAnimations.push(projectile);
+            }
+        }
+    }
+    addBuffIcon(self) {
+        const nextStepLife = Math.floor(self.maxLife * this.nextStep / 100);       
+        self.pushBuff(new CharacterBuffEffect("Hellfire", self, loseLifeProjectileSprite, 15, 10000000, null,
+            `Will hit ${this.dmg} at ${nextStepLife} life (${this.nextStep}%) `, () => { }));
     }
 }
 class RandomAttackTrigger {
@@ -1691,7 +1730,7 @@ class CharacterTooltip {
             ctx.fillText(`Effects:`, tooltip.x + 8, this.buffY + 16);
         }
         for (let i = 0; i < this.character.buffs.length; i++) {
-            const buffX = this.buffX + 24 * i;            
+            const buffX = this.buffX + 24 * i;
             BuffTooltip.paintIcon(this.character.buffs[i], buffX, this.buffY);
         }
     }
@@ -1742,7 +1781,7 @@ class BuffTooltip {
     constructor(buff) {
         this.buff = buff;
     }
-    static paintIcon(buff, buffX, buffY){
+    static paintIcon(buff, buffX, buffY) {
         ctx.beginPath();
         ctx.lineWidth = "1";
         ctx.fillStyle = "#fff6";
@@ -1751,7 +1790,7 @@ class BuffTooltip {
         buff.icon.paintScale(buffX, buffY, 20, 20);
     }
     paint() {
-        
+
         BuffTooltip.paintIcon(this.buff, tooltip.x + 4, tooltip.y + 4);
 
         let cursorY = tooltip.y + 22;
