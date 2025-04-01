@@ -995,25 +995,25 @@ class Vilains {
     static lvl2() {
         const sprite = new Sprite(tileSet1, 736, 80, 64, 48, 2);
         let vilain = new Character("Green Bag", "Monster", sprite);
-        vilain.maxLife = 600;
+        vilain.maxLife = 300;
         vilain.armor = 10;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 80, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new EnragedAoeTrigger(0.5, 30));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 100, 30, 7), castSimpleProjectile));
+        vilain.spells.push(new EnragedAoeTrigger(0.5, 60));
         return vilain;
     }
     static lvl3() {
         const sprite = new Sprite(tileSet1, 736, 124, 64, 48, 2);
         let vilain = new Character("Small Devil", "Monster", sprite);
-        vilain.maxLife = 800;
+        vilain.maxLife = 500;
         vilain.armor = 20;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 60, 50, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 120, 60, 7), castSimpleProjectile));
         vilain.spells.push(new HasteBuffTrigger(0.7, 150, 30 * 15));
         return vilain;
     }
     static lvl4() {
         const sprite = new Sprite(tileSet1, 736, 220, 64, 36, 2);
         let vilain = new Character("Brown Mud", "Monster", sprite);
-        vilain.maxLife = 1000;
+        vilain.maxLife = 800;
         vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 60, 7), castSimpleProjectile));
         vilain.spells.push(new HasteBuffTrigger(0.8, 150, 30 * 15));
@@ -1022,7 +1022,7 @@ class Vilains {
     static lvl5() {
         const sprite = new Sprite(tileSet1, 928, 220, 64, 36, 2);
         let vilain = new Character("Poison Mud", "Monster", sprite);
-        vilain.maxLife = 1100;
+        vilain.maxLife = 1000;
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 40, 7), castSimpleProjectile));
         vilain.spells.push(new EnragedAoeTrigger(0.5, 85));
@@ -1216,7 +1216,7 @@ class EnragedAoeTrigger {
         }
         self.isEnragedAoe = true;
         const stat = new ProjectileStat(self, enragedSprite, this.dmg, 40, 15)
-        self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedIcon, 45, 100000, stat,
+        self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedSprite, 45, 100000, stat,
             `Throw a ${this.dmg} fireball to all`, EnragedAoeTrigger.enragedTick));
     }
     static enragedTick(stat, boss) {
