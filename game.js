@@ -21,8 +21,7 @@ function getRandomInt(min, max) {
 
 const tileSet1 = loadImg("0x72_DungeonTilesetII_v1.7x2");
 const tileSet2 = loadImg("Shikashi");
-const enragedIcon = loadImg("106");
-const hasteBuffIcon = loadImg("76");
+
 
 class Sprite {
     constructor(tile, tx, ty, tWidth, tHeight, nbImage) {
@@ -98,8 +97,9 @@ const swordSprite = new Sprite(tileSet1, 640, 16, 28, 48, 1);
 const knifeSprite = new Sprite(tileSet1, 580, 16, 24, 32, 1);
 const hamerSprite = new Sprite(tileSet1, 640, 76, 28, 48, 1);
 const axeSprite = new Sprite(tileSet1, 676, 320, 28, 34, 1);
-const enragedSprite = new Sprite(tileSet2, 32, 0, 32, 32, 1);
-enragedSprite.correctAngus = - 3 * Math.PI / 4;
+const fireballSprite = new Sprite(tileSet2, 32, 0, 32, 32, 1);
+const hasteBuffSprite = new Sprite(tileSet2, 256, 672, 32, 32, 1);
+fireballSprite.correctAngus = - 3 * Math.PI / 4;
 const deadSprite = new Sprite(tileSet2, 0, 0, 32, 32, 1);
 const greenPotionSprite = new Sprite(tileSet1, 640, 672, 28, 28, 1);
 greenPotionSprite.forbidRotate = true;
@@ -110,6 +110,7 @@ bombSprite.forbidRotate = true;
 const boneSprite = new Sprite(tileSet2, 0, 704, 32, 32, 1);
 boneSprite.forbidRotate = true;
 const skeletonSprite = new Sprite(tileSet1, 736, 172, 64, 48, 2);
+
 
 class Character {
     constructor(name, type, sprite) {
@@ -1244,8 +1245,8 @@ class EnragedAoeTrigger {
             return;
         }
         self.isEnragedAoe = true;
-        const stat = new ProjectileStat(self, enragedSprite, this.dmg, 40, 15)
-        self.pushBuff(new CharacterBuffEffect("Enraged", self, enragedSprite, 45, 100000, stat,
+        const stat = new ProjectileStat(self, fireballSprite, this.dmg, 40, 15)
+        self.pushBuff(new CharacterBuffEffect("Hellfire", self, fireballSprite, 45, 100000, stat,
             `Throw a ${this.dmg} fireball to all`, EnragedAoeTrigger.enragedTick));
     }
     static enragedTick(stat, boss) {
@@ -1313,7 +1314,7 @@ class HasteBuffTrigger {
         this.isRunning = true;
         self.haste += this.hasteIncr;
         const spell = this;
-        const buff = new CharacterBuffEffect("Haste", self, hasteBuffIcon, this.duration, this.duration, {}, `Gain ${spell.hasteIncr} haste`, function () {
+        const buff = new CharacterBuffEffect("Haste", self, hasteBuffSprite, this.duration, this.duration, {}, `Gain ${spell.hasteIncr} haste`, function () {
             if (spell.isRunning) {
                 spell.isRunning = false;
                 self.haste -= spell.hasteIncr;
