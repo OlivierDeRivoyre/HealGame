@@ -174,7 +174,7 @@ class Character {
         const remainingArmor = Math.max(0, this.armor * (100 - this.armorBroken) / 100);
         return Math.floor(remainingArmor);
     }
-    getBerserkArmor(){
+    getBerserkArmor() {
         return this.isBerserk ? this.berserkArmor : 0;
     }
     onHit(projectileStat) {
@@ -321,9 +321,9 @@ class CharacterMenu {
     getBuffRect(i, isBonus) {
         const showLeft = this.isLeft == isBonus;
         const offsetX = this.isLeft ? 40 : 0
-        const x = showLeft ? 
+        const x = showLeft ?
             this.x + offsetX + i * 22
-            : this.x + 200 - 22 - i *22;    
+            : this.x + 200 - 22 - i * 22;
         const y = this.y + 32;
         return { x, y, width: 20, height: 20 };
     }
@@ -577,7 +577,7 @@ class Heroes {
         const name = this.getName(["Ragnak", "Erik", "Vald", "Gorm"]);
         const c = new Character(name, "Berserker", berserkerSprite1);
         c.maxLife = c.life = 950;
-        c.isBerserker = true;        
+        c.isBerserker = true;
         c.isTank = true;
         c.berserkArmor = 43;
         const projectile = new ProjectileStat(c, axeSprite, 40, 37, 7);
@@ -605,7 +605,7 @@ class Heroes {
             damage: 1,
             haste: 1,
             crit: 1,
-            berserkArmor : 1,
+            berserkArmor: 1,
         };
         return c;
     }
@@ -726,10 +726,10 @@ class UpgradeFactory {
         this.addLevelUpForOneHero(heros);
         let selected = [];
         if (teams.length < 7) {
-            let proba = teams.length <= 2 ? 1 
-                : teams.length <= 3 ? 0.7 
-                : teams.length <= 4 ? 0.4
-                :  0.3; 
+            let proba = teams.length <= 2 ? 1
+                : teams.length <= 3 ? 0.7
+                    : teams.length <= 4 ? 0.4
+                        : 0.3;
             if (!teams.find(p => p.isTank) || Math.random() < 0.6) {
                 this.randomPick(pnjs, selected, 1);
             }
@@ -1590,7 +1590,7 @@ class PlayerStat {
         ctx.strokeStyle = "gray";
         ctx.rect(PlayerStat.left + 1, top + 10, width - 2, 20);
         ctx.stroke();
-    }    
+    }
     update() {
         const regenTick = tickNumber - this.lastCast;
         this.manaRegen = (regenTick > 2.5 * 30) ? this.fullManaRegen :
@@ -1680,8 +1680,8 @@ class CharacterTooltip {
         cursorY += 16;
 
         let dodgeText = `Dodge chance: ${this.character.dodge}%`;
-        if(this.character.isBerserker){
-            const reduc = Math.floor(100 - 100*100 / (100 + this.character.berserkArmor));
+        if (this.character.isBerserker) {
+            const reduc = Math.floor(100 - 100 * 100 / (100 + this.character.berserkArmor));
             dodgeText = `Dodge:${this.character.dodge}%. Berserk dmg reduc:${reduc}%`;
         }
         ctx.fillText(dodgeText, cursorX, cursorY);
@@ -1690,15 +1690,9 @@ class CharacterTooltip {
             ctx.fillText(`Effects:`, tooltip.x + 8, this.buffY + 16);
         }
         for (let i = 0; i < this.character.buffs.length; i++) {
-            const buffX = this.buffX + 24 * i;
-            ctx.beginPath();
-            ctx.lineWidth = "1";
-            ctx.fillStyle = "white";
-            ctx.rect(buffX, this.buffY, 22, 22);
-            ctx.fill();
-            this.character.buffs[i].paintScale(buffX + 1, this.buffY + 1, 20, 20)
+            const buffX = this.buffX + 24 * i;            
+            BuffTooltip.paintIcon(this.character.buffs[i], buffX, this.buffY);
         }
-
     }
     click(event) {
         for (let i = 0; i < this.character.buffs.length; i++) {
@@ -1747,14 +1741,24 @@ class BuffTooltip {
     constructor(buff) {
         this.buff = buff;
     }
+    static paintIcon(buff, buffX, buffY){
+        ctx.beginPath();
+        ctx.lineWidth = "1";
+        ctx.fillStyle = "#fff6";
+        ctx.rect(buffX, buffY, 22, 22);
+        ctx.fill();
+        buff.icon.paintScale(buffX, buffY, 20, 20);
+    }
     paint() {
+        
+        BuffTooltip.paintIcon(this.buff, tooltip.x + 4, tooltip.y + 4);
 
         let cursorY = tooltip.y + 22;
         let cursorX = tooltip.x + 8;
 
         ctx.fillStyle = "yellow";
         ctx.font = "bold 18px Verdana";
-        ctx.fillText(this.buff.name, cursorX, cursorY);
+        ctx.fillText(this.buff.name, cursorX + 24, cursorY);
         cursorY += 18;
 
         ctx.fillStyle = "white";
@@ -2180,9 +2184,9 @@ if (window.location.search) {
         currentLevel = parseInt(lvl) - 1;
         teams = [
             heroesFactory.createPelin(),
-          //  heroesFactory.createKnight(),
-          //  heroesFactory.createWitch(),
-          //  heroesFactory.createHunter(),
+            //  heroesFactory.createKnight(),
+            //  heroesFactory.createWitch(),
+            //  heroesFactory.createHunter(),
             heroesFactory.createBerserker(),
             heroesFactory.createNecro()
         ];
