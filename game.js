@@ -597,7 +597,7 @@ class Heroes {
         const name = this.getName(["Eira", "Kaida", "Zara", "Calan"]);
         const c = new Character(name, "Necro", necroSprite);
         c.maxLife = c.life = 600;
-        c.convertDeadIntoSkeletonChance = 40;
+        c.convertDeadIntoSkeletonChance = 25;
         c.ultimatePower = 1;
         const projectile = new ProjectileStat(c, skeletonSprite, 20, 60, 10);
         c.spells.push(new PnjSpell(projectile, function (stat, from) {
@@ -893,11 +893,17 @@ class UpgradeFactory {
         if (hero.canHaveBonus("convertDeadIntoSkeleton")) {
             let incr = 10 + Math.floor(Math.random() * 25);
             let oldValue = hero.convertDeadIntoSkeletonChance;
+            let range = 40;
             let newValue = hero.convertDeadIntoSkeletonChance + incr;
+
             if (newValue <= 100) {
-                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
-                    `Increase the number of`, `collected bones when monster`, `or ally die.`,
-                `From [${oldValue} - 100]`, `To [${newValue} - 100]`], function () {
+                this.pushLevelUp(array, hero, [
+                    `Level up ${hero.name} to level ${hero.level + 1}`,
+                    `Increase the number of `, 
+                    `collected bones on death.`,
+                    `Boss:[${oldValue}-${oldValue + range}]->[${newValue}-${newValue+range}]`,
+                    `Ally:[${oldValue*3}-${oldValue*3 + range}]->[${newValue*3}-${newValue*3+range}]`,
+                    ], function () {
                     hero.talents.convertDeadIntoSkeleton++;
                     playerStat.convertDeadIntoSkeletonChance += incr;
                     hero.addBonus("convertDeadIntoSkeleton")
@@ -1874,7 +1880,10 @@ class Board {
         let newSkeletons = 0;
         for (let i = 0; i < deadCount; i++) {
             for (let necro of necros) {
-                let collected = getRandomInt(necro.convertDeadIntoSkeletonChance, 100);
+                let collected = getRandomInt(necro.convertDeadIntoSkeletonChance, necro.convertDeadIntoSkeletonChance + 40);
+                if(i != 0){
+                    collected*=3;
+                }
                 necro.collectedBones += collected;
                 while (necro.collectedBones >= 100) {
                     necro.collectedBones -= 100;
