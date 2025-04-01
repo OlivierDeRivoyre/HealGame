@@ -1084,8 +1084,7 @@ class Vilains {
         vilain.maxLife = 1400;
         vilain.armor = 70;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 6));
-        vilain.spells.push(new OnLoseLifeAoeTrigger(30, 250));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 6));        
         return vilain;
     }
     static lvl9() {
@@ -1113,7 +1112,7 @@ class Vilains {
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 6));
-        vilain.spells.push(new OnLoseLifeAoeTrigger(25, 350));
+        vilain.spells.push(new OnLoseLifeAoeTrigger(25, 150));
         Vilains.addInvulnerableBuff(vilain, 6);
         return vilain;
     }
