@@ -272,9 +272,15 @@ class CharacterMenu {
             this.character.sprite.paint(this.x + this.width - 36, this.y, 0, true);
             this.paintLifeBar(this.x, this.y);
         }
-        for (let i = 0; i < this.character.buffs.length; i++) {
-            const zone = this.getBuffRect(i);
-            this.character.buffs[i].paintScale(zone.x, zone.y, zone.width, zone.height);
+        const bonuses = this.character.buffs.filter(b => b.isBonus);
+        const maluses = this.character.buffs.filter(b => !b.isBonus);
+        for (let i = 0; i < bonuses.length; i++) {
+            const zone = this.getBuffRect(i, true);
+            bonuses[i].paintScale(zone.x, zone.y, zone.width, zone.height);
+        }
+        for (let i = 0; i < maluses.length; i++) {
+            const zone = this.getBuffRect(i, false);
+            maluses[i].paintScale(zone.x, zone.y, zone.width, zone.height);
         }
     }
     paintLifeBar(left, top) {
@@ -308,9 +314,12 @@ class CharacterMenu {
         ctx.rect(left, top + 10, 200, 20);
         ctx.stroke();
     }
-    getBuffRect(i) {
+    getBuffRect(i, isBonus) {
+        const showLeft = this.isLeft == isBonus;
         const offsetX = this.isLeft ? 40 : 0
-        const x = this.x + offsetX + i * 22;
+        const x = showLeft ? 
+            this.x + offsetX + i * 22
+            : this.x + 200 - 22 - i *22;    
         const y = this.y + 32;
         return { x, y, width: 20, height: 20 };
     }
@@ -520,6 +529,7 @@ class Heroes {
             const buff = new CharacterBuffEffect("Frozen", target, frostSprite, 60, 60, {}, `Slow attacks by ${c.ultimatePower}%`, function () {
                 target.slow = 0;
             });
+            buff.isBonus = false;
             target.pushBuff(buff);
         };
         c.spells.push(new PnjSpell(projectile, castSimpleProjectile));
@@ -544,6 +554,7 @@ class Heroes {
             const buff = new CharacterBuffEffect("Broken Armor", target, brokenArmorSprite, 60, 60, {}, `Reduce armor by ${c.ultimatePower}%`, function () {
                 target.armorBroken = 0;
             });
+            buff.isBonus = false;
             target.pushBuff(buff);
         };
         c.spells.push(new PnjSpell(projectile, castSimpleProjectile));
@@ -1489,6 +1500,7 @@ class CharacterBuffEffect {
         this.onTick = onTick;
         this.stat = stat;
         this.description = description;
+        this.isBonus = true;
     }
     update() {
         if (tickNumber == this.start) {
