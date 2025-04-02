@@ -1049,9 +1049,17 @@ class Vilains {
     }
     createVilainOfLevel(level) {
         const vilain = this.factory[(level - 1) % this.factory.length]();
-        vilain.life = vilain.maxLife;
+       
         vilain.reverse = true;
         vilain.isVilain = true;
+
+        const params = new URLSearchParams(window.location.search);
+        const cheating = params.get("cheat");
+        if(cheating && level <= cheating){
+            vilain.maxLife = 10;
+        }
+
+        vilain.life = vilain.maxLife;
         return vilain;
     }
     static lvl1() {
