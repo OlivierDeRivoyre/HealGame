@@ -139,7 +139,7 @@ class Character {
         this.crit = 0;
         this.haste = 0;
         this.dodge = 5;
-        this.canBlock = false;
+        this.isInvulnerable = false;
         this.slow = 0;
         this.ultimatePower = 0;
         this.collectedBones = 0;
@@ -181,6 +181,10 @@ class Character {
     }
     onHit(projectileStat) {
         if (this.life <= 0) {
+            return;
+        }
+        if(this.isInvulnerable){
+            allAnimations.push(new LabelAnim("invulnerable", this, "invulnerable", 0));
             return;
         }
         if (Math.random() * 100 < this.dodge) {
@@ -351,7 +355,7 @@ class PnjSpell {
         this.tick++;
         if (this.tick >= this.nextCastTick) {
             this.tick = 0;
-            this.nextCastTick = Math.ceil(this.cooldown * (100 + pnj.slow) / (100 + pnj.haste));
+            this.nextCastTick = Math.ceil(this.cooldown * (100 + pnj.slow) / (100 + pnj.haste)) + (Math.random() < 0.5 ? 1 : 0);
             this.castFunc(this.stat, pnj);
         }
     }
@@ -364,6 +368,36 @@ class ProjectileStat {
         this.cooldown = cooldown;
         this.speed = speed;
         this.hitFunc = null;
+    }
+}
+class KnightInvulnerableTrigger {
+    constructor(){
+        this.tick = 0;
+        this.cooldown = 5 * 30;
+        this.progress = 0;        
+    }
+    update(pnj) {
+        if(pnj.ultimatePower != 1){
+            return;
+        }       
+        this.tick++;
+        if(this.tick < this.cooldown){
+            return;
+        }
+        if(pnj.isInvulnerable){
+            pnj.isInvulnerable = false;            
+            return;
+        }
+        this.tick = 0;
+        this.progress += Math.floor(15 + Math.random() * 30);
+        if(this.progress < 100){
+            return;
+        }
+        this.progress -= 100;
+        pnj.isInvulnerable = true;
+        const buff = new CharacterBuffEffect("Invulnerable", pnj, invulnerableSprite, this.cooldown, this.cooldown, {}, 
+            `Invulnerable for 5 sec`, function () {});
+        pnj.pushBuff(buff);
     }
 }
 let allAnimations = [];
@@ -395,7 +429,7 @@ class ProjectileAnim {
 class LabelAnim {
     constructor(label, from, type, power) {
         this.label = label;
-        this.x = from.x + from.width / 2 - 5;
+        this.x = from.x + from.width / 2 - label.length * 3;
         this.y = from.y - 5
         this.tick = 0;
         this.color = "red";
@@ -457,6 +491,7 @@ class LabelAnim {
                 break;
             case "dodge": this.color = "gray"; break;
             case "block": this.color = "gray"; break;
+            case "invulnerable": this.color = "orange"; break;
         }
         this.vx = Math.random() * 0.6 - 0.3;
         this.vy = 1.5;
@@ -513,11 +548,13 @@ class Heroes {
         const name = this.getName(["Arthur", "Lancelot", "Perceval", "Tristan"]);
         const c = new Character(name, "Knight", redKnightSprite);
         c.maxLife = c.life = 1000;
+        c.armor = 10;
         c.isTank = true;
         c.spells.push(new PnjSpell(new ProjectileStat(c, swordSprite, 30, 38, 7), castSimpleProjectile));
+        c.spells.push(new KnightInvulnerableTrigger());
         c.talents = {
             life: 1,
-            blockBuff: 1,
+            invulnerable: 1,
             armor: 1,
             dodge: 1,
             damage: 1,
@@ -771,7 +808,7 @@ class UpgradeFactory {
     }
     addKnight() {
         const c = heroesFactory.createKnight();
-        return this.proposePnj(c, ["Recruit a new knight", "He can reduce", "the damage with his shield"]);
+        return this.proposePnj(c, ["Recruit a new knight", "He can periodically", "became invulnerable", "thanks to his shield"]);
     }
     addWitch() {
         const c = heroesFactory.createWitch();
@@ -950,11 +987,11 @@ class UpgradeFactory {
         }
 
         if (hero.level >= 3) {
-            if (hero.talents.blockBuff == 1) {
-                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Learn to block`,
-                    `30% chance to block`], function () {
-                        hero.talents.blockBuff++;
-                        hero.canBlock = true;
+            if (hero.talents.invulnerable == 1) {
+                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Learn to shield`,
+                    `30% chance to became`, `invulnerable for 5 seconds`], function () {
+                        hero.talents.invulnerable++;
+                        hero.ultimatePower = 1;
                     });
             }
             if (hero.talents.frostBuff >= 1 && hero.talents.frostBuff < 3) {
@@ -1222,9 +1259,9 @@ class Vilains {
         return vilain;
     }
     static addInvulnerableBuff(vilain, duration) {
-        vilain.spells.push(new InvulnerableBuffTrigger(75, duration * 30));
-        vilain.spells.push(new InvulnerableBuffTrigger(40, duration * 30));
-        vilain.spells.push(new InvulnerableBuffTrigger(20, duration * 30));
+        vilain.spells.push(new BossInvulnerableBuffTrigger(75, duration * 30));
+        vilain.spells.push(new BossInvulnerableBuffTrigger(40, duration * 30));
+        vilain.spells.push(new BossInvulnerableBuffTrigger(20, duration * 30));
     }
 }
 const vilainsFactory = new Vilains();
@@ -1362,7 +1399,7 @@ class HasteBuffTrigger {
         self.pushBuff(buff);
     }
 }
-class InvulnerableBuffTrigger {
+class BossInvulnerableBuffTrigger {
     constructor(lifeRatio, duration) {
         this.lifeRatio = lifeRatio;
         this.duration = duration;
@@ -1380,10 +1417,11 @@ class InvulnerableBuffTrigger {
             return;
         }
         this.isDone = true;
-        self.dodge += 100;
+        self.isInvulnerable = true;
         const durationSec = Math.floor(this.duration / 3) / 10;
-        const buff = new CharacterBuffEffect("Invulnerable", self, invulnerableSprite, this.duration, this.duration, {}, `Gain 100% invulnerable for ${durationSec} sec`, function () {
-            self.dodge -= 100;
+        const buff = new CharacterBuffEffect("Invulnerable", self, invulnerableSprite, this.duration, this.duration, {}, 
+            `Invulnerable for ${durationSec} sec`, function () {
+            self.isInvulnerable = false;
         });
         self.pushBuff(buff);
     }
@@ -2222,8 +2260,11 @@ if (window.location.search) {
     const lvl = params.get("lvl");
     if (lvl) {
         currentLevel = parseInt(lvl) - 1;
+        const knight =  heroesFactory.createKnight();
+        knight.level = 5;
         teams = [
             heroesFactory.createPelin(),
+            knight,
             //  heroesFactory.createKnight(),
             //  heroesFactory.createWitch(),
             //  heroesFactory.createHunter(),
