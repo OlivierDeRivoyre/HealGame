@@ -783,7 +783,8 @@ class UpgradeFactory {
     }
     addBerserker() {
         const c = heroesFactory.createBerserker();
-        return this.proposePnj(c, ["Recruit a new berserker", "A tank that double", "its damages and armor", "when below half life"]);
+        return this.proposePnj(c, ["Recruit a new berserker", "A tank that double its", 
+            "damages and have a", "damage reduction when", "below half life"]);
     }
     addNecro() {
         const c = heroesFactory.createNecro();
@@ -2226,7 +2227,7 @@ if (window.location.search) {
             //  heroesFactory.createKnight(),
             //  heroesFactory.createWitch(),
             //  heroesFactory.createHunter(),
-            heroesFactory.createBerserker(),
+         //   heroesFactory.createBerserker(),
             heroesFactory.createNecro()
         ];
         //  teams[1].armor = 100;
