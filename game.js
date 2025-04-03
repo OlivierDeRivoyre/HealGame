@@ -1055,8 +1055,8 @@ class Vilains {
         let vilain = new Character("Small Devil", "Monster", sprite);
         vilain.maxLife = 500;
         vilain.armor = 20;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 120, 60, 7), castSimpleProjectile));
-        vilain.spells.push(new HasteBuffTrigger(0.7, 150, 30 * 15));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, knifeSprite, 60, 30, 7), castSimpleProjectile));
+        vilain.spells.push(new HasteBuffTrigger(0.5, 400, 1000000));
         return vilain;
     }
     static lvl4() {
@@ -1065,7 +1065,7 @@ class Vilains {
         vilain.maxLife = 800;
         vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 60, 7), castSimpleProjectile));
-        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 15));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 300, 30 * 6));
         return vilain;
     }
     static lvl5() {
@@ -1083,7 +1083,7 @@ class Vilains {
         vilain.maxLife = 1200;
         vilain.armor = 60;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 300, 30 * 6));
         return vilain;
     }
     static lvl7() {
@@ -1101,7 +1101,7 @@ class Vilains {
         vilain.maxLife = 1400;
         vilain.armor = 70;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 6));        
+        vilain.spells.push(new HasteBuffTrigger(0.3, 300, 30 * 6));        
         return vilain;
     }
     static lvl9() {
@@ -1128,7 +1128,7 @@ class Vilains {
         vilain.maxLife = 2000;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 120, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 6));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 300, 30 * 6));
         vilain.spells.push(new OnLoseLifeAoeTrigger(25, 150));
         Vilains.addInvulnerableBuff(vilain, 6);
         return vilain;
@@ -1148,7 +1148,7 @@ class Vilains {
         vilain.maxLife = 2000;
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 140, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
+        vilain.spells.push(new HasteBuffTrigger(0.3, 300, 30 * 5));
         Vilains.addInvulnerableBuff(vilain, 8);        
         return vilain;
     }
@@ -1167,8 +1167,8 @@ class Vilains {
         vilain.maxLife = 1500;
         vilain.armor = 40;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 80, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new RandomAttackTrigger(0.7, 500, 100));
-        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
+        vilain.spells.push(new RandomAttackTrigger(0.7, 500, 150));
+        vilain.spells.push(new HasteBuffTrigger(0.4, 100, 1000000));
         Vilains.addInvulnerableBuff(vilain, 8);
         return vilain;
     }
@@ -2240,7 +2240,7 @@ if (window.location.search) {
     if (lvl) {
         currentLevel = parseInt(lvl) - 1;
         const knight =  heroesFactory.createKnight();
-        knight.level = 5;
+      //  knight.level = 5;
         teams = [
             heroesFactory.createPelin(),
             knight,
@@ -2253,7 +2253,7 @@ if (window.location.search) {
         //  teams[1].armor = 100;
         // teams[1].crit = 50;
         //teams[2].spells[0].stat.dmg = 100000;    
-        teams[teams.length - 1].ultimatePower = 3;
+     //   teams[teams.length - 1].ultimatePower = 3;
         playerSpells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
         currentPage = new SelectUpgradeScreen(1);
     }
