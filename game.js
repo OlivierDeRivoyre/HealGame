@@ -132,7 +132,6 @@ class Character {
         this.buffs = [];
         this.onUpdate = null;
         this.talents = {};
-        this.selectedTalents = [];
         this.level = 1;
         this.armor = 0;
         this.armorBroken = 0;
@@ -230,18 +229,7 @@ class Character {
         }
     }
     canHaveBonus(bonusKey) {
-        if (this.talents[bonusKey]) {
-            return false;
-        }
-        if (this.selectedTalents.length < 3) {
-            return true;
-        }
-        return this.selectedTalents.indexOf(bonusKey) != -1;
-    }
-    addBonus(bonusKey) {
-        if (this.selectedTalents.indexOf(bonusKey) == -1) {
-            this.selectedTalents.push(bonusKey);
-        }
+        return !!this.talents[bonusKey];
     }
     selectTarget() {
         if (this.target != null && this.target.life > 0) {
@@ -873,66 +861,55 @@ class UpgradeFactory {
     }
     addLevelUpForTheHero(hero, array) {
         if (hero.canHaveBonus("life")) {
-            let incr = 50 + Math.floor(Math.random() * 5) * 50 + hero.talents.life * 50;
+            let incr = 50 + Math.floor(Math.random() * 5) * 50;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase max life of ${hero.name}`,
-            `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function () {
-                hero.talents.life++;
+            `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function () {              
                 hero.maxLife += incr;
-                hero.addBonus("life")
             });
         }
         if (hero.canHaveBonus("armor")) {
-            let incr = 10 + Math.floor(Math.random() * 5) * 5;
+            let incr = 10 + Math.floor(Math.random() * (hero.armor < 50 ? 5 : 10)) * 5;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase armor of ${hero.name}`,
-            `From ${hero.armor}`, `To ${hero.armor + incr}`], function () {
-                hero.talents.armor++;
-                hero.armor += incr;
-                hero.addBonus("armor")
+            `From ${hero.armor}`, `To ${hero.armor + incr}`], function () {                
+                hero.armor += incr;                
             });
         }
         if (hero.canHaveBonus("damage")) {
             let incr = 5 + Math.floor(Math.random() * 4) * 5;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase damage of ${hero.name}`,
-            `From ${hero.spells[0].stat.dmg}`, `To ${hero.spells[0].stat.dmg + incr}`], function () {
-                hero.talents.damage++;
+            `From ${hero.spells[0].stat.dmg}`, `To ${hero.spells[0].stat.dmg + incr}`], function () {                
                 hero.spells[0].stat.dmg += incr;
-                hero.addBonus("damage")
             });
         }
         if (hero.canHaveBonus("crit")) {
             let incr = 10 + Math.floor(Math.random() * 5) * 5;
-            this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase critical chance`,
-            `From ${hero.crit} %`, `To ${hero.crit + incr} %`], function () {
-                hero.talents.crit++;
-                hero.crit += incr;
-                hero.addBonus("crit")
-            });
+            const newValue = hero.crit + incr;
+            if(newValue <= 100){
+                this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase critical chance`,
+                `From ${hero.crit} %`, `To ${newValue} %`], function () {                
+                    hero.crit += incr;                
+                });
+            }
         }
         if (hero.canHaveBonus("dodge") && hero.dodge < 50) {
             let incr = 5 + Math.floor(Math.random() * 10);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase dodge chance`,
-            `From ${hero.dodge} %`, `To ${hero.dodge + incr} %`], function () {
-                hero.talents.dodge++;
-                hero.dodge += incr;
-                hero.addBonus("dodge")
+            `From ${hero.dodge} %`, `To ${hero.dodge + incr} %`], function () {              
+                hero.dodge += incr;                
             });
         }
         if (hero.canHaveBonus("haste")) {
             let incr = 10 + Math.floor(Math.random() * 20);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase haste`,
-            `From ${hero.haste}`, `To ${hero.haste + incr}`], function () {
-                hero.talents.haste++;
-                hero.haste += incr;
-                hero.addBonus("haste")
+            `From ${hero.haste}`, `To ${hero.haste + incr}`], function () {                
+                hero.haste += incr;                
             });
         }
         if (hero.canHaveBonus("mana")) {
             let incr = 80 + Math.floor(Math.random() * 8) * 10;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana`,
-            `From ${playerStat.maxMana}`, `To ${playerStat.maxMana + incr}`], function () {
-                hero.talents.mana++;
+            `From ${playerStat.maxMana}`, `To ${playerStat.maxMana + incr}`], function () {                
                 playerStat.maxMana += incr;
-                hero.addBonus("mana")
             });
         }
         if (hero.canHaveBonus("regen")) {
@@ -941,20 +918,16 @@ class UpgradeFactory {
             let fullIncr = Math.floor(incr * 4);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
                 `Increase mana regen`, `From ${playerStat.fullManaRegen} mana/s`, `To ${playerStat.fullManaRegen + fullIncr} mana/s`],
-                function () {
-                    hero.talents.regen++;
+                function () {                    
                     playerStat.liteManaRegen += liteIncr;
-                    playerStat.fullManaRegen += fullIncr;
-                    hero.addBonus("regen")
+                    playerStat.fullManaRegen += fullIncr;                    
                 });
         }
         if (hero.canHaveBonus("healPower")) {
             let incr = 10 + Math.floor(Math.random() * 15);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
-                `Increase heal bonus`, `From ${playerStat.healPower} %`, `To ${playerStat.healPower + incr} %`], function () {
-                    hero.talents.healPower++;
-                    playerStat.healPower += incr;
-                    hero.addBonus("healPower")
+                `Increase heal bonus`, `From ${playerStat.healPower} %`, `To ${playerStat.healPower + incr} %`], function () {                    
+                    playerStat.healPower += incr;                    
                 });
         }
         if (hero.canHaveBonus("convertDeadIntoSkeleton")) {
@@ -970,10 +943,8 @@ class UpgradeFactory {
                     `collected bones on death.`,
                     `Mob:[${oldValue}-${oldValue + range}]->[${newValue}-${newValue + range}]`,
                     `Ally:[${oldValue * 3}-${oldValue * 3 + range}]->[${newValue * 3}-${newValue * 3 + range}]`,
-                ], function () {
-                    hero.talents.convertDeadIntoSkeleton++;
-                    playerStat.convertDeadIntoSkeletonChance += incr;
-                    hero.addBonus("convertDeadIntoSkeleton")
+                ], function () {                    
+                    playerStat.convertDeadIntoSkeletonChance += incr;                    
                 });
             }
         }
@@ -982,18 +953,15 @@ class UpgradeFactory {
             const oldReduc = Math.floor(100 - 100 * 100 / (100 + hero.berserkArmor));
             const newReduc = Math.floor(100 - 100 * 100 / (100 + hero.berserkArmor + incr));
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
-                `Increase damage reduction`, `when under berserk effect`, `From ${oldReduc} %`, `To ${newReduc} %`], function () {
-                    hero.talents.berserkArmor++;
-                    playerStat.berserkArmor += incr;
-                    hero.addBonus("berserkArmor")
+                `Increase damage reduction`, `when under berserk effect`, `From ${oldReduc} %`, `To ${newReduc} %`], function () {                    
+                    playerStat.berserkArmor += incr;                    
                 });
         }
 
         if (hero.level >= 3) {
-            if (hero.talents.invulnerable == 1) {
+            if (hero.talents.invulnerable == 1 && hero.ultimatePower != 1) {
                 this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Learn to shield`,
-                    `30% chance to became`, `invulnerable for 5 seconds`], function () {
-                        hero.talents.invulnerable++;
+                    `30% chance to became`, `invulnerable for 5 seconds`], function () {                        
                         hero.ultimatePower = 1;
                     });
             }
@@ -1210,7 +1178,7 @@ class Vilains {
         vilain.maxLife = 2500;
         vilain.armor = 100;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new FireballAoeTrigger(0.9, 60));
+        vilain.spells.push(new FireballAoeTrigger(0.9, 30));
         Vilains.addInvulnerableBuff(vilain, 10);
         return vilain;
     }
@@ -1264,7 +1232,7 @@ class Vilains {
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 20, 7), castSimpleProjectile));
         vilain.spells.push(new FireballAoeTrigger(0.5, 50));
         vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
-        vilain.spells.push(new RandomAttackTrigger(0.7, 500, 120));
+        vilain.spells.push(new RandomAttackTrigger(0.7, 500, 180));
         vilain.spells.push(new OnLoseLifeAoeTrigger(45, 150));
         Vilains.addInvulnerableBuff(vilain, 10);
         return vilain;
