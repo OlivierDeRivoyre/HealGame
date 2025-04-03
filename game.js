@@ -112,8 +112,17 @@ bombSprite.forbidRotate = true;
 const boneSprite = new Sprite(tileSet2, 0, 704, 32, 32, 1);
 boneSprite.forbidRotate = true;
 const skeletonSprite = new Sprite(tileSet1, 736, 172, 64, 48, 2);
-
-
+const armorSprite = new Sprite(tileSet2, 224, 224, 32, 32, 1);
+const hasteSprite = new Sprite(tileSet2, 480, 320, 32, 32, 1);
+const damageBonusSprite = new Sprite(tileSet2, 64, 160, 32, 32, 1);
+const critBonusSprite = new Sprite(tileSet2, 64, 96, 32, 32, 1);
+const lifeBonusSprite = new Sprite(tileSet2, 128, 288, 32, 32, 1);
+const recruitSprite = new Sprite(tileSet2, 416, 384, 32, 32, 1);
+const dodgeSprite = new Sprite(tileSet2, 160, 512, 32, 32, 1);
+const manaBonusSprite = new Sprite(tileSet2, 160, 288, 32, 32, 1);
+const manaRegenBonusSprite = new Sprite(tileSet2, 288, 288, 32, 32, 1);
+const healPowerBonusSprite = new Sprite(tileSet2, 192, 288, 32, 32, 1);
+const learnSpellSprite = new Sprite(tileSet2, 352, 416, 32, 32, 1);
 class Character {
     constructor(name, type, sprite) {
         this.name = name;
@@ -788,6 +797,7 @@ class UpgradeFactory {
         return {
             sprite: pnj.sprite,
             verb: "Recruit",
+            verbIcon: recruitSprite,
             desc: desc,
             click: () => {
                 teams.push(pnj);
@@ -820,6 +830,7 @@ class UpgradeFactory {
         return {
             sprite: spell.icon,
             verb: "Learn",
+            verbIcon: learnSpellSprite,
             desc: desc,
             click: () => {
                 playerSpells.push(spell);
@@ -842,10 +853,11 @@ class UpgradeFactory {
             array.push(this.proposeSpell(aoeHeal, ["Group Heal", `Share ${aoeHeal.power} heals`, `Mana: ${aoeHeal.mana}`]));
         }
     }
-    pushLevelUp(array, hero, desc, action) {
+    pushLevelUp(array, hero, desc, action, verbIcon) {
         array.push({
             sprite: hero.sprite,
             verb: "Level up",
+            verbIcon: verbIcon,
             desc: desc,
             click: () => {
                 hero.level++;
@@ -866,21 +878,21 @@ class UpgradeFactory {
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase max life of ${hero.name}`,
             `From ${hero.maxLife}`, `To ${hero.maxLife + incr}`], function () {
                 hero.maxLife += incr;
-            });
+            }, lifeBonusSprite);
         }
         if (hero.canHaveBonus("armor")) {
-            let incr = 10 + Math.floor(Math.random() * (hero.armor < 50 ? 5 : 10)) * 5;
+            let incr = (hero.armor < 50 ? 10 : 20) + Math.floor(Math.random() * 5) * 5;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase armor of ${hero.name}`,
             `From ${hero.armor}`, `To ${hero.armor + incr}`], function () {
                 hero.armor += incr;
-            });
+            }, armorSprite);
         }
         if (hero.canHaveBonus("damage")) {
             let incr = 5 + Math.floor(Math.random() * 4) * 5;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase damage of ${hero.name}`,
             `From ${hero.spells[0].stat.dmg}`, `To ${hero.spells[0].stat.dmg + incr}`], function () {
                 hero.spells[0].stat.dmg += incr;
-            });
+            }, damageBonusSprite);
         }
         if (hero.canHaveBonus("crit")) {
             let incr = 10 + Math.floor(Math.random() * 5) * 5;
@@ -889,7 +901,7 @@ class UpgradeFactory {
                 this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase critical chance`,
                 `From ${hero.crit} %`, `To ${newValue} %`], function () {
                     hero.crit += incr;
-                });
+                }, critBonusSprite);
             }
         }
         if (hero.canHaveBonus("dodge") && hero.dodge < 50) {
@@ -897,21 +909,21 @@ class UpgradeFactory {
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase dodge chance`,
             `From ${hero.dodge} %`, `To ${hero.dodge + incr} %`], function () {
                 hero.dodge += incr;
-            });
+            }, dodgeSprite);
         }
         if (hero.canHaveBonus("haste")) {
             let incr = 10 + Math.floor(Math.random() * 20);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase haste`,
             `From ${hero.haste}`, `To ${hero.haste + incr}`], function () {
                 hero.haste += incr;
-            });
+            }, hasteSprite);
         }
         if (hero.canHaveBonus("mana")) {
             let incr = 80 + Math.floor(Math.random() * 8) * 10;
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase mana`,
             `From ${playerStat.maxMana}`, `To ${playerStat.maxMana + incr}`], function () {
                 playerStat.maxMana += incr;
-            });
+            }, manaBonusSprite);
         }
         if (hero.canHaveBonus("regen")) {
             let incr = 1 + Math.random() * 3;
@@ -922,14 +934,14 @@ class UpgradeFactory {
                 function () {
                     playerStat.liteManaRegen += liteIncr;
                     playerStat.fullManaRegen += fullIncr;
-                });
+                }, manaRegenBonusSprite);
         }
         if (hero.canHaveBonus("healPower")) {
             let incr = 10 + Math.floor(Math.random() * 15);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
                 `Increase heal bonus`, `From ${playerStat.healPower} %`, `To ${playerStat.healPower + incr} %`], function () {
                     playerStat.healPower += incr;
-                });
+                }, healPowerBonusSprite);
         }
         if (hero.canHaveBonus("convertDeadIntoSkeleton")) {
             let incr = 10 + Math.floor(Math.random() * 25);
@@ -946,7 +958,7 @@ class UpgradeFactory {
                     `Ally:[${oldValue * 3}-${oldValue * 3 + range}]->[${newValue * 3}-${newValue * 3 + range}]`,
                 ], function () {
                     playerStat.convertDeadIntoSkeletonChance += incr;
-                });
+                }, skeletonSprite);
             }
         }
         if (hero.canHaveBonus("berserkArmor")) {
@@ -956,7 +968,7 @@ class UpgradeFactory {
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
                 `Increase damage reduction`, `when under berserk effect`, `From ${oldReduc} %`, `To ${newReduc} %`], function () {
                     playerStat.berserkArmor += incr;
-                });
+                }, berserkerSprite2);
         }
 
         if (hero.level >= 3) {
@@ -964,15 +976,15 @@ class UpgradeFactory {
                 this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Learn to shield`,
                     `30% chance to became`, `invulnerable for 5 seconds`], function () {
                         hero.ultimatePower = 1;
-                    });
+                    }, invulnerableSprite);
             }
             if (hero.talents.frostBuff >= 1 && hero.talents.frostBuff < 3) {
-                let incr = 20;
+                let incr = 10;
                 this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase slow debuff`,
                 `From ${hero.ultimatePower} %`, `To ${hero.ultimatePower + incr} %`], function () {
                     hero.talents.frostBuff++;
                     hero.ultimatePower += incr;
-                });
+                }, frostSprite);
             }
             if (hero.talents.breakArmorBuff >= 1 && hero.talents.breakArmorBuff < 3) {
                 let incr = 20;
@@ -980,7 +992,7 @@ class UpgradeFactory {
                 `From ${hero.ultimatePower} %`, `To ${hero.ultimatePower + incr} %`], function () {
                     hero.talents.breakArmorBuff++;
                     hero.ultimatePower += incr;
-                });
+                }, brokenArmorSprite);
             }
         }
     }
@@ -1230,12 +1242,12 @@ class Vilains {
         let vilain = new Character("Final boss", "Monster", sprite);
         vilain.maxLife = 10000;
         vilain.armor = 100;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 20, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 30, 7), castSimpleProjectile));
         vilain.spells.push(new FireballAoeTrigger(0.5, 50));
-        vilain.spells.push(new HasteBuffTrigger(0.3, 150, 30 * 5));
-        vilain.spells.push(new RandomAttackTrigger(0.7, 500, 180));
-        vilain.spells.push(new OnLoseLifeAoeTrigger(45, 150));
-        Vilains.addInvulnerableBuff(vilain, 10);
+        vilain.spells.push(new HasteBuffTrigger(0.3, 200, 30 * 5));
+        vilain.spells.push(new RandomAttackTrigger(0.7, 250, 10*30));
+        vilain.spells.push(new OnLoseLifeAoeTrigger(10, 150));
+        Vilains.addInvulnerableBuff(vilain, 12);
         return vilain;
     }
     static addInvulnerableBuff(vilain, duration) {
@@ -2052,11 +2064,11 @@ class Board {
         tooltip.current = null;
         return false;
     }
-    digitKeyPressed(value){
-        if(value >= this.spellButtons.length){
+    digitKeyPressed(value) {
+        if (value >= this.spellButtons.length) {
             return;
         }
-        const spell =this.spellButtons[value];
+        const spell = this.spellButtons[value];
         spell.click(this.spellButtons);
     }
 }
@@ -2182,12 +2194,21 @@ class SelectUpgradeScreen {
             ctx.font = "16px Verdana";
             const cursorX = 50 + i * 250;
             const cursorY = 180;
+
             for (let line = 0; line < upgrade.desc.length; line++) {
                 ctx.fillText(upgrade.desc[line], cursorX, cursorY + line * 24 + (line != 0 ? 20 : 0));
             }
+
         }
         for (let b of this.buttons) {
             b.paint();
+        }
+        for (let i = 0; i < this.upgrades.length; i++) {
+            const upgrade = this.upgrades[i];
+            if (upgrade.verbIcon) {
+                upgrade.verbIcon.paint(50  + i * 250, 350 + 4);
+                upgrade.verbIcon.paint(50 + 2 + i * 250 + 164, 350 + 4);
+            }
         }
     }
     selectUpgrade(index) {
@@ -2322,19 +2343,19 @@ function onmousemove(event) {
         newControl.mouseEnter(event);
     currentControl = newControl;
 }
-function handleKeyPress(event){
-    if(event.keyCode == 32){
+function handleKeyPress(event) {
+    if (event.keyCode == 32) {
         isPaused = !isPaused;
     }
-    if(currentPage != null && currentPage.digitKeyPressed){
-        switch(event.code){
+    if (currentPage != null && currentPage.digitKeyPressed) {
+        switch (event.code) {
             case 'Digit1': currentPage.digitKeyPressed(0); break;
             case 'Digit2': currentPage.digitKeyPressed(1); break;
             case 'Digit3': currentPage.digitKeyPressed(2); break;
             case 'Digit4': currentPage.digitKeyPressed(3); break;
             case 'Digit5': currentPage.digitKeyPressed(4); break;
-        }   
-    }     
+        }
+    }
     //console.log(event.code)
 }
 tick();
