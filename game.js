@@ -1986,7 +1986,7 @@ class Board {
         playerStat.update();
         if (this.combatEnded == null) {
             if (teams[0].life <= 0 || mobs.filter(c => c.life > 0).length == 0) {
-                this.combatEnded = 80;
+                this.combatEnded = mobs[0].maxLife == 10 ? 1 : 80;
             }
         }
         else if (this.combatEnded <= 0) {
