@@ -230,7 +230,7 @@ class Character {
         }
     }
     canHaveBonus(bonusKey) {
-        if (!this.talents[bonusKey]) {
+        if (this.talents[bonusKey]) {
             return false;
         }
         if (this.selectedTalents.length < 3) {
@@ -838,6 +838,9 @@ class UpgradeFactory {
         };
     }
     addSpells(array) {
+        if(playerSpells.length >= 5){
+            return;
+        }
         if (playerSpells.indexOf(fastHeal2) == -1) {
             array.push(this.proposeSpell(fastHeal2, ["Fast Heal level 2", `Heals ${fastHeal2.power}`, `Mana: ${fastHeal2.mana}`]));
         }
@@ -1055,7 +1058,7 @@ class Vilains {
 
         const params = new URLSearchParams(window.location.search);
         const cheating = params.get("cheat");
-        if(cheating && level <= cheating){
+        if(cheating && level < cheating){
             vilain.maxLife = 10;
         }
 
