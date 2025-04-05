@@ -933,7 +933,7 @@ class UpgradeFactory {
             }, manaBonusSprite);
         }
         if (hero.canHaveBonus("regen")) {
-            let incr = 1 + Math.random() * 3;
+            let incr = 2 + Math.random() * 4;
             let liteIncr = Math.floor(incr);
             let fullIncr = Math.floor(incr * 4);
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`,
