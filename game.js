@@ -1905,10 +1905,10 @@ class Board {
     placeCharacters() {
         const vilain = mobs[0];
         vilain.x = 620;
-        vilain.y = 240;
+        vilain.y = 180;
         const tank = teams.find(c => c.isTank) ?? teams[teams.length - 1];
         tank.x = 560;
-        tank.y = 230;
+        tank.y = 170;
         const rangeds = teams.filter(c => c != tank);
         for (let i = 0; i < rangeds.length; i++) {
             rangeds[i].x = 450 - Math.floor(i / 3) * 100;
