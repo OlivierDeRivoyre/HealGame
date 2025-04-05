@@ -1150,6 +1150,7 @@ class Vilains {
         vilain.armor = 80;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 80, 40, 7), castSimpleProjectile));
         vilain.spells.push(new FireballAoeTrigger(0.8, 80));
+        Vilains.addDpsCheckLimit(vilain, 40);
         return vilain;
     }
     static giantOrc() {
@@ -1242,6 +1243,7 @@ class Vilains {
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 300, 80, 7), castSimpleProjectile));
         vilain.spells.push(new FireballAoeTrigger(0.75, 50));
         vilain.spells.push(new OnLoseLifeAoeTrigger(15, 100));
+        Vilains.addDpsCheckLimit(vilain, 50);
         return vilain;
     }
     static bigZombie() {
