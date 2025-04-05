@@ -439,10 +439,11 @@ class LabelAnim {
         this.x = from.x + from.width / 2 - label.length * 3;
         this.y = from.y - 5
         this.tick = 0;
-        this.color = "red";
+        this.color = "darkorange";
         this.font = "12px Arial";
         switch (type) {
-            case "hit":
+            case "hit":        
+                this.color = "darkorange";       
                 if (power < 20) {
                     this.font = "10px Arial";
                 } else if (power < 50) {
@@ -452,20 +453,22 @@ class LabelAnim {
                 } else if (power < 250) {
                     this.font = "16px Arial";
                 } else {
-                    this.font = "18px Arial";
+                    this.color = "red";
+                    this.font = "24px Arial";
                 }
                 break;
             case "crit":
+                this.color = "red";
                 if (power < 20) {
                     this.font = "14px Arial";
                 } else if (power < 50) {
-                    this.font = "16px Arial";
-                } else if (power < 150) {
                     this.font = "18px Arial";
+                } else if (power < 150) {
+                    this.font = "10px Arial";
                 } else if (power < 250) {
-                    this.font = "20px Arial";
-                } else {
                     this.font = "22px Arial";
+                } else {
+                    this.font = "24px Arial";
                 }
                 break;
             case "heal":
