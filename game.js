@@ -280,16 +280,9 @@ class CharacterMenu {
             this.character.sprite.paint(this.x + this.width - 36, this.y, 0, true);
             this.paintLifeBar(this.x, this.y);
         }
-        const bonuses = this.character.buffs.filter(b => b.isBonus);
-        const maluses = this.character.buffs.filter(b => !b.isBonus);
-        for (let i = 0; i < bonuses.length; i++) {
-            const zone = this.getBuffRect(i, true);
-            bonuses[i].paintScale(zone.x, zone.y, zone.width, zone.height);
-        }
-        for (let i = 0; i < maluses.length; i++) {
-            const zone = this.getBuffRect(i, false);
-            maluses[i].paintScale(zone.x, zone.y, zone.width, zone.height);
-        }
+        for(let button of this.getBuffButtons()) {
+            button.buff.paintScale(button.zone.x, button.zone.y, button.zone.width, button.zone.height);
+        }        
     }
     paintLifeBar(left, top) {
         ctx.beginPath();
@@ -331,13 +324,27 @@ class CharacterMenu {
         const y = this.y + 32;
         return { x, y, width: 20, height: 20 };
     }
-    getClickedBuff(event) {
-        for (let i = 0; i < this.character.buffs.length; i++) {
-            const zone = this.getBuffRect(i);
-            if (isInside(zone, event)) {
-                return this.character.buffs[i];
-            }
+    getBuffButtons(){
+        let buttons = [];
+        const bonuses = this.character.buffs.filter(b => b.isBonus);
+        const maluses = this.character.buffs.filter(b => !b.isBonus);
+        for (let i = 0; i < bonuses.length; i++) {
+            const zone = this.getBuffRect(i, true);
+            buttons.push({zone, buff: bonuses[i], isBonus: true});
+            
         }
+        for (let i = 0; i < maluses.length; i++) {
+            const zone = this.getBuffRect(i, false);
+            buttons.push({zone, buff: maluses[i], isBonus: false});
+        }
+        return buttons;
+    }
+    getClickedBuff(event) {
+        for(let button of this.getBuffButtons()) {            
+            if (isInside(button.zone, event)) {
+                return button.buff;
+            }
+        }         
         return null;
     }
 }
@@ -2272,10 +2279,9 @@ if (window.location.search) {
         //  knight.level = 5;
         teams = [
             heroesFactory.createPelin(),
-            knight,
-            //  heroesFactory.createKnight(),
-            //  heroesFactory.createWitch(),
-            //  heroesFactory.createHunter(),
+            knight,          
+              heroesFactory.createWitch(),
+              heroesFactory.createHunter(),
             //   heroesFactory.createBerserker(),
             heroesFactory.createNecro()
         ];
