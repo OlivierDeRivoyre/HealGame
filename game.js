@@ -730,7 +730,7 @@ class NecroSkeleton {
         this.tick++;
         if (this.tick >= this.nextCastTick) {
             this.tick = 0;
-            this.nextCastTick = this.getCooldown();
+            this.nextCastTick = this.getCooldown() + Math.floor(Math.random() * 10 - 5);
             let target = this.necro.selectTarget();
             if (!target) {
                 return;
@@ -2376,13 +2376,15 @@ if (window.location.search) {
         //  knight.level = 5;
         const witch = heroesFactory.createWitch();
         witch.crit = 20;
+        const necro = heroesFactory.createNecro();
+        necro.ultimatePower = 5;
         teams = [
             heroesFactory.createPelin(),
             knight,
-            witch,
+          // witch,
             //heroesFactory.createHunter(),
             //   heroesFactory.createBerserker(),
-            //heroesFactory.createNecro()
+            necro
         ];
         //  teams[1].armor = 100;
         // teams[1].crit = 50;
