@@ -1544,8 +1544,8 @@ class SpellButton {
 
 const fastHeal1 = new PlayerSpell("Fast", "Fast heal", fastHealIcon, 100, 30, 1, 250, healCasted, "Heal any member of the teams");
 const fastHeal2 = new PlayerSpell("Fast 2", "Fast heal II", fastHeal2Icon, 160, 30, 2, 400, healCasted, "Fast and big, but mana costly");
-const slowHeal1 = new PlayerSpell("Big", "Big heal", slowHealIcon, 140, 90, 3, 500, healCasted, "Mana efficient, but slow to cast");
-const slowHeal2 = new PlayerSpell("Big 2", "Big heal II", slowHeal2Icon, 200, 90, 4, 800, healCasted, "Big and efficient, but slow to cast");
+const slowHeal1 = new PlayerSpell("Slow", "Slow heal", slowHealIcon, 40, 90, 3, 250, healCasted, "Mana efficient, but slow to cast");
+const slowHeal2 = new PlayerSpell("Slow 2", "Slow heal II", slowHeal2Icon, 60, 90, 4, 400, healCasted, "Big and efficient, but slow to cast");
 const hotHeal = new PlayerSpell("HOT", "Heal over time", hotHealIcon, 80, 10, 5, 400 / 20, hotHealCaster, "Heal a little on every tick");
 const aoeHeal = new PlayerSpell("AOE", "Heal all teams", aoeHealIcon, 120, 60, 6, 500, aoeHealCasted, "Share heal by all the teams");
 
