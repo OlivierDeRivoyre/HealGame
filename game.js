@@ -113,7 +113,7 @@ const boneSprite = new Sprite(tileSet2, 0, 704, 32, 32, 1);
 boneSprite.forbidRotate = true;
 const skeletonSprite = new Sprite(tileSet1, 736, 172, 64, 48, 2);
 const armorSprite = new Sprite(tileSet2, 224, 224, 32, 32, 1);
-const hasteSprite = new Sprite(tileSet2, 480, 320, 32, 32, 1);
+//const hasteSprite = new Sprite(tileSet2, 480, 320, 32, 32, 1);
 const damageBonusSprite = new Sprite(tileSet2, 64, 160, 32, 32, 1);
 const critBonusSprite = new Sprite(tileSet2, 64, 96, 32, 32, 1);
 const lifeBonusSprite = new Sprite(tileSet2, 128, 288, 32, 32, 1);
@@ -923,7 +923,7 @@ class UpgradeFactory {
             this.pushLevelUp(array, hero, [`Level up ${hero.name} to level ${hero.level + 1}`, `Increase haste`,
             `From ${hero.haste}`, `To ${hero.haste + incr}`], function () {
                 hero.haste += incr;
-            }, hasteSprite);
+            }, hasteBuffSprite);
         }
         if (hero.canHaveBonus("mana")) {
             let incr = 80 + Math.floor(Math.random() * 8) * 10;
