@@ -123,6 +123,7 @@ const manaBonusSprite = new Sprite(tileSet2, 160, 288, 32, 32, 1);
 const manaRegenBonusSprite = new Sprite(tileSet2, 288, 288, 32, 32, 1);
 const healPowerBonusSprite = new Sprite(tileSet2, 192, 288, 32, 32, 1);
 const learnSpellSprite = new Sprite(tileSet2, 352, 416, 32, 32, 1);
+const bigBombSprite = new Sprite(tileSet1, 608, 640, 64, 32, 2);
 class Character {
     constructor(name, type, sprite) {
         this.name = name;
@@ -155,6 +156,7 @@ class Character {
         this.convertDeadIntoSkeletonChance = 0;
         this.isBerserk = false;
         this.berserkArmor = 0;
+        this.onInit = null;
     }
     paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
@@ -280,9 +282,9 @@ class CharacterMenu {
             this.character.sprite.paint(this.x + this.width - 36, this.y, 0, true);
             this.paintLifeBar(this.x, this.y);
         }
-        for(let button of this.getBuffButtons()) {
+        for (let button of this.getBuffButtons()) {
             button.buff.paintScale(button.zone.x, button.zone.y, button.zone.width, button.zone.height);
-        }        
+        }
     }
     paintLifeBar(left, top) {
         ctx.beginPath();
@@ -324,27 +326,27 @@ class CharacterMenu {
         const y = this.y + 32;
         return { x, y, width: 20, height: 20 };
     }
-    getBuffButtons(){
+    getBuffButtons() {
         let buttons = [];
         const bonuses = this.character.buffs.filter(b => b.isBonus);
         const maluses = this.character.buffs.filter(b => !b.isBonus);
         for (let i = 0; i < bonuses.length; i++) {
             const zone = this.getBuffRect(i, true);
-            buttons.push({zone, buff: bonuses[i], isBonus: true});
-            
+            buttons.push({ zone, buff: bonuses[i], isBonus: true });
+
         }
         for (let i = 0; i < maluses.length; i++) {
             const zone = this.getBuffRect(i, false);
-            buttons.push({zone, buff: maluses[i], isBonus: false});
+            buttons.push({ zone, buff: maluses[i], isBonus: false });
         }
         return buttons;
     }
     getClickedBuff(event) {
-        for(let button of this.getBuffButtons()) {            
+        for (let button of this.getBuffButtons()) {
             if (isInside(button.zone, event)) {
                 return button.buff;
             }
-        }         
+        }
         return null;
     }
 }
@@ -745,6 +747,13 @@ class NecroSkeleton {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
         this.sprite.paint(this.x, this.y, spriteNumber);
     }
+    click(event) {
+        if (isInside(this, event)) {
+            tooltip.current = new SkeletonTooltip(this);
+            tooltip.isMinimized = false;
+            return true;
+        }
+    }
 }
 let heroesFactory = new Heroes();
 class UpgradeFactory {
@@ -1095,6 +1104,7 @@ class Vilains {
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 40, 7), castSimpleProjectile));
         vilain.spells.push(new FireballAoeTrigger(0.5, 85));
+        Vilains.addDpsCheckLimit(vilain, 25);
         return vilain;
     }
     static lvl6() {
@@ -1252,7 +1262,7 @@ class Vilains {
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 30, 7), castSimpleProjectile));
         vilain.spells.push(new FireballAoeTrigger(0.5, 50));
         vilain.spells.push(new HasteBuffTrigger(0.3, 200, 30 * 5));
-        vilain.spells.push(new RandomAttackTrigger(0.7, 250, 10*30));
+        vilain.spells.push(new RandomAttackTrigger(0.7, 250, 10 * 30));
         vilain.spells.push(new OnLoseLifeAoeTrigger(10, 150));
         Vilains.addInvulnerableBuff(vilain, 12);
         return vilain;
@@ -1261,6 +1271,11 @@ class Vilains {
         vilain.spells.push(new BossInvulnerableBuffTrigger(75, duration * 30));
         vilain.spells.push(new BossInvulnerableBuffTrigger(40, duration * 30));
         vilain.spells.push(new BossInvulnerableBuffTrigger(20, duration * 30));
+    }
+    static addDpsCheckLimit(vilain, timeLimitInSec) {
+        vilain.onInit = function () {
+            allAnimations.push(new BigBombTimeLimitAnim(vilain, timeLimitInSec));
+        };
     }
 }
 const vilainsFactory = new Vilains();
@@ -1423,6 +1438,62 @@ class BossInvulnerableBuffTrigger {
                 self.isInvulnerable = false;
             });
         self.pushBuff(buff);
+    }
+}
+class BigBombTimeLimitAnim {
+    constructor(vilain, timeLimitInSec) {
+        this.vilain = vilain;
+        this.sprite = bigBombSprite;
+        this.width = this.sprite.singleWidth;
+        this.height = 64;
+        this.x = vilain.x + 80;
+        this.y = vilain.y + 20;
+        this.cooldown = timeLimitInSec * 30;
+    }
+    update() {
+        if (this.vilain.life <= 5) {
+            return false;
+        }
+        this.cooldown--;
+        if (this.cooldown > 0) {
+            return false;
+        }
+        return this.explode();
+    }
+    paint() {
+        let spriteNumber = Math.floor(tickNumber / 8) % 2;
+        this.sprite.paint(this.x, this.y + spriteNumber, spriteNumber);
+
+        const sec = this.cooldown / 30;
+        const label = this.cooldown > 0 ? sec.toFixed(1) : "BOOM!!!";
+        ctx.fillStyle = sec < 12 ? "red" : sec < 20 ? "darkorange" : "black";
+        const bigText = sec < 3;
+        ctx.font = bigText ? "bold 18px Courier New" : "14px Tahoma";
+        if(!bigText || (tickNumber % 10) < 6){
+            ctx.fillText(label, this.x + 22 - label.length * (bigText ? 5 : 4), this.y + 48 + (bigText ? 2 : 0));
+        }
+    }
+    explode() {
+        if (Math.abs(this.cooldown) % 5 != 0) {
+            return;
+        }
+        let anyAlive = false;
+        for (const c of teams) {
+            if (c.life > 0) {
+                const stat = new ProjectileStat(self, bombSprite, 314159265, 1, 10);
+                const projectile = new ProjectileAnim(stat, this, c);
+                allAnimations.push(projectile);
+                anyAlive = true;
+            }
+        }
+        return !anyAlive;
+    }
+    click(event) {
+        if (isInside(this, event)) {
+            tooltip.current = new BigBombTooltip(this);
+            tooltip.isMinimized = false;
+            return true;
+        }
     }
 }
 class PlayerSpell {
@@ -1785,8 +1856,6 @@ class CharacterTooltip {
 class SkeletonTooltip {
     constructor(skeleton) {
         this.skeleton = skeleton;
-        this.buffY = tooltip.y + tooltip.height - 20 - 8;
-        this.buffX = tooltip.x + 8 + 56;
     }
     paint() {
         let cursorY = tooltip.y + 22;
@@ -1809,6 +1878,31 @@ class SkeletonTooltip {
 
         ctx.fillText(`Crit chance: ${this.skeleton.necro.crit}%`, cursorX, cursorY);
         cursorY += 16;
+    }
+}
+class BigBombTooltip {
+    constructor(bomb) {
+        this.bomb = bomb;
+    }
+    paint() {
+        let cursorY = tooltip.y + 22;
+        let cursorX = tooltip.x + 8;
+
+        ctx.fillStyle = "orange";
+        ctx.font = "bold 18px Verdana";
+        ctx.fillText(`Look like a bomb`, cursorX, cursorY);
+        cursorY += 18;
+
+        ctx.fillStyle = "white";
+        ctx.font = "12px Verdana";
+        ctx.fillText(`Damage: 3141592653589793238462`, cursorX, cursorY);
+        cursorY += 16;
+        cursorY += 16;
+        ctx.fillText(`You should probably clean this level`, cursorX, cursorY);
+        cursorY += 16;
+        ctx.fillText(`as fast as you can!`, cursorX, cursorY);
+        cursorY += 16;
+
     }
     click(event) {
         return false;
@@ -1887,6 +1981,9 @@ class Board {
         mobs = [vilain];
         characterMenus.push(new CharacterMenu(vilain, 0));
         this.placeCharacters();
+        if (vilain.onInit) {
+            vilain.onInit();
+        }
         this.combatEnded = null;
         playerStat.haste = teams[0].haste;
         playerStat.crit = teams[0].crit;
@@ -2061,10 +2158,8 @@ class Board {
             }
             return true;
         }
-        for (let skeleton of allAnimations.filter(a => a.type == NecroSkeleton.AnymType)) {
-            if (isInside(skeleton, event)) {
-                tooltip.current = new SkeletonTooltip(skeleton);
-                tooltip.isMinimized = false;
+        for (let anim of allAnimations.filter(a => a.click)) {
+            if (anim.click(event)) {
                 return true;
             }
         }
@@ -2213,7 +2308,7 @@ class SelectUpgradeScreen {
         for (let i = 0; i < this.upgrades.length; i++) {
             const upgrade = this.upgrades[i];
             if (upgrade.verbIcon) {
-                upgrade.verbIcon.paint(50  + i * 250, 350 + 4);
+                upgrade.verbIcon.paint(50 + i * 250, 350 + 4);
                 upgrade.verbIcon.paint(50 + 2 + i * 250 + 164, 350 + 4);
             }
         }
@@ -2277,18 +2372,21 @@ if (window.location.search) {
         currentLevel = parseInt(lvl) - 1;
         const knight = heroesFactory.createKnight();
         //  knight.level = 5;
+        const witch = heroesFactory.createWitch();
+        witch.crit = 20;
         teams = [
             heroesFactory.createPelin(),
-            knight,          
-              heroesFactory.createWitch(),
-              heroesFactory.createHunter(),
+            knight,
+            witch,
+            //heroesFactory.createHunter(),
             //   heroesFactory.createBerserker(),
-            heroesFactory.createNecro()
+            //heroesFactory.createNecro()
         ];
         //  teams[1].armor = 100;
         // teams[1].crit = 50;
         //teams[2].spells[0].stat.dmg = 100000;    
         //   teams[teams.length - 1].ultimatePower = 3;
+
         playerSpells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
         currentPage = new SelectUpgradeScreen(1);
     }
