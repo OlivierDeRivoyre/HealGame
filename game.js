@@ -79,10 +79,10 @@ class Sprite {
             x, y, width, height);
     }
 }
-const fastHealIcon = new Sprite(tileSet2, 416, 352, 32, 32, 1);
-const fastHeal2Icon = new Sprite(tileSet2, 480, 352, 32, 32, 1);
-const slowHealIcon = new Sprite(tileSet2, 0, 288, 32, 32, 1);
-const slowHeal2Icon = new Sprite(tileSet2, 448, 288, 32, 32, 1);
+const slowHealIcon = new Sprite(tileSet2, 416, 352, 32, 32, 1);
+const slowHeal2Icon = new Sprite(tileSet2, 480, 352, 32, 32, 1);
+const fastHealIcon = new Sprite(tileSet2, 0, 288, 32, 32, 1);
+const fastHeal2Icon = new Sprite(tileSet2, 448, 288, 32, 32, 1);
 const hotHealIcon = new Sprite(tileSet2, 160, 96, 32, 32, 1);
 const aoeHealIcon = new Sprite(tileSet2, 480, 96, 32, 32, 1);
 const healerSprite = new Sprite(tileSet1, 256, 340, 288, 48, 9);
@@ -1425,7 +1425,7 @@ class BigBombTimeLimitAnim {
         this.width = this.sprite.singleWidth;
         this.height = 64;
         this.x = 700;
-        this.y = 200;        
+        this.y = 200;
         this.timeLimitInSec = timeLimitInSec;
         this.cooldown = timeLimitInSec * 30;
     }
@@ -2184,8 +2184,7 @@ class Board {
                     newSkeletons++;
                 }
             }
-        }
-        teams = teams.filter(c => c.life > 0);
+        }        
         if (currentLevel % 3 == 0 && rerollsNumber < 3) {
             rerollsNumber++;
         }
@@ -2330,12 +2329,12 @@ class NecroLevelScreen {
     }
 }
 class EndLevelStatScreen {
-    constructor() {                
-        if(!vilainsFactory.isLastLevel(currentLevel)){
+    constructor() {
+        if (!vilainsFactory.isLastLevel(currentLevel)) {
             this.nextBoss = vilainsFactory.createVilainOfLevel(currentLevel + 1);
         }
         let buttonY = 350;
-        if(this.nextBoss && this.nextBoss.spells.length >= 5){
+        if (this.nextBoss && this.nextBoss.spells.length >= 5) {
             buttonY = 394;
         }
         this.buttons = [new MenuButton(500, buttonY, "Next", () => this.nextPage())];
@@ -2403,7 +2402,7 @@ class EndLevelStatScreen {
         ctx.font = "12px Verdana";
         ctx.fillText(`Level ${boss.level} - Life: ${boss.maxLife}`, cursorX + 40, cursorY);
 
-        cursorY += 24;        
+        cursorY += 24;
         let currentArmor = boss.getArmor();
         let armorReduc = Math.floor(100 - Math.floor(100000 / (100 + currentArmor)) / 10);
         ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
@@ -2430,11 +2429,12 @@ class EndLevelStatScreen {
                 ctx.fillStyle = "#444";
                 ctx.fillText(desc.desc[i], cursorX + 40, cursorY + yIncr);
                 yIncr += 12;
-            }          
+            }
             cursorY += Math.max(40, yIncr);
         }
     }
     nextPage() {
+        teams = teams.filter(c => c.life > 0);
         currentPage = new SelectUpgradeScreen(1);
     }
 }
