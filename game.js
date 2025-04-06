@@ -2336,7 +2336,7 @@ class EndLevelStatScreen {
         }
         let buttonY = 350;
         if(this.nextBoss && this.nextBoss.spells.length >= 5){
-            buttonY = 380;
+            buttonY = 394;
         }
         this.buttons = [new MenuButton(500, buttonY, "Next", () => this.nextPage())];
     }
@@ -2401,18 +2401,18 @@ class EndLevelStatScreen {
         cursorY += 20;
         ctx.fillStyle = "black";
         ctx.font = "12px Verdana";
-        ctx.fillText(`Level ${boss.level}`, cursorX + 40, cursorY);
+        ctx.fillText(`Level ${boss.level} - Life: ${boss.maxLife}`, cursorX + 40, cursorY);
 
-        cursorY += 24;
+        cursorY += 24;        
+        let currentArmor = boss.getArmor();
+        let armorReduc = Math.floor(100 - Math.floor(100000 / (100 + currentArmor)) / 10);
+        ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
+        cursorY += 16;
         let dmg = boss.spells[0].stat.dmg;
         let cooldown = Math.floor(0.34 * boss.spells[0].stat.cooldown) / 10;
         let mainSpell = `Damage: ${dmg} every ${cooldown} seconds`;
         ctx.fillText(mainSpell, cursorX, cursorY);
 
-        cursorY += 20;
-        let currentArmor = boss.getArmor();
-        let armorReduc = Math.floor(100 - Math.floor(100000 / (100 + currentArmor)) / 10);
-        ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
         cursorY += 10;
         let descriptions = boss.spells.filter(s => s.getDescription).map(s => s.getDescription());
         for (let otherEffect of boss.animationsToStartOnInit.filter(a => a.getDescription)) {
