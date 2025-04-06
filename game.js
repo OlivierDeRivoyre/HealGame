@@ -2413,7 +2413,7 @@ class EndLevelStatScreen {
         let mainSpell = `Damage: ${dmg} every ${cooldown} seconds`;
         ctx.fillText(mainSpell, cursorX, cursorY);
 
-        cursorY += 10;
+        cursorY += 12;
         let descriptions = boss.spells.filter(s => s.getDescription).map(s => s.getDescription());
         for (let otherEffect of boss.animationsToStartOnInit.filter(a => a.getDescription)) {
             descriptions.push(otherEffect.getDescription());
