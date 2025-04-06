@@ -89,9 +89,9 @@ const healerSprite = new Sprite(tileSet1, 256, 340, 288, 48, 9);
 const witchSprite = new Sprite(tileSet1, 256, 274, 288, 48, 9);
 const redKnightSprite = new Sprite(tileSet1, 256, 148, 256, 48, 8);
 const elfSprite = new Sprite(tileSet1, 256, 84, 256, 44, 8);
-const berserkerSprite1 = new Sprite(tileSet1, 256, 528, 256, 52, 8);
-const berserkerSprite2 = new Sprite(tileSet1, 256, 592, 256, 52, 8);
-const necroSprite = new Sprite(tileSet1, 736, 800, 256, 52, 8);
+const berserkerSprite1 = new Sprite(tileSet1, 256, 532, 256, 44, 8);
+const berserkerSprite2 = new Sprite(tileSet1, 256, 596, 256, 44, 8);
+const necroSprite = new Sprite(tileSet1, 736, 792, 256, 48, 8);
 const arrowSprite = new Sprite(tileSet1, 644, 400, 20, 48, 1);
 const frostSprite = new Sprite(tileSet2, 352, 672, 32, 32, 1);
 const swordSprite = new Sprite(tileSet1, 640, 16, 28, 48, 1);
@@ -113,7 +113,6 @@ const boneSprite = new Sprite(tileSet2, 0, 704, 32, 32, 1);
 boneSprite.forbidRotate = true;
 const skeletonSprite = new Sprite(tileSet1, 736, 172, 64, 48, 2);
 const armorSprite = new Sprite(tileSet2, 224, 224, 32, 32, 1);
-//const hasteSprite = new Sprite(tileSet2, 480, 320, 32, 32, 1);
 const damageBonusSprite = new Sprite(tileSet2, 64, 160, 32, 32, 1);
 const critBonusSprite = new Sprite(tileSet2, 64, 96, 32, 32, 1);
 const lifeBonusSprite = new Sprite(tileSet2, 128, 288, 32, 32, 1);
@@ -156,7 +155,10 @@ class Character {
         this.convertDeadIntoSkeletonChance = 0;
         this.isBerserk = false;
         this.berserkArmor = 0;
-        this.onInit = null;
+        this.animationsToStartOnInit = [];
+        this.damageDone = 0;
+        this.damageTaken = 0;
+        this.damageNotMitagedTaken = 0;
     }
     paint() {
         let spriteNumber = Math.floor(tickNumber / 8) % 2;
@@ -194,6 +196,10 @@ class Character {
         if (this.life <= 0) {
             return;
         }
+        const isCrit = Math.random() * 100 < projectileStat.from.crit;
+        const baseDamage = projectileStat.from.isBerserk ? projectileStat.dmg * 2 : projectileStat.dmg;
+        const fullDamge = isCrit ? baseDamage * 2 : baseDamage;
+        this.damageNotMitagedTaken += fullDamge + 1;
         if (this.isInvulnerable) {
             allAnimations.push(new LabelAnim("invulnerable", this, "invulnerable", 0));
             return;
@@ -202,11 +208,10 @@ class Character {
             allAnimations.push(new LabelAnim("dodge", this, "dodge", 0));
             return;
         }
-        const isCrit = Math.random() * 100 < projectileStat.from.crit;
-        const baseDamage = projectileStat.from.isBerserk ? projectileStat.dmg * 2 : projectileStat.dmg;
-        const fullDamge = isCrit ? baseDamage * 2 : baseDamage;
         const dmg = Math.floor(1 + fullDamge * 100 * 100 / ((100 + this.getArmor()) * (100 + this.getBerserkArmor())));
         this.life = Math.max(0, this.life - dmg);
+        projectileStat.from.damageDone += dmg;
+        this.damageTaken += dmg;
         allAnimations.push(new LabelAnim(`${dmg}`, this, isCrit ? "crit" : "hit", dmg));
         if (this.life <= 0) {
             this.buffs = [];
@@ -260,94 +265,6 @@ class Character {
             }
         }
         return this.target;
-    }
-}
-class CharacterMenu {
-    constructor(character, i) {
-        this.character = character;
-        this.isLeft = !this.character.isVilain;
-        this.x = this.isLeft ? 10 : 530;
-        this.y = 20 + i * 60;
-        this.height = 60;
-        this.width = 200 + 40;
-    }
-    paint() {
-        if (this.isLeft) {
-            this.character.sprite.paint(this.x, this.y, 0);
-            if (this.character.life <= 0) {
-                deadSprite.paint(this.x + 4, this.y + 10);
-            }
-            this.paintLifeBar(this.x + 40, this.y);
-        } else {
-            this.character.sprite.paint(this.x + this.width - 36, this.y, 0, true);
-            this.paintLifeBar(this.x, this.y);
-        }
-        for (let button of this.getBuffButtons()) {
-            button.buff.paintScale(button.zone.x, button.zone.y, button.zone.width, button.zone.height);
-        }
-    }
-    paintLifeBar(left, top) {
-        ctx.beginPath();
-        ctx.lineWidth = "1";
-        ctx.fillStyle = this.character.isVilain ? "FireBrick" : "green";
-        ctx.rect(left, top + 10, this.character.life * 200 / this.character.maxLife, 20);
-        ctx.fill();
-
-        let label = `${this.character.life} / ${this.character.maxLife}`
-        if (this.character.life <= 0) {
-            label = "Dead";
-            ctx.beginPath();
-            ctx.lineWidth = "1";
-            ctx.fillStyle = "gray";
-            ctx.rect(left, top + 10, 200, 20);
-            ctx.fill();
-        }
-
-        ctx.fillStyle = "#FBC";
-        ctx.font = "12px Arial";
-        ctx.fillText(this.character.name, left + 5, top + 24);
-
-        ctx.fillStyle = "black";
-        ctx.font = "12px Arial";
-        ctx.fillText(label, left + 90, top + 24);
-
-        ctx.beginPath();
-        ctx.lineWidth = "1";
-        ctx.strokeStyle = "gray";
-        ctx.rect(left, top + 10, 200, 20);
-        ctx.stroke();
-    }
-    getBuffRect(i, isBonus) {
-        const showLeft = this.isLeft == isBonus;
-        const offsetX = this.isLeft ? 40 : 0
-        const x = showLeft ?
-            this.x + offsetX + i * 22
-            : this.x + 200 - 22 - i * 22;
-        const y = this.y + 32;
-        return { x, y, width: 20, height: 20 };
-    }
-    getBuffButtons() {
-        let buttons = [];
-        const bonuses = this.character.buffs.filter(b => b.isBonus);
-        const maluses = this.character.buffs.filter(b => !b.isBonus);
-        for (let i = 0; i < bonuses.length; i++) {
-            const zone = this.getBuffRect(i, true);
-            buttons.push({ zone, buff: bonuses[i], isBonus: true });
-
-        }
-        for (let i = 0; i < maluses.length; i++) {
-            const zone = this.getBuffRect(i, false);
-            buttons.push({ zone, buff: maluses[i], isBonus: false });
-        }
-        return buttons;
-    }
-    getClickedBuff(event) {
-        for (let button of this.getBuffButtons()) {
-            if (isInside(button.zone, event)) {
-                return button.buff;
-            }
-        }
-        return null;
     }
 }
 class PnjSpell {
@@ -442,8 +359,8 @@ class LabelAnim {
         this.color = "darkorange";
         this.font = "12px Arial";
         switch (type) {
-            case "hit":        
-                this.color = "darkorange";       
+            case "hit":
+                this.color = "darkorange";
                 if (power < 20) {
                     this.font = "10px Arial";
                 } else if (power < 50) {
@@ -1055,7 +972,7 @@ class Vilains {
 
         vilain.reverse = true;
         vilain.isVilain = true;
-
+        vilain.level = level;
         const params = new URLSearchParams(window.location.search);
         const cheating = params.get("cheat");
         if (cheating && level < cheating) {
@@ -1273,14 +1190,10 @@ class Vilains {
         return vilain;
     }
     static addInvulnerableBuff(vilain, duration) {
-        vilain.spells.push(new BossInvulnerableBuffTrigger(75, duration * 30));
-        vilain.spells.push(new BossInvulnerableBuffTrigger(40, duration * 30));
-        vilain.spells.push(new BossInvulnerableBuffTrigger(20, duration * 30));
+        vilain.spells.push(new BossInvulnerableBuffTrigger([20, 40, 75], duration * 30));
     }
     static addDpsCheckLimit(vilain, timeLimitInSec) {
-        vilain.onInit = function () {
-            allAnimations.push(new BigBombTimeLimitAnim(vilain, timeLimitInSec));
-        };
+        vilain.animationsToStartOnInit.push(new BigBombTimeLimitAnim(vilain, timeLimitInSec));
     }
 }
 const vilainsFactory = new Vilains();
@@ -1298,6 +1211,8 @@ class FireballAoeTrigger {
     constructor(lifeRatio, dmg) {
         this.lifeRatio = lifeRatio;
         this.dmg = dmg;
+        this.sprite = fireballSprite;
+        this.cooldown = 45;
     }
     update(self) {
         if (self.isEnragedAoe) {
@@ -1307,8 +1222,8 @@ class FireballAoeTrigger {
             return;
         }
         self.isEnragedAoe = true;
-        const stat = new ProjectileStat(self, fireballSprite, this.dmg, 40, 15)
-        self.pushBuff(new CharacterBuffEffect("Hellfire", self, fireballSprite, 45, 100000, stat,
+        const stat = new ProjectileStat(self, this.sprite, this.dmg, this.cooldown, 15)
+        self.pushBuff(new CharacterBuffEffect("Hellfire", self, this.sprite, this.cooldown, 100000, stat,
             `Throw a ${this.dmg} fireball to all`, FireballAoeTrigger.fireTick));
     }
     static fireTick(stat, boss) {
@@ -1319,12 +1234,22 @@ class FireballAoeTrigger {
             }
         }
     }
+    getDescription() {
+        const lifeRatio = Math.floor(100 * this.lifeRatio);
+        const cooldown = Math.floor(this.cooldown / 30).toFixed(1);
+        return {
+            icon: this.sprite,
+            title: "Hellfire",
+            desc: [`Once at ${lifeRatio}% life`, `do ${this.dmg} to all players every ${cooldown} sec`]
+        };
+    }
 }
 class OnLoseLifeAoeTrigger {
     constructor(lifeRatio, dmg) {
         this.lifeRatio = lifeRatio;
         this.dmg = dmg;
         this.nextStep = null;
+        this.sprite = loseLifeProjectileSprite;
     }
     update(self) {
         if (self.life <= 0) {
@@ -1339,7 +1264,7 @@ class OnLoseLifeAoeTrigger {
         }
         this.nextStep = Math.max(0, this.nextStep - this.lifeRatio);
         this.addBuffIcon(self);
-        const stat = new ProjectileStat(self, loseLifeProjectileSprite, this.dmg, 40, 15);
+        const stat = new ProjectileStat(self, this.sprite, this.dmg, 40, 15);
         for (const c of teams) {
             if (c.life > 0) {
                 const projectile = new ProjectileAnim(stat, self, c);
@@ -1349,8 +1274,15 @@ class OnLoseLifeAoeTrigger {
     }
     addBuffIcon(self) {
         const nextStepLife = Math.floor(self.maxLife * this.nextStep / 100);
-        self.pushBuff(new CharacterBuffEffect("Hellfire", self, loseLifeProjectileSprite, 15, 10000000, null,
+        self.pushBuff(new CharacterBuffEffect("Revenge", self, this.sprite, 15, 10000000, null,
             `Will hit ${this.dmg} at ${nextStepLife} life (${this.nextStep}%) `, () => { }));
+    }
+    getDescription() {
+        return {
+            icon: this.sprite,
+            title: "Revenge",
+            desc: [`Each ${this.lifeRatio}% life lost`, `do ${this.dmg} to all players`]
+        };
     }
 }
 class RandomAttackTrigger {
@@ -1359,6 +1291,7 @@ class RandomAttackTrigger {
         this.dmg = dmg;
         this.cooldown = cooldown;
         this.triggered = false;
+        this.sprite = bombSprite;
     }
     update(self) {
         if (this.triggered) {
@@ -1368,7 +1301,7 @@ class RandomAttackTrigger {
             return;
         }
         this.triggered = true;
-        const stat = new ProjectileStat(self, bombSprite, this.dmg, this.cooldown, 6);
+        const stat = new ProjectileStat(self, this.sprite, this.dmg, this.cooldown, 6);
         stat.lastTarget = null;
         self.pushBuff(new CharacterBuffEffect("Explosive", self, bombSprite, this.cooldown, 100000, stat,
             `Deal ${this.dmg} damage to random character`, RandomAttackTrigger.randomAttackTick));
@@ -1384,6 +1317,14 @@ class RandomAttackTrigger {
         const projectile = new ProjectileAnim(stat, boss, target);
         allAnimations.push(projectile);
     }
+    getDescription() {
+        const lifeRatio = Math.floor(100 * this.lifeRatio);
+        return {
+            icon: this.sprite,
+            title: "Random attack",
+            desc: [`Once at ${lifeRatio}% life`, `do ${this.dmg} to random player`]
+        };
+    }
 }
 class HasteBuffTrigger {
     constructor(lifePeriodRatio, hasteIncr, duration) {
@@ -1393,6 +1334,7 @@ class HasteBuffTrigger {
         this.nextLifeTrigger = null;
         this.period = null;
         this.isRunning = false;
+        this.sprite = hasteBuffSprite;
     }
     update(self) {
         if (this.isRunning) {
@@ -1409,7 +1351,7 @@ class HasteBuffTrigger {
         this.isRunning = true;
         self.haste += this.hasteIncr;
         const spell = this;
-        const buff = new CharacterBuffEffect("Haste", self, hasteBuffSprite, this.duration, this.duration, {}, `Gain ${spell.hasteIncr} haste`, function () {
+        const buff = new CharacterBuffEffect("Haste", self, this.sprite, this.duration, this.duration, {}, `Gain ${spell.hasteIncr} haste`, function () {
             if (spell.isRunning) {
                 spell.isRunning = false;
                 self.haste -= spell.hasteIncr;
@@ -1417,20 +1359,25 @@ class HasteBuffTrigger {
         });
         self.pushBuff(buff);
     }
+    getDescription() {
+        const lifeRatio = Math.floor(100 * this.lifePeriodRatio);
+        return {
+            icon: this.sprite,
+            title: "Haste",
+            desc: [`Gain ${this.hasteIncr} haste`, `every time he lost ${lifeRatio}% life`]
+        };
+    }
 }
 class BossInvulnerableBuffTrigger {
-    constructor(lifeRatio, duration) {
-        this.lifeRatio = lifeRatio;
+    constructor(lifeRatios, duration) {
+        this.lifeRatios = lifeRatios;
         this.duration = duration;
         this.nextLifeTrigger = null;
-        this.isDone = false;
+        this.sprite = invulnerableSprite;
     }
     update(self) {
-        if (this.isDone) {
-            return;
-        }
         if (this.nextLifeTrigger == null) {
-            this.nextLifeTrigger = Math.floor(self.maxLife * this.lifeRatio / 100);
+            this.setNextTrigger(self);
         }
         if (self.life > this.nextLifeTrigger) {
             return;
@@ -1438,11 +1385,37 @@ class BossInvulnerableBuffTrigger {
         this.isDone = true;
         self.isInvulnerable = true;
         const durationSec = Math.floor(this.duration / 3) / 10;
-        const buff = new CharacterBuffEffect("Invulnerable", self, invulnerableSprite, this.duration, this.duration, {},
+        const buff = new CharacterBuffEffect("Invulnerable", self, this.sprite, this.duration, this.duration, {},
             `Invulnerable for ${durationSec} sec`, function () {
                 self.isInvulnerable = false;
             });
         self.pushBuff(buff);
+        this.setNextTrigger(self);
+    }
+    setNextTrigger(boss) {
+        for (let i = this.lifeRatios.length - 1; i >= 0; i--) {
+            const lifeTrigger = Math.floor(boss.maxLife * this.lifeRatios[i] / 100);
+            if (boss.life > lifeTrigger) {
+                this.nextLifeTrigger = lifeTrigger;
+                return;
+            }
+        }
+        this.nextLifeTrigger = -1;
+    }
+    getDescription() {
+        const durationSec = Math.floor(this.duration / 3) / 10;
+        let ticks = "";
+        for (let ratio of this.lifeRatios) {
+            if (ticks != "") {
+                ticks += ", ";
+            }
+            ticks += `${ratio}%`;
+        }
+        return {
+            icon: this.sprite,
+            title: "Invulnerable",
+            desc: [`Invulnerable for ${durationSec} sec`, `at [${ticks}] life`]
+        };
     }
 }
 class BigBombTimeLimitAnim {
@@ -1451,8 +1424,9 @@ class BigBombTimeLimitAnim {
         this.sprite = bigBombSprite;
         this.width = this.sprite.singleWidth;
         this.height = 64;
-        this.x = vilain.x + 80;
-        this.y = vilain.y + 20;
+        this.x = 700;
+        this.y = 200;        
+        this.timeLimitInSec = timeLimitInSec;
         this.cooldown = timeLimitInSec * 30;
     }
     update() {
@@ -1474,7 +1448,7 @@ class BigBombTimeLimitAnim {
         ctx.fillStyle = sec < 12 ? "red" : sec < 20 ? "darkorange" : "black";
         const bigText = sec < 3;
         ctx.font = bigText ? "bold 18px Courier New" : "14px Tahoma";
-        if(!bigText || (tickNumber % 10) < 6){
+        if (!bigText || (tickNumber % 10) < 6) {
             ctx.fillText(label, this.x + 22 - label.length * (bigText ? 5 : 4), this.y + 48 + (bigText ? 2 : 0));
         }
     }
@@ -1499,6 +1473,13 @@ class BigBombTimeLimitAnim {
             tooltip.isMinimized = false;
             return true;
         }
+    }
+    getDescription() {
+        return {
+            icon: this.sprite,
+            title: `Time limit`,
+            desc: [`Fatal explosion after ${this.timeLimitInSec} seconds`]
+        };
     }
 }
 class PlayerSpell {
@@ -1754,6 +1735,94 @@ class PlayerStat {
     }
 }
 let playerStat = new PlayerStat();
+class CharacterMenu {
+    constructor(character, i) {
+        this.character = character;
+        this.isLeft = !this.character.isVilain;
+        this.x = this.isLeft ? 10 : 530;
+        this.y = 20 + i * 60;
+        this.height = 60;
+        this.width = 200 + 40;
+    }
+    paint() {
+        if (this.isLeft) {
+            this.character.sprite.paint(this.x, this.y, 0);
+            if (this.character.life <= 0) {
+                deadSprite.paint(this.x + 4, this.y + 10);
+            }
+            this.paintLifeBar(this.x + 40, this.y);
+        } else {
+            this.character.sprite.paint(this.x + this.width - 36, this.y, 0, true);
+            this.paintLifeBar(this.x, this.y);
+        }
+        for (let button of this.getBuffButtons()) {
+            button.buff.paintScale(button.zone.x, button.zone.y, button.zone.width, button.zone.height);
+        }
+    }
+    paintLifeBar(left, top) {
+        ctx.beginPath();
+        ctx.lineWidth = "1";
+        ctx.fillStyle = this.character.isVilain ? "FireBrick" : "green";
+        ctx.rect(left, top + 10, this.character.life * 200 / this.character.maxLife, 20);
+        ctx.fill();
+
+        let label = `${this.character.life} / ${this.character.maxLife}`
+        if (this.character.life <= 0) {
+            label = "Dead";
+            ctx.beginPath();
+            ctx.lineWidth = "1";
+            ctx.fillStyle = "gray";
+            ctx.rect(left, top + 10, 200, 20);
+            ctx.fill();
+        }
+
+        ctx.fillStyle = "#FBC";
+        ctx.font = "12px Arial";
+        ctx.fillText(this.character.name, left + 5, top + 24);
+
+        ctx.fillStyle = "black";
+        ctx.font = "12px Arial";
+        ctx.fillText(label, left + 90, top + 24);
+
+        ctx.beginPath();
+        ctx.lineWidth = "1";
+        ctx.strokeStyle = "gray";
+        ctx.rect(left, top + 10, 200, 20);
+        ctx.stroke();
+    }
+    getBuffRect(i, isBonus) {
+        const showLeft = this.isLeft == isBonus;
+        const offsetX = this.isLeft ? 40 : 0
+        const x = showLeft ?
+            this.x + offsetX + i * 22
+            : this.x + 200 - 22 - i * 22;
+        const y = this.y + 32;
+        return { x, y, width: 20, height: 20 };
+    }
+    getBuffButtons() {
+        let buttons = [];
+        const bonuses = this.character.buffs.filter(b => b.isBonus);
+        const maluses = this.character.buffs.filter(b => !b.isBonus);
+        for (let i = 0; i < bonuses.length; i++) {
+            const zone = this.getBuffRect(i, true);
+            buttons.push({ zone, buff: bonuses[i], isBonus: true });
+
+        }
+        for (let i = 0; i < maluses.length; i++) {
+            const zone = this.getBuffRect(i, false);
+            buttons.push({ zone, buff: maluses[i], isBonus: false });
+        }
+        return buttons;
+    }
+    getClickedBuff(event) {
+        for (let button of this.getBuffButtons()) {
+            if (isInside(button.zone, event)) {
+                return button.buff;
+            }
+        }
+        return null;
+    }
+}
 class Tooltip {
     constructor() {
         this.current = null;
@@ -1986,8 +2055,8 @@ class Board {
         mobs = [vilain];
         characterMenus.push(new CharacterMenu(vilain, 0));
         this.placeCharacters();
-        if (vilain.onInit) {
-            vilain.onInit();
+        for (let anim of vilain.animationsToStartOnInit) {
+            allAnimations.push(anim);
         }
         this.combatEnded = null;
         playerStat.haste = teams[0].haste;
@@ -2123,7 +2192,7 @@ class Board {
         if (newSkeletons > 0) {
             currentPage = new NecroLevelScreen(newSkeletons);
         } else {
-            currentPage = new SelectUpgradeScreen(1);
+            currentPage = new EndLevelStatScreen();
         }
     }
     click(event) {
@@ -2257,6 +2326,115 @@ class NecroLevelScreen {
         }
     }
     nextPage() {
+        currentPage = new EndLevelStatScreen();
+    }
+}
+class EndLevelStatScreen {
+    constructor() {                
+        if(!vilainsFactory.isLastLevel(currentLevel)){
+            this.nextBoss = vilainsFactory.createVilainOfLevel(currentLevel + 1);
+        }
+        let buttonY = 350;
+        if(this.nextBoss && this.nextBoss.spells.length >= 5){
+            buttonY = 380;
+        }
+        this.buttons = [new MenuButton(500, buttonY, "Next", () => this.nextPage())];
+    }
+    update() { }
+    paint() {
+        this.paintDamages();
+        this.paintNextBoss(this.nextBoss);
+        for (let b of this.buttons) {
+            b.paint();
+        }
+    }
+    paintDamages() {
+        const baseX = 60;
+        ctx.fillStyle = "black";
+        ctx.font = "20px Verdana";
+        ctx.fillText('Damages', baseX + 30, 36);
+
+        let totalDmgDone = 0;
+        for (let pnj of teams) {
+            totalDmgDone += pnj.damageDone;
+        }
+        if (totalDmgDone == 0) {
+            totalDmgDone = 1;
+        }
+        for (let i = 0; i < teams.length; i++) {
+            const pnj = teams[i];
+
+            const baseY = 48 + 50 * i;
+            pnj.sprite.paint(baseX, baseY, 0);
+            if (pnj.life <= 0) {
+                deadSprite.paint(baseX + 4, baseY + 10);
+            }
+            const cursorX = baseX + 40;
+            let cursorY = baseY + 20;
+            ctx.fillStyle = "black";
+            ctx.font = "12px Verdana";
+            ctx.fillText(`Done: ${pnj.damageDone}, Team: ${Math.floor(100 * pnj.damageDone / totalDmgDone)}%`, cursorX, cursorY);
+
+            cursorY += 20;
+            let mitigation = pnj.damageNotMitagedTaken != 0 ?
+                Math.floor(100 * (pnj.damageNotMitagedTaken - pnj.damageTaken) / pnj.damageNotMitagedTaken)
+                : 0;
+            ctx.fillText(`Taken: ${pnj.damageNotMitagedTaken}, Mitigation: ${mitigation}%`, cursorX, cursorY);
+
+        }
+    }
+    paintNextBoss(boss) {
+        if (!boss) {
+            return;
+        }
+        const cursorX = 410;
+        let cursorY = 36;
+        ctx.fillStyle = "black";
+        ctx.font = "20px Verdana";
+        ctx.fillText('Next boss', cursorX + 30, cursorY);
+
+        cursorY += 40;
+        boss.sprite.paint(cursorX + 16 - boss.sprite.singleWidth * 0.5, cursorY + 24 - boss.sprite.tHeight, 0);
+        ctx.fillStyle = "maroon";
+        ctx.font = "bold 18px Verdana";
+        ctx.fillText(boss.name, cursorX + 40, cursorY);
+        cursorY += 20;
+        ctx.fillStyle = "black";
+        ctx.font = "12px Verdana";
+        ctx.fillText(`Level ${boss.level}`, cursorX + 40, cursorY);
+
+        cursorY += 24;
+        let dmg = boss.spells[0].stat.dmg;
+        let cooldown = Math.floor(0.34 * boss.spells[0].stat.cooldown) / 10;
+        let mainSpell = `Damage: ${dmg} every ${cooldown} seconds`;
+        ctx.fillText(mainSpell, cursorX, cursorY);
+
+        cursorY += 20;
+        let currentArmor = boss.getArmor();
+        let armorReduc = Math.floor(100 - Math.floor(100000 / (100 + currentArmor)) / 10);
+        ctx.fillText(`Armor: ${currentArmor}. Reduce damage by ${armorReduc}%`, cursorX, cursorY);
+        cursorY += 10;
+        let descriptions = boss.spells.filter(s => s.getDescription).map(s => s.getDescription());
+        for (let otherEffect of boss.animationsToStartOnInit.filter(a => a.getDescription)) {
+            descriptions.push(otherEffect.getDescription());
+        }
+        for (let desc of descriptions) {
+            desc.icon.paintScale(cursorX, cursorY, 32, 32);
+            ctx.fillStyle = "black";
+            ctx.font = "bold 14px Verdana";
+            let yIncr = 8;
+            ctx.fillText(desc.title, cursorX + 40, cursorY + yIncr);
+            yIncr += 14;
+            for (let i = 0; i < desc.desc.length; i++) {
+                ctx.font = "12px Verdana";
+                ctx.fillStyle = "#444";
+                ctx.fillText(desc.desc[i], cursorX + 40, cursorY + yIncr);
+                yIncr += 12;
+            }          
+            cursorY += Math.max(40, yIncr);
+        }
+    }
+    nextPage() {
         currentPage = new SelectUpgradeScreen(1);
     }
 }
@@ -2313,8 +2491,8 @@ class SelectUpgradeScreen {
         for (let i = 0; i < this.upgrades.length; i++) {
             const upgrade = this.upgrades[i];
             if (upgrade.verbIcon) {
-                upgrade.verbIcon.paint(50 + i * 250, 350 + 4);
-                upgrade.verbIcon.paint(50 + 2 + i * 250 + 164, 350 + 4);
+                upgrade.verbIcon.paintScale(50 + i * 250, 350 + 4, 32, 32);
+                upgrade.verbIcon.paintScale(50 + 2 + i * 250 + 164, 350 + 4, 32, 32);
             }
         }
     }
@@ -2384,10 +2562,11 @@ if (window.location.search) {
         teams = [
             heroesFactory.createPelin(),
             knight,
-          // witch,
-            //heroesFactory.createHunter(),
-            //   heroesFactory.createBerserker(),
-            necro
+            witch,
+            heroesFactory.createHunter(),
+            heroesFactory.createBerserker(),
+            necro,
+            heroesFactory.createBerserker(),
         ];
         //  teams[1].armor = 100;
         // teams[1].crit = 50;
@@ -2395,7 +2574,12 @@ if (window.location.search) {
         //   teams[teams.length - 1].ultimatePower = 3;
 
         playerSpells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
-        currentPage = new SelectUpgradeScreen(1);
+        //currentPage = new SelectUpgradeScreen(1);
+        necro.damageDone = 300;
+        witch.damageDone = 3000;
+        witch.damageTaken = 4000;
+        witch.damageNotMitagedTaken = 5000;
+        currentPage = new EndLevelStatScreen();
     }
 }
 const tickDuration = 1000.0 / 30;
