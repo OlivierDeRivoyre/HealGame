@@ -2188,7 +2188,9 @@ class Board {
         if (currentLevel % 3 == 0 && rerollsNumber < 3) {
             rerollsNumber++;
         }
-        if (newSkeletons > 0) {
+        if(currentLevel == 1){
+            currentPage = new SelectUpgradeScreen(1);
+        } else if (newSkeletons > 0) {
             currentPage = new NecroLevelScreen(newSkeletons);
         } else {
             currentPage = new EndLevelStatScreen();
