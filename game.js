@@ -1024,7 +1024,7 @@ class Vilains {
         vilain.armor = 50;
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 100, 40, 7), castSimpleProjectile));
         vilain.spells.push(new FireballAoeTrigger(0.5, 85));
-        Vilains.addDpsCheckLimit(vilain, 25);
+        Vilains.addDpsCheckLimit(vilain, 30);
         return vilain;
     }
     static lvl6() {
@@ -1163,7 +1163,7 @@ class Vilains {
         vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 300, 80, 7), castSimpleProjectile));
         vilain.spells.push(new FireballAoeTrigger(0.75, 50));
         vilain.spells.push(new OnLoseLifeAoeTrigger(15, 100));
-        Vilains.addDpsCheckLimit(vilain, 50);
+        Vilains.addDpsCheckLimit(vilain, 70);
         return vilain;
     }
     static bigZombie() {
