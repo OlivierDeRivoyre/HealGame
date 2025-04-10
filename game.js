@@ -1128,8 +1128,8 @@ class Vilains {
         let vilain = new Character("Punk-in", "Monster", sprite);
         vilain.maxLife = 2500;
         vilain.armor = 100;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 150, 40, 7), castSimpleProjectile));
-        vilain.spells.push(new FireballAoeTrigger(0.9, 30));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, greenPotionSprite, 175, 40, 7), castSimpleProjectile));
+        vilain.spells.push(new FireballAoeTrigger(0.9, 35));
         Vilains.addInvulnerableBuff(vilain, 10);
         return vilain;
     }
@@ -1171,7 +1171,7 @@ class Vilains {
         let vilain = new Character("Big Zombie", "Monster", sprite);
         vilain.maxLife = 5000;
         vilain.armor = 100;
-        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 200, 50, 7), castSimpleProjectile));
+        vilain.spells.push(new PnjSpell(new ProjectileStat(vilain, hamerSprite, 225, 50, 7), castSimpleProjectile));
         vilain.spells.push(new FireballAoeTrigger(0.4, 70));
         Vilains.addInvulnerableBuff(vilain, 10);
         return vilain;
