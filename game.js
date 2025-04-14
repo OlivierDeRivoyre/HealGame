@@ -208,7 +208,10 @@ class Character {
             allAnimations.push(new LabelAnim("dodge", this, "dodge", 0));
             return;
         }
-        const dmg = Math.floor(1 + fullDamge * 100 * 100 / ((100 + this.getArmor()) * (100 + this.getBerserkArmor())));
+        let dmg = Math.floor(1 + fullDamge * 100 * 100 / ((100 + this.getArmor()) * (100 + this.getBerserkArmor())));
+        if(this.isBerserk && this.life - dmg < 50){
+            dmg = Math.ceil(dmg * 0.65);
+        }
         this.life = Math.max(0, this.life - dmg);
         projectileStat.from.damageDone += dmg;
         this.damageTaken += dmg;
@@ -545,11 +548,12 @@ class Heroes {
         c.maxLife = c.life = 950;
         c.isBerserker = true;
         c.isTank = true;
+        c.armor = 5;
         c.berserkArmor = 43;
         const projectile = new ProjectileStat(c, axeSprite, 40, 37, 7);
         c.spells.push(new PnjSpell(projectile, castSimpleProjectile));
         c.onUpdate = function () {
-            const shouldBeBerserk = c.life <= c.maxLife / 2;
+            const shouldBeBerserk = c.life <= c.maxLife * 0.65;
             if (shouldBeBerserk == c.isBerserk) {
                 return;
             }
@@ -568,6 +572,7 @@ class Heroes {
         c.talents = {
             life: 1,
             armor: 1,
+            dodge: 1,
             damage: 1,
             haste: 1,
             crit: 1,
@@ -2563,12 +2568,12 @@ if (window.location.search) {
         necro.ultimatePower = 5;
         teams = [
             heroesFactory.createPelin(),
-            knight,
+          //  knight,
             witch,
-            heroesFactory.createHunter(),
+        //    heroesFactory.createHunter(),
             heroesFactory.createBerserker(),
-            necro,
-            heroesFactory.createBerserker(),
+         //   necro,
+          //  heroesFactory.createBerserker(),
         ];
         //  teams[1].armor = 100;
         // teams[1].crit = 50;
@@ -2576,12 +2581,8 @@ if (window.location.search) {
         //   teams[teams.length - 1].ultimatePower = 3;
 
         playerSpells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
-        //currentPage = new SelectUpgradeScreen(1);
-        necro.damageDone = 300;
-        witch.damageDone = 3000;
-        witch.damageTaken = 4000;
-        witch.damageNotMitagedTaken = 5000;
-        currentPage = new EndLevelStatScreen();
+        currentPage = new SelectUpgradeScreen(1);
+       // currentPage = new EndLevelStatScreen();
     }
 }
 const tickDuration = 1000.0 / 30;
