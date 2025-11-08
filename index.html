@@ -1,9 +1,16 @@
 <html>
 <title>Healer game</title>
-<meta name="viewport" content="width=810; initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-    .board {    
-        margin-top: 4em;  
+    body,
+    html {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .board {
+        margin-top: auto;
         margin-left: auto;
         margin-right: auto;
         border: 3px solid green;
@@ -14,7 +21,9 @@
 <body>
     <canvas id="myCanvas" width="800" height="450" class="board"></canvas>
 </body>
-
+<script>
+    console.clear();        
+</script>
 <script src="game.js"></script>
 
 <!--

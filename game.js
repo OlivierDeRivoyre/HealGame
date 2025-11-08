@@ -7,6 +7,28 @@ let tickNumber = 1;
 canvas.onmousedown = onmousedown;
 canvas.onmousemove = onmousemove;
 window.addEventListener('keydown', handleKeyPress, false);
+window.addEventListener('resize', () => this.windowResize(), false);
+
+function windowResize() {
+    let w = (window.outerWidth - 40);
+    let h = (window.outerHeight - 108);
+    if (h * 16 > w * 9) {
+        h = Math.floor(w * 9 / 16);
+    } else {
+        w = Math.floor(h * 16 / 9);
+    }    
+    canvas.width = w;
+    canvas.height = h;
+    let ratio = w / CanvasWidth;
+    ctx.scale(ratio, ratio);
+}
+windowResize();
+function toCanvasCoord(x, y) {
+    return {
+        x: Math.floor(x * CanvasWidth / canvas.width),
+        y: Math.floor(y * CanvasHeight / canvas.height)
+    };
+}
 
 function loadImg(name) {
     const img = new Image();
@@ -209,7 +231,7 @@ class Character {
             return;
         }
         let dmg = Math.floor(1 + fullDamge * 100 * 100 / ((100 + this.getArmor()) * (100 + this.getBerserkArmor())));
-        if(this.isBerserk && this.life - dmg < 50){
+        if (this.isBerserk && this.life - dmg < 50) {
             dmg = Math.ceil(dmg * 0.65);
         }
         this.life = Math.max(0, this.life - dmg);
@@ -2189,11 +2211,11 @@ class Board {
                     newSkeletons++;
                 }
             }
-        }        
+        }
         if (currentLevel % 3 == 0 && rerollsNumber < 3) {
             rerollsNumber++;
         }
-        if(currentLevel == 1){
+        if (currentLevel == 1) {
             currentPage = new SelectUpgradeScreen(1);
         } else if (newSkeletons > 0) {
             currentPage = new NecroLevelScreen(newSkeletons);
@@ -2568,12 +2590,12 @@ if (window.location.search) {
         necro.ultimatePower = 5;
         teams = [
             heroesFactory.createPelin(),
-          //  knight,
+            //  knight,
             witch,
-        //    heroesFactory.createHunter(),
+            //    heroesFactory.createHunter(),
             heroesFactory.createBerserker(),
-         //   necro,
-          //  heroesFactory.createBerserker(),
+            //   necro,
+            //  heroesFactory.createBerserker(),
         ];
         //  teams[1].armor = 100;
         // teams[1].crit = 50;
@@ -2582,7 +2604,7 @@ if (window.location.search) {
 
         playerSpells = [aoeHeal, fastHeal1, slowHeal1, hotHeal]
         currentPage = new SelectUpgradeScreen(1);
-       // currentPage = new EndLevelStatScreen();
+        // currentPage = new EndLevelStatScreen();
     }
 }
 const tickDuration = 1000.0 / 30;
@@ -2598,7 +2620,7 @@ function update() {
     currentPage.update();
 }
 function paint() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, CanvasWidth, CanvasHeight);
     currentPage.paint();
 }
 function isInside(control, event) {
@@ -2609,13 +2631,15 @@ function isInside(control, event) {
         && event.offsetY >= control.y && event.offsetY < control.y + control.height
 }
 function onmousedown(event) {
+    const coord = toCanvasCoord(event.offsetX, event.offsetY);
+    const e = { offsetX: coord.x, offsetY: coord.y };
     if (currentPage.click) {
-        currentPage.click(event);
+        currentPage.click(e);
     }
     if (currentPage.buttons) {
         for (const c of currentPage.buttons) {
-            if (isInside(c, event)) {
-                c.click(event);
+            if (isInside(c, e)) {
+                c.click(e);
             }
         }
     }
@@ -2625,9 +2649,11 @@ let currentControl = null;
 function onmousemove(event) {
     if (!currentPage.buttons)
         return;
+    const coord = toCanvasCoord(event.offsetX, event.offsetY);
+    const e = { offsetX: coord.x, offsetY: coord.y };
     let newControl = null
     for (const c of currentPage.buttons) {
-        if (isInside(c, event)) {
+        if (isInside(c, e)) {
             newControl = c;
             break;
         }
@@ -2636,9 +2662,9 @@ function onmousemove(event) {
         return;
     }
     if (currentControl && currentControl.mouseExit)
-        currentControl.mouseExit(event);
+        currentControl.mouseExit(e);
     if (newControl && newControl.mouseEnter)
-        newControl.mouseEnter(event);
+        newControl.mouseEnter(e);
     currentControl = newControl;
 }
 function handleKeyPress(event) {
